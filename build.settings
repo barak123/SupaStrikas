@@ -1,0 +1,171 @@
+settings = {
+     orientation = {
+          default = "landscapeRight",
+          content = "landscapeRight",
+          supported = {
+               "landscapeRight",
+			   "landscapeLeft"
+          },
+     },
+	 androidPermissions = {
+		"android.permission.INTERNET",
+		"com.android.vending.BILLING",
+		"android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+	},
+     --adds the font BorisBlackBloxx.ttf to our game
+     --you will still need to reference the name in the
+     --code, but if you don't have it referenced here it
+     --will not work
+     iphone = {
+          plist = {
+                UIAppFonts = {
+                    "troika.otf"
+               },
+               
+               
+                NSLocationAlwaysUsageDescription = { "" },
+                NSLocationWhenInUseUsageDescription = { "" },
+
+			    UIApplicationExitsOnSuspend = false,
+				FacebookAppID = "608674832569283" ,  --replace 608674832569283 with your Facebook App ID 612089632227803
+				CFBundleURLTypes =
+				{
+					{ CFBundleURLSchemes = { "fb608674832569283", } }  --replace 608674832569283 with your Facebook App ID
+				},
+
+				-- Whitelist Facebook Servers for Network Requests
+	            NSAppTransportSecurity = 
+	            {
+	                NSExceptionDomains = 
+	                {
+	                    ["fbcdn.net"] = 
+	                    {
+	                        NSIncludesSubdomains = true,
+	                        NSExceptionRequiresForwardSecrecy = false,
+	                    },
+	                    ["facebook.com"] = 
+	                    {
+	                        NSIncludesSubdomains = true,
+	                        NSExceptionRequiresForwardSecrecy = false,
+	                    },
+	                    ["akamaihd.net"] = 
+	                    {
+	                        NSIncludesSubdomains = true,
+	                        NSExceptionRequiresForwardSecrecy = false,
+	                    },
+	                },
+	                NSAllowsArbitraryLoads=true ,
+	            },
+
+	            -- Whitelist Facebook Apps
+	            LSApplicationQueriesSchemes = 
+	            {
+	                "fb",
+	                "fbapi20130214",
+	                "fbapi20130410",
+	                "fbapi20140410",
+	                "fbapi20140116",
+	                "fbapi20150313",
+	                "fbapi20150629",
+	                "fbauth",
+	                "fbauth2",
+	                "fb-messenger-api20140430",
+	            },
+          },
+     },
+	 android = 
+	{
+	   facebookAppId = "608674832569283" , 	
+	   googlePlayGamesAppId = "961881838054"  --long App ID number (use yours!)
+	},
+
+	plugins =
+	{
+		-- Add Vungle	
+		["CoronaProvider.ads.vungle"] =
+		{
+				publisherId = "com.vungle",
+		},
+		--["plugin.adcolony"] =
+        --{
+        --    publisherId = "com.coronalabs",
+        --    supportedPlatforms = { iphone=true, android=true }
+        --},
+		["plugin.applovin"] =
+        {
+           publisherId = "com.coronalabs",
+            supportedPlatforms = { iphone=true, android=true, osx=true, win32=true, appletvos=true }
+        },
+		 ["plugin.supersonic"] =
+        {
+            publisherId = "com.coronalabs",
+            supportedPlatforms = { iphone=true, android=true }
+        },
+         ["plugin.adbuddiz"] =
+        {
+            publisherId = "com.adbuddiz"
+        },
+		-- Add Google Play Services
+		["plugin.google.play.services"] =
+		{
+				publisherId = "com.coronalabs"
+		},
+		["CoronaProvider.gameNetwork.apple"] =
+        {
+            publisherId = "com.coronalabs",
+            supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
+        },
+	   --key is the name passed to the Lua "require()"
+	   ["CoronaProvider.gameNetwork.google"] =
+	   {
+		  --required!
+		  publisherId = "com.coronalabs",
+		  supportedPlatforms = { android=true },
+	   },
+	    ["CoronaProvider.native.popup.social"] =
+        {
+            publisherId = "com.coronalabs"
+        },
+		["CoronaProvider.native.popup.activity"] =
+		{
+			publisherId = "com.coronalabs",
+			supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
+		},
+		["plugin.openssl"] = 
+			{
+			publisherId = "com.coronalabs"
+			},
+		["plugin.facebook.v4"] = 
+        {
+            publisherId = "com.coronalabs"
+        },
+        --["plugin.fbAudienceNetwork"] =
+        --{
+        --    publisherId = "com.coronalabs",
+        --    supportedPlatforms = { iphone=true, android=true }
+        --},        
+		 ["plugin.zip"] =
+        {
+            publisherId = "com.coronalabs"
+        },
+        ["plugin.google.iap.v3"] =
+        {
+            publisherId = "com.coronalabs",
+            supportedPlatforms = { android=true }
+        },
+           ["plugin.flurry.analytics"] =
+        {
+            publisherId = "com.coronalabs"
+        },        
+        ["plugin.twitter"] = {
+            publisherId = "com.jasonschroeder",
+        },        
+ --        ["plugin.coronaAds"] =
+ --           {
+ --               publisherId = "com.coronalabs",
+  --              supportedPlatforms = { iphone=true, android=true }
+   --         },
+		
+	},
+}
