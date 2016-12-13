@@ -12,6 +12,7 @@ local averageScoreText = nil
 local gamesCountText = nil
 local perfectRatioText = nil
 local distanceText = nil
+local comboText = nil
 
 ---------------------------------------------------------------------------------
 -- All code outside of the listener functions will only be executed ONCE
@@ -45,8 +46,8 @@ function scene:create( event )
         x = 420,
         y = 20,
         width = 270,     --required for multi-line and alignment
-        font = "troika",   
-        fontSize = 45,
+        font = "UnitedSansRgHv",   
+        fontSize = 25,
         align = "center"  --new alignment parameter
     }
 
@@ -63,8 +64,8 @@ function scene:create( event )
         x = 420,
         y = 20,
         width = 250,     --required for multi-line and alignment
-        font = "troika",   
-        fontSize = 150,
+        font = "UnitedSansRgHv",   
+        fontSize = 60,
         align = "center"  --new alignment parameter
     }
       scoreText = display.newText(highScoreOptions1) 
@@ -101,6 +102,10 @@ function scene:create( event )
      distanceText.x = 420
      distanceText.y = 223
 
+     comboText = display.newText(coinTextOptions)  
+     comboText.x = 420
+     comboText.y = 263
+
     local function backButtonListener( event )
 
        if ( "ended" == event.phase ) then
@@ -122,7 +127,9 @@ function scene:create( event )
       }
       backButton:scale(0.5,0.5)
 
-      backButton.x = backButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      
+      backButton.x = display.screenOriginX  + backButton.contentWidth /2
+
 
      sceneGroup:insert(background)
      sceneGroup:insert(highScoreText)
@@ -132,6 +139,8 @@ function scene:create( event )
      sceneGroup:insert(averageScoreText)
      sceneGroup:insert(perfectRatioText)
      sceneGroup:insert(distanceText)
+     sceneGroup:insert(comboText)
+
      
      sceneGroup:insert(backButton)
      --this is what gets called when playButton gets touched
@@ -161,9 +170,10 @@ function scene:show( event )
 
            
              highScoreText.text  = "HIGH SCORE" 
-             scoreText.text =  event.params.gameData.highScore
-             gamesCountText.text = "GAMES PLAYED: ".. event.params.gameData.gamesCount
-             distanceText.text = "TOTAL METERS: ".. event.params.gameData.totalScore
+             scoreText.text =  commonData.comma_value(event.params.gameData.highScore)
+             gamesCountText.text = "GAMES PLAYED: ".. commonData.comma_value(event.params.gameData.gamesCount)
+             distanceText.text = "TOTAL METERS: ".. commonData.comma_value(event.params.gameData.totalScore)
+             comboText.text = "HIGHEST COMBO: ".. event.params.gameData.highestCombo
              averageScoreText.text = "AVARAGE SCORE: ".. 
                                 string.format("%.00f" , event.params.gameData.totalScore / math.max(event.params.gameData.gamesCount, 1))    
              perfectRatioText.text = "PERFECT RATIO: "..  

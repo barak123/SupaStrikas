@@ -111,7 +111,7 @@ end
        timer.performWithDelay(400, packReady, 1)
      else
 
-      ballPack.skeleton.group.alpha = 0
+      --ballPack.skeleton.group.alpha = 0
      end
             
      
@@ -196,25 +196,19 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
      background.xScale = display.actualContentWidth / background.contentWidth 
      background.yScale = display.actualContentHeight  / background.contentHeight
 
-    local cupImg = display.newImage("PacksScreen/Cup.png")
-     cupImg.x = 240
-     cupImg.y = 260
-     
-     cupImg.xScale =  0.6 * display.actualContentWidth / background.contentWidth 
-     cupImg.yScale = 0.6 * display.actualContentHeight  / background.contentHeight
-
+    
 
       ballPackSpine =  require ("ballPack")
       ballPack = ballPackSpine.new(0.6, true)
       
       ballPack.skeleton.group.x = 240
-       ballPack.skeleton.group.y = 160
+       ballPack.skeleton.group.y = 300
 
-      local rewardsSpineAn = require "reward"
+      -- local rewardsSpineAn = require "reward"
 
-      reward = rewardsSpineAn.new(2)
-       reward.skeleton.group.x = 240
-       reward.skeleton.group.y = 100
+      -- reward = rewardsSpineAn.new(2)
+      --  reward.skeleton.group.x = 240
+      --  reward.skeleton.group.y = 100
 
     
         local function backButtonListener( event )
@@ -355,7 +349,9 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       }
       backButton:scale(0.5,0.5)
 
-      backButton.x = backButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      backButton.x = display.screenOriginX  + backButton.contentWidth /2
+
+      
     
        local buyTrophie = widget.newButton
       {
@@ -471,7 +467,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
       sceneGroup:insert(background)
       sceneGroup:insert(ballGlowImg)
-      sceneGroup:insert(cupImg)
+      
 
       sceneGroup:insert(coinImg)
       sceneGroup:insert(packsImg)
@@ -485,7 +481,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
       
      sceneGroup:insert(ballPack.skeleton.group)
-     sceneGroup:insert(reward.skeleton.group)
+     --sceneGroup:insert(reward.skeleton.group)
 
     
      sceneGroup:insert(backButton)
@@ -501,8 +497,8 @@ end
 -- "scene:show()"
 
 local function showCoins()
-    reward:init()
-    reward.skeleton.group.alpha = 1
+    -- reward:init()
+    -- reward.skeleton.group.alpha = 1
 
     
 end
@@ -747,7 +743,7 @@ function scene:show( event )
               dropNewBall()
            else
             
-               ballPack.skeleton.group.alpha = 0
+              -- ballPack.skeleton.group.alpha = 0
              
            end 
       end

@@ -77,52 +77,29 @@ settings = {
 	 android = 
 	{
 	   facebookAppId = "608674832569283" , 	
-	   googlePlayGamesAppId = "961881838054"  --long App ID number (use yours!)
+	   googlePlayGamesAppId = "195502442109"  --long App ID number (use yours!)
 	},
 
 	plugins =
 	{
-		-- Add Vungle	
-		["CoronaProvider.ads.vungle"] =
-		{
-				publisherId = "com.vungle",
-		},
-		--["plugin.adcolony"] =
-        --{
-        --    publisherId = "com.coronalabs",
-        --    supportedPlatforms = { iphone=true, android=true }
-        --},
-		["plugin.applovin"] =
-        {
-           publisherId = "com.coronalabs",
-            supportedPlatforms = { iphone=true, android=true, osx=true, win32=true, appletvos=true }
-        },
-		 ["plugin.supersonic"] =
+		
+		 ["plugin.gpgs"] =
         {
             publisherId = "com.coronalabs",
             supportedPlatforms = { iphone=true, android=true }
         },
-         ["plugin.adbuddiz"] =
-        {
-            publisherId = "com.adbuddiz"
-        },
-		-- Add Google Play Services
-		["plugin.google.play.services"] =
-		{
-				publisherId = "com.coronalabs"
-		},
-		["CoronaProvider.gameNetwork.apple"] =
-        {
-            publisherId = "com.coronalabs",
-            supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
-        },
+	--	["CoronaProvider.gameNetwork.apple"] =
+      --  {
+      --      publisherId = "com.coronalabs",
+       --     supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
+      --  },
 	   --key is the name passed to the Lua "require()"
-	   ["CoronaProvider.gameNetwork.google"] =
-	   {
+	--   ["CoronaProvider.gameNetwork.google"] =
+	 --  {
 		  --required!
-		  publisherId = "com.coronalabs",
-		  supportedPlatforms = { android=true },
-	   },
+--		  publisherId = "com.coronalabs",
+--		  supportedPlatforms = { android=true },
+--	   },
 	    ["CoronaProvider.native.popup.social"] =
         {
             publisherId = "com.coronalabs"
@@ -158,9 +135,9 @@ settings = {
         {
             publisherId = "com.coronalabs"
         },        
-        ["plugin.twitter"] = {
-            publisherId = "com.jasonschroeder",
-        },        
+  --      ["plugin.twitter"] = {
+  --          publisherId = "com.jasonschroeder",
+  --      },        
  --        ["plugin.coronaAds"] =
  --           {
  --               publisherId = "com.coronalabs",

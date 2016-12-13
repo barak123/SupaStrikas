@@ -2,20 +2,11 @@ local commonData = require( "commonData" )
 
 local composer = require( "composer" )
 local widget = require( "widget" )
-local ads = require( "ads" )
-local supersonic = nil
-if ( system.getInfo( "platformName" ) == "Android" ) then
-
-  supersonic = require( "plugin.supersonic" )
-end
 
 --local fuse = require( "plugin.fuse" )
 require( "menu" )
 require( "achivmentsManager" )
 require "translation"
-
---local coronaAds = require( "plugin.coronaAds" )
---local adcolony = require( "plugin.adcolony" )
 
 
 
@@ -26,7 +17,7 @@ local isSimulator = "simulator" == system.getInfo( "environment" )
 local scene = composer.newScene()
 local playButton = nil
 local background = nil
-local showAdButton =  nil
+
 local rateUsButton = nil
 local fbLoginButton = nil
 local fbLoginButton2 = nil
@@ -44,12 +35,12 @@ local boosterMsgSpine =  nil
 local boosterMsg = nil
 local avatarsInProgress = 0
 
-local scoreTextM  = nil
-local scoreTextMS  = nil
 local shareButton = nil
 
 local scoreTitleText = nil 
 local scoreTitleTextS = nil
+local comboText = nil 
+local comboTextS = nil
 local dailyRewardBlocker = nil
 local loadingBlocker = nil
 local boosterRect = nil
@@ -69,17 +60,13 @@ local chalengesData = nil
 local chalengesBox = nil
 local friendsBox =nil
 local friendsData =nil
-local reminder = nil
+
 local tip = nil
 local tip2 = nil
 local tip3 = nil
 local packReminder = nil
 local dailyReward = nil
 local activeScreen = 1
-local skipAdmob = false
-local admobTime = nil
-local isSupersonicLoaded = false
-
 
 
 ---------------------------------------------------------------------------------
@@ -320,80 +307,10 @@ local function pairsByHighScore (t)
       return iter
     end
 
-local function adBonus( event )
-        showAdButton.alpha = 0
-        reminder.alpha = 0
-        
-        playButton.alpha = 1
-        commonData.gameData.coins = commonData.gameData.coins + 20     
-        commonData.gameData.adsPressed = commonData.gameData.adsPressed + 1   
-
-        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
-
-
-        logCoins(commonData.gameData , 20)
-        commonData.analytics.logEvent( "endWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
-
-        parent:outerCoinsReward(20 ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
-
-        if commonData.gameData.adsPressed == 100 then
-          
-          initAchivments(commonData.gameData.unlockedAchivments)
-
-          unlockAchivment("MoneyMachine", true) 
-        end
-
-end
-
-local adbuddiz = require( "plugin.adbuddiz" )
-
-adbuddiz.setAndroidPublisherKey("d2e9da03-8e82-421c-a963-1d4ba301ae38" )  -- Replace with your Android app publisher key
-adbuddiz.setIOSPublisherKey("37793603-3677-4db8-bf3d-f2a6c2daa8f7")
-
-adbuddiz.cacheAds()
-
-
-local function listenerRewardedVideo( event ) 
-
-    --printTable(event)
-    if event.value == "didFetch" then
-        
-    end
-    if event.value == "didComplete" then
-        -- Reward user here
-        timer.performWithDelay(1000, adBonus, 1)
-        adbuddiz.RewardedVideo_fetch()
-    end
-    if event.value == "didNotComplete" then
-        
-    end
-    if event.value == "didFail" then
-        
-    end
-end
-Runtime:addEventListener( "AdBuddizRewardedVideoEvent", listenerRewardedVideo )
-  
-
-
-
-local applovin = require( "plugin.applovin" )
-
-local function applovinListener( event )
---    printTable(event)
-    if ( event.phase == "init" ) then  -- Successful initialization        
-         applovin.load(true)
-    elseif ( event.phase == "validationSucceeded" ) then  -- Successful initialization              
-         timer.performWithDelay(1000, adBonus, 1)
-         applovin.load(true)
-    end
-end
-
--- Initialize the AppLovin plugin
-applovin.init( applovinListener, { sdkKey="D33FRFq0ffJLM_HuIiRQbuzVdIAsFV7TTAk-PT_4CJQZIhSbPv0_o-UQGeGW8O-hZifzFf2SzS1F9TrTMsX8q1" } )
 
 local function buildFriendsPart(gameData)
                      
-
+  
                      if gameData.isConnectedToFB  or isSimulator then
                         fbLoginButton2.alpha = 0 
                         LoginDisclamer.alpha = 0 
@@ -425,7 +342,7 @@ local function buildFriendsPart(gameData)
                               x = 420,
                               y = 20,
                               width = 70,     --required for multi-line and alignment
-                              font = "troika",   
+                              font = "UnitedSansRgHv",   
                               fontSize = 15,
                               align = "left"  --new alignment parameter
                           }
@@ -437,7 +354,7 @@ local function buildFriendsPart(gameData)
                             y = 20,
                             width = 70,     --required for multi-line and alignment
                             --height = 10,
-                            font = "troika",   
+                            font = "UnitedSansRgHv",   
                             fontSize = 10,
                             align = "left"  --new alignment parameter
                         }
@@ -470,6 +387,7 @@ local function buildFriendsPart(gameData)
 
                                if friendPos > 2 then
                                  heroBack.y = 210 
+                                 heroBack.x = 160 
                                  heroBack.xScale = -0.4
                                else
                                  heroBack.y = 140 
@@ -521,7 +439,7 @@ local function buildFriendsPart(gameData)
                                
                             end  
                       
-                          if friendPos < 4 then
+                          if friendPos < 3 then
                                  local avatarToLoad = nil
                                   if isAvatarExists then
                                     avatarToLoad = commonData.avatars[friend.avatarId].data
@@ -636,14 +554,19 @@ local function buildFriendsPart(gameData)
                                                        local heroAvatar = heroSpine.new(0.15, true, false)
                                                         heroBack:scale(0.4,0.4)
                                                        
-                                                       if friendPos % 2 == 1 then
+                                                       local friendPos2 = friendPos
+                                                        if (friendPos2 > 3) then
+                                                          friendPos2 = 3
+                                                        end
+
+                                                       if friendPos2 % 2 == 1 then
                                                          heroBack.x = 160 
                                                        else
                                                          heroBack.x = 300 
                                                         
                                                        end
 
-                                                       if friendPos > 2 then
+                                                       if friendPos2 > 2 then
                                                          heroBack.y = 210 
                                                          heroBack.xScale = -0.4
                                                        else
@@ -687,7 +610,49 @@ local function buildFriendsPart(gameData)
                                                      else
                                                        friendGroup.alpha = 0 
                                                      end
-                                end   
+                                end 
+                                 if (gameData.isConnectedToFB or isSimulator)  then
+                                          friendPos = friendPos + 1
+                                                     if friendPos > 3 then
+                                                        friendPos = 4
+                                                     end 
+                                                     
+                                                      local heroBack1 = widget.newButton
+                                                      {
+                                                          x = 410,
+                                                          y = 165,
+                                                          id = "playButton",
+                                                          defaultFile = "images/InviteBTNUp.png",
+                                                          overFile = "images/InviteBTNDown.png",
+                                                          onEvent = commonData.fbInviteListener
+                                                      }
+                                                    
+                                                     heroBack1:scale(0.4,0.4)
+                                                       
+                                                       if friendPos % 2 == 1 then
+                                                         heroBack1.x = 160 
+                                                       else
+                                                         heroBack1.x = 300 
+                                                        
+                                                       end
+
+                                                       if friendPos > 2 then
+                                                         heroBack1.y = 210 
+                                                        -- heroBack1.xScale = -0.4
+                                                       else
+                                                         heroBack1.y = 140 
+                                                       end
+                                                       
+                                                    
+                                                      local friendGroup1 = display.newGroup()
+                                                      friendGroup1:insert(heroBack1)
+                                                      
+                                                     if friendsData and friendsData.isVisible then
+                                                       friendsData:insert(friendGroup1)
+                                                     else
+                                                       friendGroup1.alpha = 0 
+                                                     end
+                                end    
             end -- end build friends
 
 
@@ -718,23 +683,7 @@ local function showGameOver( gameResult , isFirstLoad)
             
             --print( string.format("%.00f", texUsed) .. " / " .. memUsed)
              
-     if math.random(2) == 1 then
-            showAdButton.alpha = 1
-            reminder.alpha = 1
-      else
-            showAdButton.alpha = 0
-            reminder.alpha = 0
-      end      
-
-
-        --else
-          --showAdButton.alpha = 0
-
-        --end  
-       
-       -- achivmetBarFull.alpha = 0
-        scoreTextM.alpha=0 
-        scoreTextMS.alpha=0 
+    
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
         packsIndicator.alpha = 0
@@ -773,87 +722,16 @@ local function showGameOver( gameResult , isFirstLoad)
           end  
        end 
 
-
-       ads:setCurrentProvider( "admob" )     
-     
-       local gmCnt = commonData.gameData.gamesCount
-       if (gmCnt == 0) then
-        gmCnt = 1
-       end 
-       local showAdRnd =  gmCnt % 5 
-       
-         if ( system.getInfo( "platformName" ) == "Android" ) then
-
-                 if not supersonic.isLoaded( "rewardedVideo" ) then                                    
-                  isSupersonicLoaded = false
-                   supersonic.load( "rewardedVideo", "WatchRewardedVideo" )                 
-                 end
-           
-         end
-
-         if not  applovin.isLoaded(true) then
-           applovin.load(true)           
-         end
-
-        if not adbuddiz.RewardedVideo_isReadyToShow() then
-
-           adbuddiz.RewardedVideo_fetch()
-        end 
-
-        
-       if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase and 
-            (commonData.gameData.adsPressed / gmCnt) < 0.1  and showAdRnd == 1 and not isFirstLoad) then
-                                       -- show the advert.
-           
-           -- Disable fb ads
-           -- if ( 1==2 and fbAudienceNetwork.isLoaded( placementID ) == true ) then
-           --  --print ("fb ad")
-           --  fbAudienceNetwork.show( "interstitial", placementID )
-             --if ads.isLoaded("interstitial") then                           -- if it has been loaded.
-                
-             -- else
-
-             -- if ( system.getInfo( "platformName" ) == "Android" ) then
-             --      if supersonic.isLoaded( "interstitial" ) then
-             --       supersonic.show( "interstitial" )
-             --       -- loadingBlocker.alpha = 0.01
-             --     elseif not skipAdmob    then
-             --        ads.show("interstitial") 
-             --        admobTime = system.getTimer() 
-             --        playButton.alpha = 0
-             --        timer.performWithDelay(5000,function ()
-             --          playButton.alpha = 1
-             --        end,1)
-             --        --ads.show("interstitial")                              -- show the advert.
-             --        --print("banner ready")
-                 
-             --     end
-             -- else
-
-
-             if not skipAdmob    then
-                
-                ads.show("interstitial") 
-                playButton.alpha = 0
-                admobTime = system.getTimer() 
-                timer.performWithDelay(5000,function ()
-                  playButton.alpha = 1
-                end,1)
-                
-             end
-
-      else
-        playButton.alpha = 1
-
-      end 
+ 
+   
       --Called when the scene is now on screen.
       -- Insert code here to make the scene come alive.
       -- Example: start timers, begin animation, play audio, etc.
       if(gameResult) then
 
             local endGameScore = gameResult.gameScore
-            scoreText.text = endGameScore
-            scoreTextS.text = endGameScore
+            scoreText.text = commonData.comma_value(endGameScore)
+            scoreTextS.text = commonData.comma_value(endGameScore)
             
 
             local function buildChallengesPart()
@@ -877,7 +755,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       x = 420,
                       y = 20,
                       width = 300,     --required for multi-line and alignment
-                      font = "troika",   
+                      font = "UnitedSansRgHv",   
                       fontSize = 15,
                       align = "left"  --new alignment parameter
                   }
@@ -889,7 +767,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       x = 420,
                       y = 20,
                       width = 100,     --required for multi-line and alignment
-                      font = "troika",   
+                      font = "UnitedSansRgHv",   
                       fontSize = 15,
                       align = "right"  --new alignment parameter
                   }  
@@ -922,8 +800,8 @@ local function showGameOver( gameResult , isFirstLoad)
 
                       bullet:scale(0.5,0.5)
                       bullet.y = 95 + i* 22
-                      bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 10
-                      challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 5
+                      bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 35
+                      challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
                       challegesText.y = 95 + i* 22
                       challegesText.text = challeges[i].text
 
@@ -932,7 +810,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       challegesCoinsText.text = challeges[i].coins
 
                       challegesCoin:scale(0.15,0.15)
-                      challegesCoin.x = 240 + background.contentWidth/2 -  challegesCoin.contentWidth/2 - 15
+                      challegesCoin.x = 240 + background.contentWidth/2 -  challegesCoin.contentWidth/2 - 35
                       challegesCoin.y = 95 + i* 22
 
                       challegesCoinsText.x = challegesCoin.x - challegesCoin.contentWidth/2  - challegesCoinsText.contentWidth/2 - 10
@@ -965,13 +843,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
              end
 
-            if (scoreText.contentWidth and  scoreTextM.contentWidth )  then
-              scoreTextM.x = scoreText.x  + scoreText.contentWidth/2  +  scoreTextM.contentWidth /2 
-            end
             
-            scoreTextMS.x = scoreTextM.x
-            scoreTextM.alpha=1
-            scoreTextMS.alpha=1 
             rateUsButton.alpha =0
             fbLoginButton.alpha =0
             local function postScoreSubmit( event )
@@ -984,15 +856,20 @@ local function showGameOver( gameResult , isFirstLoad)
 
             --if ( system.getInfo( "platformName" ) == "Android" ) then
                --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
-               myCategory = "CgkI5qOApf8bEAIQAg"
+               myCategory = "CgkI_YzqptgFEAIQAA"
             --end
 
-            commonData.gameNetwork.request( "setHighScore",
-            {
-               localPlayerScore = { category=myCategory, value=tonumber(gameResult.gameScore) },
-               listener = postScoreSubmit
-            } )
+            -- TODO: remove
+            -- commonData.gameNetwork.request( "setHighScore",
+            -- {
+            --    localPlayerScore = { category=myCategory, value=tonumber(gameResult.gameScore) },
+            --    listener = postScoreSubmit
+            -- } )
+            commonData.gpgs.leaderboards.submit( {leaderboardId=myCategory, score=tonumber(gameResult.gameScore) } )
 
+            -- submit highest combo
+            local highestComboId = "CgkI_YzqptgFEAIQBw"
+            commonData.gpgs.leaderboards.submit( {leaderboardId=highestComboId, score=tonumber(gameResult.combo) } )
             
 
             local isHighScore = gameResult.gameScore > commonData.gameData.highScore
@@ -1035,10 +912,7 @@ local function showGameOver( gameResult , isFirstLoad)
               scoreTitleText.text = "NEW HIGH SCORE:"
               scoreTitleTextS.text = "NEW HIGH SCORE:"
 
-              submitHighScoreToFacebook()
-
-
-                 
+              submitHighScoreToFacebook()                 
             else
 
               scoreTitleText.text = "YOU REACHED:"
@@ -1058,6 +932,16 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.jumps  = commonData.gameData.jumps + gameResult.jumps
             commonData.gameData.unlockedAchivments = getUnlockedAchivments()
             commonData.gameData.unlockedChallenges = getUnlockedChallenges()
+
+            if not commonData.gameData.highestCombo or commonData.gameData.highestCombo < gameResult.combo then
+              commonData.gameData.highestCombo = gameResult.combo
+            end  
+
+
+            comboText.text = "HIGHEST COMBO: " ..  gameResult.combo
+            comboTextS.text = "HIGHEST COMBO: " ..   gameResult.combo
+            comboText.alpha = 1
+            comboTextS.alpha = 1
 
             if (isFirstLoad or isHighScore) then
               timer.performWithDelay(1,function ()
@@ -1130,7 +1014,7 @@ local function showGameOver( gameResult , isFirstLoad)
                     x = 420,
                     y = 20,
                     width = 300,     --required for multi-line and alignment
-                    font = "troika",   
+                    font = "UnitedSansRgHv",   
                     fontSize = 15,
                     align = "center"  --new alignment parameter
                 }
@@ -1142,7 +1026,7 @@ local function showGameOver( gameResult , isFirstLoad)
                     x = 420,
                     y = 20,
                     --width = 230,     --required for multi-line and alignment
-                    font = "troika",   
+                    font = "UnitedSansRgHv",   
                     fontSize = 25,
                     align = "center"  --new alignment parameter
                 }
@@ -1245,108 +1129,108 @@ local function showGameOver( gameResult , isFirstLoad)
             network.request( URL, "GET", validateDailyReward ) 
           
               -- not fisrt game today  
-            elseif ((commonData.gameData.gamesCount == 5 and commonData.gameData.highScore < 20)   or 
-                  (commonData.gameData.gamesCount == 20 and commonData.gameData.highScore < 40))  then
+           --  elseif ((commonData.gameData.gamesCount == 5 and commonData.gameData.highScore < 20)   or 
+           --        (commonData.gameData.gamesCount == 20 and commonData.gameData.highScore < 40) )  then
                 
-                showPrizeNotification("Dribbler Tip:" , "Hold your leg up until you hit the ball",nil,true)
+           --      showPrizeNotification("Dribbler Tip:" , "Hold your leg up until you hit the ball",nil,true)
 
 
 
-                if not tip then  
-                    local ultraSheetSetup = 
-                    {
-                    width = 456,
-                    height = 355,
-                    numFrames = 5,
-                    sheetContentWidth = 2280,
-                    sheetContentHeight = 355
-                    }
+           --      if not tip then  
+           --          local ultraSheetSetup = 
+           --          {
+           --          width = 456,
+           --          height = 355,
+           --          numFrames = 5,
+           --          sheetContentWidth = 2280,
+           --          sheetContentHeight = 355
+           --          }
 
-                    local ultraData = 
-                    {
-                    { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
-                    }
-                    local spriteSheet = graphics.newImageSheet("images/TipSheet.jpg", ultraSheetSetup);
-                    tip = display.newSprite(spriteSheet, ultraData);
+           --          local ultraData = 
+           --          {
+           --          { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
+           --          }
+           --          local spriteSheet = graphics.newImageSheet("images/TipSheet.jpg", ultraSheetSetup);
+           --          tip = display.newSprite(spriteSheet, ultraData);
 
 
-                    tip.x = 180
-                    tip.y = 140
-                    tip:scale(0.35,0.35)
+           --          tip.x = 180
+           --          tip.y = 140
+           --          tip:scale(0.35,0.35)
 
-                    local currentSceneName = composer.getSceneName( "current" )
+           --          local currentSceneName = composer.getSceneName( "current" )
                     
-                    if ( currentSceneName== "game" ) then
-                      notificationData:insert(tip)
-                    else
-                      tip:removeSelf()
-                    end
+           --          if ( currentSceneName== "game" ) then
+           --            notificationData:insert(tip)
+           --          else
+           --            tip:removeSelf()
+           --          end
                    
 
-                end    
-           elseif  (gameResult.finishReason=="catchedBYShamina"  and gameResult.gameScore < 45)  then
+           --      end    
+           -- elseif  (gameResult.finishReason=="catchedBYShamina"  and gameResult.gameScore < 45)  then
 
-                showPrizeNotification("Dribbler Tip:" , "Kick in perfect timing and swap legs \n to gain speed",nil,true)
+           --      showPrizeNotification("Dribbler Tip:" , "Kick in perfect timing and swap legs \n to gain speed",nil,true)
 
 
 
-                if not tip3 then  
+           --      if not tip3 then  
                     
-                    tip3 = display.newImage("images/Tip3.jpg")
+           --          tip3 = display.newImage("images/Tip3.jpg")
 
 
-                    tip3.x = 180
-                    tip3.y = 140
-                    tip3:scale(0.35,0.35)
+           --          tip3.x = 180
+           --          tip3.y = 140
+           --          tip3:scale(0.35,0.35)
 
-                    local currentSceneName = composer.getSceneName( "current" )
+           --          local currentSceneName = composer.getSceneName( "current" )
                     
-                    if ( currentSceneName== "game" ) then
-                      notificationData:insert(tip3)
-                    else
-                      tip3:removeSelf()
-                    end           
-                end    
+           --          if ( currentSceneName== "game" ) then
+           --            notificationData:insert(tip3)
+           --          else
+           --            tip3:removeSelf()
+           --          end           
+           --      end    
 
-           elseif  ((commonData.gameData.gamesCount == 30 and commonData.gameData.highScore < 50)   or 
-                  (commonData.gameData.gamesCount == 50 and commonData.gameData.highScore < 70)) then
+           -- elseif  ((commonData.gameData.gamesCount == 30 and commonData.gameData.highScore < 50)   or 
+           --        (commonData.gameData.gamesCount == 50 and commonData.gameData.highScore < 70)) then
 
-                showPrizeNotification("Dribbler Tip:" , "Try to kick the ball low",nil,true)
-
-
-
-                if not tip2 then  
-                    local ultraSheetSetup = 
-                    {
-                    width = 365,
-                    height = 355,
-                    numFrames = 7,
-                    sheetContentWidth = 2555,
-                    sheetContentHeight = 355
-                    }
-
-                    local ultraData = 
-                    {
-                    { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
-                    }
-                    local spriteSheet = graphics.newImageSheet("images/Tip2.jpg", ultraSheetSetup);
-                    tip2 = display.newSprite(spriteSheet, ultraData);
+           --      showPrizeNotification("Dribbler Tip:" , "Try to kick the ball low",nil,true)
 
 
-                    tip2.x = 180
-                    tip2.y = 140
-                    tip2:scale(0.35,0.35)
 
-                    local currentSceneName = composer.getSceneName( "current" )
+           --      if not tip2 then  
+           --          local ultraSheetSetup = 
+           --          {
+           --          width = 365,
+           --          height = 355,
+           --          numFrames = 7,
+           --          sheetContentWidth = 2555,
+           --          sheetContentHeight = 355
+           --          }
+
+           --          local ultraData = 
+           --          {
+           --          { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
+           --          }
+           --          local spriteSheet = graphics.newImageSheet("images/Tip2.jpg", ultraSheetSetup);
+           --          tip2 = display.newSprite(spriteSheet, ultraData);
+
+
+           --          tip2.x = 180
+           --          tip2.y = 140
+           --          tip2:scale(0.35,0.35)
+
+           --          local currentSceneName = composer.getSceneName( "current" )
                     
-                    if ( currentSceneName== "game" ) then
-                      notificationData:insert(tip2)
-                    else
-                      tip2:removeSelf()
-                    end
+           --          if ( currentSceneName== "game" ) then
+           --            notificationData:insert(tip2)
+           --          else
+           --            tip2:removeSelf()
+           --          end
                    
 
-                end    
+           --      end    
 
                
            elseif (commonData.gameData.gamesCount > 100 and isHighScore and not commonData.gameData.rateUsShown ) then   
@@ -1373,7 +1257,7 @@ local function showGameOver( gameResult , isFirstLoad)
               --showPrizeNotification("NICE SCORE!" , "Rate us if you like our game")
               showPrizeNotification("" , "",nil,false)
               commonData.gameData.rateUsShown = true
-            elseif (not commonData.gameData.isConnectedToFB and commonData.gameData.gamesCount == 50) then
+            elseif (not commonData.gameData.isConnectedToFB and commonData.gameData.gamesCount == 50)  then
             --elseif (not gameData.isConnectedToFB ) then
               local rateImg = display.newImage("images/LoginWithFacebook.png")
               rateImg:scale(0.65,0.65)
@@ -1423,8 +1307,8 @@ local function showGameOver( gameResult , isFirstLoad)
             end
 
 
-            highScoreText.text = commonData.gameData.highScore .. " METERS"  
-            highScoreShadowText.text = commonData.gameData.highScore .. " METERS"  
+            highScoreText.text = commonData.comma_value(commonData.gameData.highScore)
+            highScoreShadowText.text = commonData.comma_value(commonData.gameData.highScore)
             --parse:logEvent( "Share", { ["score"] = gameResult.gameScore } )
 
             -- unlock new achivments
@@ -1434,12 +1318,15 @@ local function showGameOver( gameResult , isFirstLoad)
 
             
             for k,v in pairs(newAchiv) do
-            
-              commonData.gameNetwork.request( "unlockAchievement", {
-                                            achievement = {
-                                              identifier=v.code
-                                            }
-                                          }); 
+              
+                commonData.gpgs.achievements.unlock({
+                                              achievementId=v.code
+                                            })
+              -- commonData.gameNetwork.request( "unlockAchievement", {
+              --                               achievement = {
+              --                                 identifier=v.code
+              --                               }
+              --                             }); 
 
             end
             
@@ -1459,54 +1346,6 @@ local function showGameOver( gameResult , isFirstLoad)
             showActiveScreen()
 
 
-            -- less than 20 coins to pack
-            local mod100 = commonData.gameData.coins % 100
-             if mod100 >= 80 and showAdButton.alpha == 1 then
-               if not packReminder then  
-                    local watchAVidSetup = 
-                    {
-                    width = 372,
-                    height = 272,
-                    numFrames = 12,
-                    -- sheetContentWidth = 1860,
-                    -- sheetContentHeight = 816
-                    }
-
-                    local watchAVidData = 
-                    {
-                    { name = "start", start = 1, count = 12, time = 2000, loopCount = 0}
-                    }
-                    local spriteSheet = graphics.newImageSheet("images/WatchAVid.png", watchAVidSetup);
-                    packReminder = display.newSprite(spriteSheet, watchAVidData);
-
-
-                    packReminder.x = 70
-                    packReminder.y = 80
-                    packReminder:scale(0.35,0.35)
-
-                    
-                     
-
-                      local currentSceneName = composer.getSceneName( "current" )
-                     
-                      if ( currentSceneName== "game" and reminder and packReminder) then
-                        reminder:insert(packReminder)
-                      elseif packReminder then
-
-                        packReminder:removeSelf()
-                      end
-              end      
-
-               packReminder:setSequence("start")
-               packReminder:play() 
-               reminder.alpha = 1
-            else
-             reminder.alpha = 0    
-            end  
-
-            
-            
-          
       end    
 end
 -- "scene:create()"
@@ -1524,15 +1363,14 @@ function scene:create( event )
      chalengesData = display.newGroup()
      friendsBox = display.newGroup()
      friendsData= display.newGroup()
-     reminder = display.newGroup()
-
+     
      buttonsSet = "BlueSet"
      --everything from here down to the return line is what makes
      --up the scene so... go crazy
-     background = display.newImage(buttonsSet .. "/End/ScoreFrame.png")
+     background = display.newImage("images/EndGameBG.png")
 
     
-     background.xScale =  (display.actualContentWidth*0.6) / background.contentWidth
+     background.xScale =  (display.actualContentWidth*0.7) / background.contentWidth
      background.yScale =  (display.actualContentHeight*0.6) / background.contentHeight
      background.x = 240
      background.y = 160 
@@ -1557,30 +1395,10 @@ function scene:create( event )
      LoginDisclamer.y = 200
 
 
-     -- Initialize Corona Ads (substitute your own API key when generated)
-
-     -- Substitute your own placement IDs when generated
-
-     -- -- Corona Ads listener function
-     -- local function adcolonyListener( event )
-     --    printTable(event)
-     --     -- Successful initialization of Corona Ads
-     --     if ( event.phase == "reward" ) then
-     --         -- Show an ad
-     --         timer.performWithDelay(1000, adBonus, 1)
-             
-     --     end
-     -- end
-
-     -- --coronaAds.init( "4efad5f1-675f-43f2-bbf2-ea9f21ead19b", adListener )
-     -- adcolony.init( adcolonyListener, { apiKey="4efad5f1-675f-43f2-bbf2-ea9f21ead19b" } )
-
-
-
       boosterMsgSpine =  require ("boosterMsg")
       boosterMsg = boosterMsgSpine.new(0.8, true)
       
-      boosterMsg.skeleton.group.x = 280
+      boosterMsg.skeleton.group.x = 190
       boosterMsg.skeleton.group.y = 320
 
       --boosterMsg.skeleton.group.x =   boosterMsg.skeleton.group.x  + (display.actualContentWidth - display.contentWidth)/2  
@@ -1589,88 +1407,9 @@ function scene:create( event )
 
      
     
-     local function supersonicListener( event )
-
-           --printTable(event)
-          if ( event.phase == "init" ) then  -- Successful initialization
-             
---              supersonic.load( "interstitial", "DefaultInterstitial" )
-              supersonic.load( "rewardedVideo", "WatchRewardedVideo" )
-              isSupersonicLoaded = false
-          elseif (event.phase ==  "loaded" and not event.isError) then
-             isSupersonicLoaded = true
-
-          elseif (event.phase ==  "rewarded") then
-              timer.performWithDelay(1000, adBonus, 1)
-          end  
-      end
-
-      -- Initialize the Supersonic plugin
-
-      if ( system.getInfo("platformName") == "Android" ) then
-          supersonic.init( supersonicListener, { appKey="4aedba55" } )
-      end
-
+    
       
   
-                               
-    local function adListener( event )
-        if ( event.type == "adStart" and event.isError ) then
-           
-        elseif event.type == "adEnd" then
-            
-          timer.performWithDelay(1000, adBonus, 1)
-
-        end
-    end
-
-    local function fuseListener( event )
-   
-        if ( event.isError ) then
-           -- print( "Fuse error: " .. event.response )
-        else
-            if ( event.phase == "init" ) then
-                --Fuse system initialized
-             --   print("fuse init")
-            elseif ( event.phase == "shown" ) then
-                --an ad finished showing
-               -- print("fuse shown")
-            end
-        end
-    end
-    
-    ads.init( "vungle", "LittleDribble", adListener )
-   
-    local function adMobListener( event )
-       --local height = ads.height()
-       -- print("Local height: ",tostring( height))
-       -- print( "Height in listener: "..ads.height())
-       
-
-      if event.phase == "shown" then                                -- we cannot use the test in the timer loop because closing the interstitional 
-        loadingBlocker.alpha = 0 
-        playButton.alpha = 1
-        ads:setCurrentProvider( "admob" )     
-        ads.load("interstitial") 
-
-        if sceneGroup.alpha == 0 then
-          commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
-          skipAdmob = true
-        end
-
-      end           
-          
-    end
-    
-     
-     if ( system.getInfo( "platformName" ) == "Android" ) then
-      ads.init( "admob", "ca-app-pub-3507083359749399/7405020463", adMobListener )
-     else
-      ads.init( "admob", "ca-app-pub-3507083359749399/5710579663", adMobListener )
-     end
-
-     ads:setCurrentProvider( "admob" )     
-     ads.load("interstitial")
    
     
     
@@ -1686,6 +1425,10 @@ function scene:create( event )
             
             scoreTitleText.alpha = 0
             scoreTitleTextS.alpha = 0
+
+            comboText.alpha = 0
+            comboTextS.alpha = 0
+
          
           --composer.gotoScene( "game" , options )
           --composer.hideOverlay(true, "fade", 400 )
@@ -1914,113 +1657,18 @@ function scene:create( event )
            return true
        end
 
-          local function showAdListener( event )
-                 if ( "ended" == event.phase ) then
-                  local isSimulator = (system.getInfo("environment") == "simulator");
-                  commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
-                  if (not isSimulator)  then
+      
 
 
-     -- Substitute your own placement IDs when generated
-               local bannerPlacement = "top-banner-320x50"
-               local interstitialPlacement = "interstitial-1"
-
-                       -- Show an ad
-       --          coronaAds.show( interstitialPlacement, false )
-                       --coronaAds.show( interstitialPlacement, true )
-
-
-                --    combre.showVideoAd( 3, true, false )
-
-                 
-                -- if ( fbAudienceNetwork.isLoaded( placementID ) == true ) then
-                --     fbAudienceNetwork.show( "interstitial", placementID )
-                -- else
-                --applovin.show(true)
-                local isSupersonicReady = false 
-                if ( system.getInfo( "platformName" ) == "Android" ) then 
-                    if supersonic.isLoaded( "rewardedVideo" ) then 
-                      isSupersonicReady = true
-                    end
-                end  
-                --       supersonic.show( "rewardedVideo" )
-                --     else 
-
-               -- if ( adcolony.isLoaded( "rewardedVideo" ) ) then
-               --    adcolony.show( "rewardedVideo" )              
-               -- else
-              if isSupersonicReady then
-                 supersonic.show( "rewardedVideo" )
-                 isSupersonicLoaded = false
-               elseif  applovin.isLoaded(true) then
-                  applovin.show(true)
-               elseif adbuddiz.RewardedVideo_isReadyToShow() then
-                 adbuddiz.RewardedVideo_show()                
-               else
-                  ads:setCurrentProvider( "vungle" )
-                  ads.show( "interstitial" )  
-               end 
-                -- if ( system.getInfo( "platformName" ) == "Android" ) then 
-                --     if supersonic.isLoaded( "rewardedVideo" ) or 1==1 then 
-                --       supersonic.show( "rewardedVideo" )
-                --     else 
-
-                --      ads:setCurrentProvider( "vungle" )
-                --      ads.show( "interstitial" )
-                --    end
-                -- else
-                --     ads:setCurrentProvider( "vungle" )
-                --      ads.show( "interstitial" )
-                -- end   
-                      
-                
-                      --   local useFuse = false
-                      
-                      -- if (useFuse) then
-                      --   --fuse.show()
-                      -- elseif (ads.isAdAvailable()) then
-                      --  -- local adShown = ads.show( "interstitial", { isAnimated=false, isBackButtonEnabled=true } )
-                      --   ads.show( "interstitial", { x=0, y=0 } )
-                      -- else
-                      --   ads:setCurrentProvider( "admob" )
-                      --    ads.show( "interstitial" )  
-                      
-                      -- end
-                 -- end
-
-                      showAdButton.alpha = 0
-                       reminder.alpha = 0
-                
-                  else
-                    --adBonus()
-                    
-                  end
-                 end 
-                   return true
-           end
-
-
-        -- local function combreListener( event )
-
-        --     if ( event.phase == "complete" ) then
-        --         if ( event.success_ads > 0 ) then
-        --             -- At least one Commercial Break ad was played
-        --             -- Give in-game rewards here, for example an extra life or free coins
-        --              timer.performWithDelay(1000, adBonus, 1)
-        --         end
-        --     end
-        -- end
-
-        -- combre.setEventListener( combreListener )
- 
+        
       -- Create the widget
       playButton = widget.newButton
       {
           x = 410,
           y = 165,
           id = "playButton",
-          defaultFile = buttonsSet .. "/End/tryAgainUp.png",
-          overFile = buttonsSet .. "/End/tryAgainDown.png",
+          defaultFile = buttonsSet .. "/End/TryAgainUp.png",
+          overFile = buttonsSet .. "/End/TryAgainDown.png",
           onEvent = buttonListener
       }
       local scaleFactorP = (display.contentWidth*0.15) / playButton.width
@@ -2032,28 +1680,16 @@ function scene:create( event )
       local menuButton = widget.newButton
       {
           x = 240,
-          y = 270,
+          y = 272,
           id = "menuButton",
           defaultFile = buttonsSet .. "/End/MainMenuUp.png",
           overFile = buttonsSet .. "/End/MainMenuDown.png",
           onEvent = menuListener
       }
-      menuButton.xScale =  (display.actualContentWidth* 0.2) / menuButton.width
+      menuButton.xScale =  (display.actualContentWidth* 0.28) / menuButton.width
       menuButton.yScale =   menuButton.xScale  -- (display.actualContentHeight* 0.1) / menuButton.height
    
-      showAdButton = widget.newButton
-      {
-          x = 70,
-          y = 165,
-          id = "showAdButton",
-          defaultFile = buttonsSet .. "/End/EarnCoinsUp.png",
-          overFile = buttonsSet .. "/End/EarnCoinsDown.png",
-          onEvent = showAdListener
-      }
-      showAdButton.xScale =  (display.contentWidth*0.15) / showAdButton.width
-      showAdButton.yScale = showAdButton.xScale  
-      showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
-      reminder.x =  reminder.x - (display.actualContentWidth - display.contentWidth) /2
+    
       rateUsButton = widget.newButton
       {
           x = 240,
@@ -2108,7 +1744,7 @@ function scene:create( event )
           onEvent = nativeShareListener
       }
 
-      shareButton.xScale =  (display.actualContentWidth*0.2) / shareButton.width
+      shareButton.xScale =  (display.actualContentWidth*0.25) / shareButton.width
       shareButton.yScale =  shareButton.xScale-- (display.actualContentHeight*0.22) / shareButton.height
 
 
@@ -2121,7 +1757,7 @@ function scene:create( event )
           overFile = buttonsSet .. "/End/OpenPacksDown.png",
           onEvent = packsListener
       }
-     openPkgButton.xScale =  (display.actualContentWidth*0.2) / openPkgButton.width
+     openPkgButton.xScale =  (display.actualContentWidth*0.25) / openPkgButton.width
       openPkgButton.yScale = openPkgButton.xScale  -- (display.actualContentHeight*0.22) / openPkgButton.height
 
 
@@ -2132,7 +1768,7 @@ function scene:create( event )
 
      -- packsIndicator:setFillColor(1,0,0)
 
-      packsIndicator.x =  openPkgButton.x  - openPkgButton.contentWidth/2 + 7
+      packsIndicator.x =  openPkgButton.x  - openPkgButton.contentWidth/2 + 17
       packsIndicator.y =  openPkgButton.y
 
 
@@ -2161,39 +1797,26 @@ function scene:create( event )
 
       boosterClose.xScale =  (display.contentWidth*0.07) / boosterClose.width
       boosterClose.yScale = boosterClose.xScale  
+    
 
-       -- ads:setCurrentProvider( "admob" )
-       -- ads.load("interstitial")
-              
-
-    scoreText = display.newText("", 0, 0 , "troika" , 110)
+    scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 90)
     scoreText.x = 230
     scoreText.y = 180
-    scoreText:setFillColor(1,1,1)
+    scoreText:setFillColor(255/255,241/255,208/255)
 
-    scoreTextS = display.newText("", 0, 0 , "troika" , 110)
+    scoreTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 90)
     scoreTextS.x = 230
     scoreTextS.y = 184
     scoreTextS:setFillColor(0,0,0)
     
-    scoreTextM = display.newText("M", 0, 0 , "troika" , 50)
-    scoreTextM.x = 240
-    scoreTextM.y = 196
-    scoreTextM:setFillColor(1,1,1)
-    
 
-    scoreTextMS = display.newText("M", 0, 0 , "troika" , 50)
-    scoreTextMS.x = 240
-    scoreTextMS.y = 200
-    scoreTextMS:setFillColor(0,0,0)    
-
-    scoreTitleText = display.newText("", 0, 0 , "troika" , 24)
+    scoreTitleText = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
     scoreTitleText.x = 240
     scoreTitleText.y = 120
     scoreTitleText.text = "YOU REACHED:"
-    scoreTitleText:setFillColor(1,1,1)
+    scoreTitleText:setFillColor(255/255,241/255,208/255)
     
-    scoreTitleTextS = display.newText("", 0, 0 , "troika" , 24)
+    scoreTitleTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
     scoreTitleTextS.x = 240
     
 
@@ -2204,6 +1827,24 @@ function scene:create( event )
     scoreTitleText.alpha = 0
     scoreTitleTextS.alpha = 0
 
+    comboText = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    comboText.x = 240
+    comboText.y = 235
+    comboText.text = ""
+    comboText:setFillColor(255/255,241/255,208/255)
+    
+    comboTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    comboTextS.x = 240
+    
+
+    comboTextS.text = ""
+    comboTextS:setFillColor(39/255,39/255,53/255)
+    comboTextS.y = comboText.y + 2
+
+    comboText.alpha = 0
+    comboTextS.alpha = 0
+
+
     local coinTextOptions = 
     {
         --parent = textGroup,
@@ -2211,7 +1852,7 @@ function scene:create( event )
         x = 420,
         y = 20,
         width = 130,     --required for multi-line and alignment
-        font = "troika",   
+        font = "UnitedSansRgHv",   
         fontSize = 20,
         align = "center"  --new alignment parameter
     }
@@ -2274,7 +1915,7 @@ function scene:create( event )
         x = 420,
         y = 20,
         width = 300,     --required for multi-line and alignment
-        font = "troika",   
+        font = "UnitedSansRgHv",   
         fontSize = 15,
         align = "center"  --new alignment parameter
     }
@@ -2286,7 +1927,7 @@ function scene:create( event )
         x = 420,
         y = 20,
         --width = 230,     --required for multi-line and alignment
-        font = "troika",   
+        font = "UnitedSansRgHv",   
         fontSize = 25,
         align = "center"  --new alignment parameter
     }
@@ -2348,36 +1989,36 @@ function scene:create( event )
 
      local leftArrowButton = widget.newButton
     {
-        x = 150,
+        x = 145,
         y = 80,
         id = "leftArrow",
-        defaultFile = "images/Arrow.png",
-        overFile = "images/ArrowDown.png",
+        defaultFile = "images/ArrowBtnUp.png",
+        overFile = "images/ArrowBtnDown.png",
         onEvent = changeScreenListener
     }
 
     leftArrowButton.xScale =  (display.actualContentWidth*0.06) / leftArrowButton.width
     leftArrowButton.yScale = leftArrowButton.xScale
 
-    leftArrowButton:rotate(90)
+    leftArrowButton:rotate(180)
 
     local rightArrowButton = widget.newButton
     {
-        x = 320,
+        x = 335,
         y = 80,
         id = "rightArrow",
-        defaultFile = "images/Arrow.png",
-        overFile = "images/ArrowDown.png",
+        defaultFile = "images/ArrowBtnUp.png",
+        overFile = "images/ArrowBtnDown.png",
         onEvent = changeScreenListener
     }
 
     rightArrowButton.xScale =  (display.actualContentWidth*0.06) / rightArrowButton.width
     rightArrowButton.yScale = rightArrowButton.xScale  
-    rightArrowButton:rotate(-90)
+  --  rightArrowButton:rotate(-180)
     
 
     local challengesText = display.newText(boosterHeaderTextOptions)
-    challengesText:setFillColor(194/256,236/256,254/256)
+    challengesText:setFillColor(255/255,241/255,208/255)
     challengesText.x = 240
     
     challengesText.y = 160 - background.contentHeight/2 + challengesText.contentHeight/2 + 3
@@ -2387,13 +2028,13 @@ function scene:create( event )
     challengesText.isConstant = true
 
     local scoreScreenText = display.newText(boosterHeaderTextOptions)
-    scoreScreenText:setFillColor(194/256,236/256,254/256)
+    scoreScreenText:setFillColor(255/255,241/255,208/255)
     scoreScreenText.x = 240
     scoreScreenText.y = 160 - background.contentHeight/2 + scoreScreenText.contentHeight/2 + 3
     scoreScreenText.text = "SCORE" 
 
     local friendsScreenText = display.newText(boosterHeaderTextOptions)
-    friendsScreenText:setFillColor(194/256,236/256,254/256)
+    friendsScreenText:setFillColor(255/255,241/255,208/255)
     friendsScreenText.x = 240
     friendsScreenText.y = 160 - background.contentHeight/2 + friendsScreenText.contentHeight/2 + 3
     friendsScreenText.text = "TOP FRIENDS" 
@@ -2432,10 +2073,11 @@ function scene:create( event )
      scoreBox:insert(scoreTitleTextS)     
      scoreBox:insert(scoreTitleText)     
      scoreBox:insert(scoreTextS) 
-     scoreBox:insert(scoreText)     
-     scoreBox:insert(scoreTextMS) 
-     scoreBox:insert(scoreTextM)     
-
+     scoreBox:insert(scoreText)    
+     scoreBox:insert(comboTextS) 
+     scoreBox:insert(comboText)    
+      
+     
      
      sceneGroup:insert(highScoreTitleShadow)     
      sceneGroup:insert(highScoreTitle)     
@@ -2460,13 +2102,13 @@ function scene:create( event )
      friendsBox.alpha = 0
      
      sceneGroup:insert(playButton)
-     sceneGroup:insert(menuButton)
+     
      sceneGroup:insert(shareButton)
      sceneGroup:insert(openPkgButton)
-          
-     sceneGroup:insert(showAdButton)
+     sceneGroup:insert(menuButton)     
+
      sceneGroup:insert(packsIndicator)
-     sceneGroup:insert(reminder)
+     
        
       sceneGroup:insert(dailyRewardBlocker)
 
@@ -2520,12 +2162,7 @@ function scene:show( event )
       parent = event.parent
        local isSimulator = (system.getInfo("environment") == "simulator");
  
-      --if ((not isSimulator) and (ads.isAdAvailable())) then
-       -- if (not isSimulator)  then
-      
-       -- achivmetBarFull.alpha = 0
-        scoreTextM.alpha=0 
-        scoreTextMS.alpha=0 
+        
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
         packsIndicator.alpha = 0

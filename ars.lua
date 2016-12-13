@@ -7,17 +7,50 @@ local ars = {}
 local kidTypes = {}
 
 kidTypes[1] = {}
-kidTypes[1].json = "AnnoyingKid.json"
-kidTypes[1].path = "Ars"
-kidTypes[1].scale = 0.3
+kidTypes[1].json = "Hero.json"
+kidTypes[1].skin = "BadGuy01"
+kidTypes[1].scale = 0.4
+kidTypes[1].anim = "EnemyCrouch"
+
 kidTypes[2] = {}
-kidTypes[2].json = "AnnoyingKid02.json"
-kidTypes[2].path = "defender2"
-kidTypes[2].scale = 0.3
+kidTypes[2].json = "Hero.json"
+kidTypes[2].skin = "BadGuy01"
+kidTypes[2].scale = 0.4
+kidTypes[2].anim = "EnemyCrouch2"
+
 kidTypes[3] = {}
-kidTypes[3].json = "AnnoyingKid03.json"
-kidTypes[3].path = "defender3"
-kidTypes[3].scale = 0.37
+kidTypes[3].json = "Hero.json"
+kidTypes[3].skin = "BadGuy01"
+kidTypes[3].scale = 0.35
+kidTypes[3].anim = "EnemyStand"
+
+kidTypes[4] = {}
+kidTypes[4].json = "Hero.json"
+kidTypes[4].skin = "BadGuy01"
+kidTypes[4].scale = 0.4
+kidTypes[4].anim = "EnemySlide"
+
+
+kidTypes[5] = {}
+kidTypes[5].json = "Hero.json"
+kidTypes[5].skin = "BadGuy02"
+kidTypes[5].scale = 0.4
+kidTypes[5].anim = "EnemyTall"
+
+-- 		EnemyStand
+-- - EnemySlide
+-- - EnemyCrouch
+-- - EnemyCrouch2
+-- - EnemyTall
+
+
+-- kidTypes[2].json = "AnnoyingKid02.json"
+-- kidTypes[2].path = "defender2"
+-- kidTypes[2].scale = 0.3
+-- kidTypes[3] = {}
+-- kidTypes[3].json = "AnnoyingKid03.json"
+-- kidTypes[3].path = "defender3"
+-- kidTypes[3].scale = 0.37
 
 
 function ars.new (kidType)
@@ -32,7 +65,7 @@ function ars.new (kidType)
 		stateData = nil ,
 		state = nil
 	}
-
+	
 	self.json = spine.SkeletonJson.new()
 	self.json.scale = kidTypes[kidType].scale
 	self.skeletonData = self.json:readSkeletonDataFile(kidTypes[kidType].json)
@@ -40,10 +73,20 @@ function ars.new (kidType)
 	self.skeleton = {}
 	self.skeleton = spine.Skeleton.new(self.skeletonData)
 
+	self.skeleton:setSkin(kidTypes[kidType].skin)
+
 	function self.skeleton:createImage (attachment)
 		-- Customize where images are loaded.
 		
-		local newPart =  display.newImage(kidTypes[kidType].path .. "/" .. attachment.name .. ".png")
+		local newPart = nil
+		if (attachment.name == "HeroResized/DribbleGuySkin/Ball001") then
+				
+				
+				 newPart =  display.newImage("balls/emptyBall.png")
+		else		 
+			 newPart =  display.newImage( attachment.name .. ".png")
+		end
+		--local newPart =  display.newImage(kidTypes[kidType].path .. "/" .. attachment.name .. ".png")
 
 		
 	--	end
@@ -109,13 +152,15 @@ function ars.new (kidType)
 	function self:init()	
 		Runtime:addEventListener("enterFrame", handleFrame)
 		self.skeleton:setToSetupPose()
-		self.state:setAnimationByName(0, "Idel", true, 0) --  arsYell
+
+
+		self.state:setAnimationByName(0, kidTypes[kidType].anim, true, 0) --  arsYell
 
 	end
 
 	function self:fail()	
 		
-		self.state:setAnimationByName(0, "Fail", true, 0) --  arsYell
+		self.state:setAnimationByName(0, kidTypes[kidType].anim, true, 0) --  arsYell
 
 	end
 

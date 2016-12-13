@@ -418,11 +418,14 @@ function unlockAchivment(name, autoPost)
 		isNew = true
 
 		if autoPost then
-			gameNetwork.request( "unlockAchievement", {
-                                            achievement = {
-                                              identifier=achivments[name].code
-                                            }
-                                          }); 
+			commonData.gpgs.achievements.unlock({
+                                              achievementId=achivments[name].code
+                                            })
+			-- gameNetwork.request( "unlockAchievement", {
+   --                                          achievement = {
+   --                                            identifier=achivments[name].code
+   --                                          }
+   --                                        }); 
 		end	
 	end
 

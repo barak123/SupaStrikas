@@ -12,6 +12,24 @@ local openssl = require "plugin.openssl"
 local isFlurryReady = false
 local shouldLogOpens = false
 
+commonData.gpgs = require( "plugin.gpgs" )
+ 
+local function gpgsLoginListener( event )
+    print( "Login event:", json.prettify(event) )
+
+    if commonData.loadAfterLogin then
+      commonData.loadAfterLogin()
+    end 
+end
+ 
+local function gpgsInitListener( event )
+    if not event.isError then
+        -- Try to automatically log in the user without displaying the login screen
+        commonData.gpgs.login( { listener = gpgsLoginListener , userInitiated=true} )
+    end
+end
+ 
+commonData.gpgs.init( gpgsInitListener )
 
 local function logAppOpens()
   local opensToAlert = {}
@@ -30,7 +48,7 @@ local function logAppOpens()
   for i=1,11 do
     
 
-    if commonData.gameData.appOpened  == opensToAlert[i]  then  
+    if commonData.gameData and commonData.gameData.appOpened  == opensToAlert[i]  then  
       -- print("appOpened")
       -- print(commonData.gameData.appOpened  )
 
@@ -64,13 +82,13 @@ end
 
 -- Initialize the Flurry plugin
 commonData.analytics = require( "plugin.flurry.analytics" )
-local twitter = require "plugin.twitter"
+--local twitter = require "plugin.twitter"
 
 local flurryKey =  nil 
 if ( system.getInfo("platformName") == "Android" ) then
-    flurryKey =  "Q9F86WHMXG6Z3ZB7VNDK"
+    flurryKey =  "VM9MZ6KBTM6NGD94GVJV"
  else
-    flurryKey =  "37CHR36WDHVX7KWQNP65"
+    flurryKey =  "J86WNYRJSSS5MMY98V2Q"
  end
 commonData.analytics.init( flurryListener, { apiKey=flurryKey , crashReportingEnabled=true })
 
@@ -135,11 +153,13 @@ local packsIndicator = nil
 local splash = nil
 local splash2 = nil
 local blackRect = nil 
+local isSimulator = false
 
 commonData.isMute = false
 
 if system.getInfo("environment") == "simulator" then
 --  commonData.isMute = true
+  isSimulator = true
 end  
 
 local muteButton = nil
@@ -157,7 +177,7 @@ commonData.globalHighScore = 0
 local cipher = openssl.get_cipher ( "aes-256-cbc" )
 local dataFileEncKey = "t0m y@m kun8"
 
-local clouds = nil
+--local clouds = nil
 local function printTable( t, label, level )
   if label then print( label ) end
   level = level or 1
@@ -210,10 +230,11 @@ end
 
 local function loadGameScene()
   
-        
-      local options = {params = {gameData = commonData.gameData, isTutorial=false}}
-            
-      local results = composer.loadScene( "game", false, options )
+      if (commonData.gameData) then  
+        local options = {params = {gameData = commonData.gameData, isTutorial=false}}
+              
+        local results = composer.loadScene( "game", false, options )
+      end
      
       
 end
@@ -260,7 +281,10 @@ function submitHighScoreToFacebook()
       --print ("submit hige score of ".. globalHighScore)         
       local params = {}
       params.body = "&score=".. commonData.globalHighScore .."&access_token=".. commonData.accessTokenFromFacebookLogin
-      network.request( "https://graph.facebook.com/".. commonData.facebook_user_id .. "/scores", "POST", fbNetworkListener, params)
+      
+
+      --TODO: remove
+      -- network.request( "https://graph.facebook.com/".. commonData.facebook_user_id .. "/scores", "POST", fbNetworkListener, params)
 
                 
   end
@@ -365,7 +389,7 @@ local function facebookListener( event )
                       commonData.shopItems[k] = v
                     end
                     
-                    saveTable(commonData.shopItems , SHOP_FILE)
+                    commonData.saveTable(commonData.shopItems , SHOP_FILE)
 
                   end  
                 end
@@ -512,8 +536,8 @@ function scene:create( event )
    local sceneGroup = self.view
 
 
-commonData.selectedSkin = "littleDribbler"
-commonData.selectedBall = "Ball001"
+commonData.selectedSkin = "Shakes"
+commonData.selectedBall = "NormalBall"
 commonData.selectedShoes = "Default"
 commonData.selectedPants = "defaultPants"
 commonData.selectedShirt = "defaultShirt"
@@ -530,7 +554,7 @@ local selectMenuSound = nil
 selectMenuSound = audio.loadSound( "BtnPress.mp3" )
 
 
-commonData.gameNetwork = require( "gameNetwork" )
+--commonData.gameNetwork = require( "gameNetwork" )
 local playerName
 local googlePlayerId = nil
 
@@ -556,28 +580,28 @@ local function loadLocalPlayerCallback( event )
    
 end
 
-local function gameNetworkLoginCallback( event )
-  --native.showAlert("debug","gameNetworkLoginCallback" )
-   -- print("gameNetworkLoginCallback")
-   commonData.gameNetwork.request( "loadLocalPlayer", { listener=loadLocalPlayerCallback } )
-   return true
-end
+-- local function gameNetworkLoginCallback( event )
+--   --native.showAlert("debug","gameNetworkLoginCallback" )
+--    -- print("gameNetworkLoginCallback")
+--    commonData.gameNetwork.request( "loadLocalPlayer", { listener=loadLocalPlayerCallback } )
+--    return true
+-- end
 
-local function gpgsInitCallback( event )
-   commonData.gameNetwork.request( "login", { userInitiated=true, listener=gameNetworkLoginCallback } )
-   -- native.showAlert("debug", "gpgsInitCallback")
+-- local function gpgsInitCallback( event )
+--    commonData.gameNetwork.request( "login", { userInitiated=true, listener=gameNetworkLoginCallback } )
+--    -- native.showAlert("debug", "gpgsInitCallback")
 
-end
+-- end
 
-local function gameNetworkSetup()
+-- local function gameNetworkSetup()
    
-   if ( system.getInfo("platformName") == "Android" ) then
-      commonData.gameNetwork.init( "google", gpgsInitCallback )
-   else
-      -- print("call gamecenter init")
-      commonData.gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
-   end
-end
+--    if ( system.getInfo("platformName") == "Android" ) then
+--       commonData.gameNetwork.init( "google", gpgsInitCallback )
+--    else
+--       -- print("call gamecenter init")
+--       commonData.gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
+--    end
+-- end
 
 ------HANDLE SYSTEM EVENTS------
 local function systemEvents( event )
@@ -589,9 +613,16 @@ local function systemEvents( event )
    elseif ( event.type == "applicationExit" ) then
       --print( "exiting.............................." )
    elseif ( event.type == "applicationStart" ) then
-      gameNetworkSetup()  --login to the network here
+      --gameNetworkSetup()  --login to the network here
    end
    return true
+end
+
+
+commonData.comma_value = function (n)
+
+  local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
+  return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
 end
 
 
@@ -795,6 +826,29 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
         file:write( encryptedData )
         io.close( file )
 
+         local function gpgsSnapshotAfterSaveListener( event )
+          print( "gpgsSnapshotAfterSaveListener", json.prettify(event) )
+        end
+           
+        local function gpgsSnapshotOpenForSaveListener( event )
+            if not event.isError then
+              print("about to save")
+              print(contents)
+              print("end of data")
+                event.snapshot.contents.write( encodeB64(encryptedData) )  -- Write new data as a JSON string into the snapshot
+                commonData.gpgs.snapshots.save({
+                    snapshot = event.snapshot,
+                    description = "Save slot " .. filename,
+                    listener = gpgsSnapshotAfterSaveListener
+                })
+            end
+        end
+         
+          commonData.gpgs.snapshots.open({  -- Open the save slot
+              filename = filename,
+              create = true,  -- Create the snapshot if it's not found
+              listener = gpgsSnapshotOpenForSaveListener
+          })
 ---            print(filename)
  --           print(contents)
         if filename == SHOP_FILE and not isShopRestore then
@@ -866,17 +920,26 @@ Runtime:addEventListener( "system", systemEvents )
   
     --everything from here down to the return line is what makes
      --up the scene so... go crazy
-     local background = display.newImage("MainMenu/BackGroundNoClouds.jpg")
+     local background = display.newImage("MainMenu/MainMenu BG.jpg")
      background.x = 240
      background.y = 160
 
 
      background.xScale = display.actualContentWidth / background.contentWidth 
      background.yScale = display.actualContentHeight  / background.contentHeight
+
+     local abstract = display.newImage("MainMenu/Abstract.png")
+     
+     abstract.yScale = display.actualContentHeight  / abstract.contentHeight
+     abstract.xScale = abstract.yScale
+     
+     abstract.x = 240 + display.actualContentWidth/2 - abstract.contentWidth/2 
+     abstract.y = 160
+      
      
 
 
-     splash = display.newImage("images/Splash1920X1080.jpg")
+     splash = display.newImage("images/Splash.jpg")
      splash.x = 240
      splash.y = 160
 
@@ -894,73 +957,6 @@ Runtime:addEventListener( "system", systemEvents )
           return true
       end
 
-
-      --  network.download(
-      --    "http://62.90.226.119/ZIVLIN/zivlin/LITTLE_DRIBBLE/1.png",
-      --    "GET",
-      --    nullListener,
-      --    nil,
-      --    "banner1.jpg",
-      --    system.TemporaryDirectory
-      -- )
-
-      --  network.download(
-      --    "http://62.90.226.119/ZIVLIN/zivlin/LITTLE_DRIBBLE/2.png",
-      --    "GET",
-      --    nullListener,
-      --    nil,
-      --    "banner2.jpg",
-      --    system.TemporaryDirectory
-      -- )
-
-      --  network.download(
-      --    "http://62.90.226.119/ZIVLIN/zivlin/LITTLE_DRIBBLE/3.png",
-      --    "GET",
-      --    nullListener,
-      --    nil,
-      --    "banner3.jpg",
-      --    system.TemporaryDirectory
-      -- )
-
-      --  local bannerRnd = math.random(3)
-
-      --  print(bannerRnd)
-      -- if bannerRnd == 1 then
-      --   splash2 = display.newImage("banner1.jpg" , system.TemporaryDirectory) 
-      -- elseif bannerRnd == 2 then
-      --   splash2 = display.newImage("banner2.jpg" , system.TemporaryDirectory) 
-      -- else
-      --   splash2 = display.newImage("banner3.jpg" , system.TemporaryDirectory) 
-      -- end  
-
-      
-
-      if splash2 then
-         splash2.x = 240
-         splash2.y = 160
-
-         local widthRatio = display.actualContentWidth / splash2.contentWidth 
-         local heightRatio = display.actualContentHeight / splash2.contentHeight
-
-         if widthRatio < heightRatio then
-            splash2.xScale = widthRatio
-         else
-            splash2.xScale = heightRatio  
-         end
-         
-         splash2.yScale = splash2.xScale
-         splash2:addEventListener("touch", nullListener )
-
-         blackRect = display.newRect(240, 160, 700,400)
-         blackRect:setFillColor(0, 0, 0)
-
-         timer.performWithDelay(5000 , function ()
-           commonData.analytics.logEvent( "Banner showed ", 
-            { bannerIndex = tostring( bannerRnd) } )
-        
-         end,1)
-         
-      end   
  
      splash:addEventListener("touch", nullListener )
            
@@ -968,7 +964,14 @@ Runtime:addEventListener( "system", systemEvents )
      local extras = display.newImage("ExtrasMenu/ExtasWindow.png")
      extras.x = 380
      extras.y = 160
-     extras:scale(0.7,0.7)
+
+
+     extras.yScale =  display.actualContentHeight / extras.contentHeight
+     extras.xScale = extras.yScale
+
+
+
+     --extras.x = display.screenOriginX  + display.actualContentWidth - extras.contentWidth /2
 
 
     local widget = require( "widget" )
@@ -1005,12 +1008,13 @@ Runtime:addEventListener( "system", systemEvents )
          if ( "ended" == event.phase ) then
           commonData.playSound( selectMenuSound ) 
            commonData.analytics.logEvent( "leaderboardScreen" )
+           commonData.gpgs.leaderboards.show()
                     
-           if ( system.getInfo("platformName") == "Android" ) then
-              commonData.gameNetwork.show( "leaderboards" )
-           else
-              commonData.gameNetwork.show( "leaderboards", { leaderboard = {timeScope="AllTime"} } )
-           end
+           -- if ( system.getInfo("platformName") == "Android" ) then
+           --    commonData.gameNetwork.show( "leaderboards" )
+           -- else
+           --    commonData.gameNetwork.show( "leaderboards", { leaderboard = {timeScope="AllTime"} } )
+           -- end
           end
            return true
      end
@@ -1025,8 +1029,8 @@ Runtime:addEventListener( "system", systemEvents )
             --         filter = "APP_NON_USERS"
             --     })
 
-
-           commonData.gameNetwork.show("achievements")
+            commonData.gpgs.achievements.show()
+           --commonData.gameNetwork.show("achievements")
            commonData.analytics.logEvent( "achievementsScreen" )
           end
            return true
@@ -1188,10 +1192,10 @@ Runtime:addEventListener( "system", systemEvents )
              commonData.analytics.logEvent( "tweetFollowPressed" )
              --isABTesting = not isABTesting
 
-              twitter.login(function()  twitter.follow("LittleDribbleRV", 
-                function()
-                   commonData.analytics.logEvent( "tweetFollowSucceed" )
-                end  ) end)         
+              -- twitter.login(function()  twitter.follow("LittleDribbleRV", 
+              --   function()
+              --      commonData.analytics.logEvent( "tweetFollowSucceed" )
+              --   end  ) end)         
           
           end
            return true
@@ -1269,8 +1273,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160, 
           y = 110,
           id = "playButton",
-          defaultFile = buttonsSet .. "/Main/PlayUp.png",
-          overFile = buttonsSet .. "/Main/PlayDown.png",
+          defaultFile = "MainMenu/PlayBtnUp.png",
+          overFile = "MainMenu/PlayBtnDown.png",
           onEvent = buttonListener
       }
 
@@ -1286,8 +1290,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160,
           y = 195,
           id = "shopButton",
-          defaultFile = buttonsSet .. "/Main/ShopUp.png",
-          overFile = buttonsSet .. "/Main/ShopDown.png",
+          defaultFile = "MainMenu/CustomizeUp.png",
+          overFile = "MainMenu/CustomizeDown.png",
           onEvent = shopListener
       }
         shopButton.xScale =  (display.actualContentWidth*0.45) / shopButton.width
@@ -1302,8 +1306,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160,
           y = 195,
           id = "packsButton",
-          defaultFile = buttonsSet .. "/Main/PacksUp.png",
-          overFile = buttonsSet .. "/Main/PacksDown.png",
+          defaultFile = "MainMenu/PacksUp.png",
+          overFile = "MainMenu/PacksDown.png",
           onEvent = packsListener
       }
         packsButton.xScale =  (display.actualContentWidth*0.45) / packsButton.width
@@ -1327,8 +1331,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160,
           y = 280,
           id = "leaderButton",
-          defaultFile = buttonsSet .. "/Main/LeaderboardUp.png",
-          overFile = buttonsSet .. "/Main/LeaderboardDown.png",
+          defaultFile = "MainMenu/LeaderBoardUp.png",
+          overFile = "MainMenu/LeaderBoardDown.png",
           onEvent = leadersListener
       }
        leaderButton.xScale =  (display.actualContentWidth*0.08) / leaderButton.width
@@ -1339,8 +1343,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 200,
           y  = 280,
           id = "acivButton",
-          defaultFile = buttonsSet .. "/Main/AchievmentsUp.png",
-          overFile = buttonsSet .. "/Main/AchievmentsDown.png",
+          defaultFile = "MainMenu/ChallengeUp.png",
+          overFile = "MainMenu/ChallengeDown.png",
           onEvent = achivListener
       }
 
@@ -1355,8 +1359,8 @@ Runtime:addEventListener( "system", systemEvents )
           x = 100 ,
           y = 280,
           id = "statsButton",
-          defaultFile = buttonsSet .. "/Main/StatsUp.png",
-          overFile = buttonsSet .. "/Main/StatsDown.png",
+          defaultFile = "MainMenu/StatsUp.png",
+          overFile = "MainMenu/StatsDown.png",
           onEvent = statsListener
       }
       
@@ -1389,10 +1393,14 @@ Runtime:addEventListener( "system", systemEvents )
           onEvent = moreListener
       }
 
-      moreButton.xScale =  (display.actualContentWidth*0.08) / moreButton.width
-      moreButton.yScale = moreButton.xScale  
+      --backButton.x = display.screenOriginX  + backButton.contentWidth /2
 
-      moreButton.x = moreButton.x + (display.actualContentWidth - display.contentWidth) /2
+      
+      moreButton.yScale =  achivButton.contentHeight / moreButton.contentHeight
+      moreButton.xScale = moreButton.yScale  
+
+      --moreButton.x = moreButton.x + (display.actualContentWidth - display.contentWidth) /2
+     
 
       local lessButton = widget.newButton
       {
@@ -1534,6 +1542,34 @@ Runtime:addEventListener( "system", systemEvents )
       packsIndicator.x =  packsButton.x + 60
       packsIndicator.y =  packsButton.y
       
+      shopButton.xScale = playButton.xScale
+      packsButton.xScale = shopButton.xScale
+      shopButton.yScale = playButton.yScale
+      packsButton.yScale = shopButton.yScale
+
+      statsButton.yScale = shopButton.yScale
+      leaderButton.yScale = statsButton.yScale
+      achivButton.yScale = statsButton.yScale
+      statsButton.xScale = shopButton.yScale
+      leaderButton.xScale = statsButton.yScale
+      achivButton.xScale = statsButton.yScale
+      moreButton.xScale = statsButton.xScale
+      moreButton.yScale = statsButton.yScale
+
+
+      playButton.y = display.actualContentHeight * 0.25 - (display.actualContentHeight - display.contentHeight)/2 
+      shopButton.y =  playButton.y + (playButton.contentHeight + shopButton.contentHeight)/2 + 10
+      packsButton.y =  shopButton.y + (packsButton.contentHeight + shopButton.contentHeight)/2 + 10
+    
+       playButton.x =  240 - display.actualContentWidth/2  + playButton.contentWidth/2
+       shopButton.x =  240 - display.actualContentWidth/2  + shopButton.contentWidth/2
+       packsButton.x =  240 - display.actualContentWidth/2  + packsButton.contentWidth/2
+       statsButton.x = 240 - display.actualContentWidth/2  + statsButton.contentWidth/2
+       leaderButton.x = statsButton.x + (leaderButton.contentWidth*0.75)/2 
+       achivButton.x = leaderButton.x + (leaderButton.contentWidth )/2  + 10
+
+        moreButton.x = display.screenOriginX  + display.actualContentWidth - moreButton.contentWidth /2
+
 
        local function boosterRectListener( event )   
          extrasGroup.alpha = 0 
@@ -1561,7 +1597,7 @@ Runtime:addEventListener( "system", systemEvents )
       
       
       extrasGroup.alpha = 0
-      extrasGroup.x =  extrasGroup.x + (display.actualContentWidth - display.contentWidth)/2
+      extrasGroup.x =  extrasGroup.x + (display.actualContentWidth - display.contentWidth)/2 + 13
       extrasGroup.y =  extrasGroup.y + 10
       
       -- parse:init({ 
@@ -1576,7 +1612,7 @@ Runtime:addEventListener( "system", systemEvents )
       
 
     
-      twitter.init("BSwidOskNjdyNfvQd9QpPbnSe", "BrFDGYkWIHywcvrpedjkfg8pWI0YrJzYEXEnr0RlL3uM72tS8r")
+      --twitter.init("BSwidOskNjdyNfvQd9QpPbnSe", "BrFDGYkWIHywcvrpedjkfg8pWI0YrJzYEXEnr0RlL3uM72tS8r")
 
 
       heroSpine =  require ("hero")
@@ -1587,12 +1623,12 @@ Runtime:addEventListener( "system", systemEvents )
 
       hero.skeleton.group.x = hero.skeleton.group.x + (display.actualContentWidth - display.contentWidth)/2
       
-      local cloudsSpine =  require ("clouds")
-      clouds = cloudsSpine.new()
+      -- local cloudsSpine =  require ("clouds")
+      -- clouds = cloudsSpine.new()
 
-      clouds.skeleton.group.x = 100
+      -- clouds.skeleton.group.x = 100
       
-      clouds.skeleton.group.y = 60
+      -- clouds.skeleton.group.y = 60
 
       local params = nil
       local function parseNetworkListener ()
@@ -1626,23 +1662,26 @@ Runtime:addEventListener( "system", systemEvents )
       settingsButton.alpha = 0 
       
      sceneGroup:insert(background)   
+     sceneGroup:insert(abstract)   
+     
 
      
 
-     sceneGroup:insert(clouds.skeleton.group)
+     --sceneGroup:insert(clouds.skeleton.group)
    
      sceneGroup:insert(hero.skeleton.group)
      sceneGroup:insert(extraBackground)
    
      sceneGroup:insert(playButton)
      
-     
+     sceneGroup:insert(achivButton)
+     sceneGroup:insert(leaderButton) 
      sceneGroup:insert(statsButton)
      sceneGroup:insert(shopButton)
      sceneGroup:insert(packsButton)
      sceneGroup:insert(packsIndicator)
-     sceneGroup:insert(achivButton)
-     sceneGroup:insert(leaderButton) 
+     
+     
      sceneGroup:insert(settingsButton)
      sceneGroup:insert(moreButton)
      sceneGroup:insert(extrasGroup)
@@ -1682,84 +1721,49 @@ function scene:show( event )
     
    end
 
-    local function removeSplash2()
-      
-      if splash2 then
-          splash2:removeSelf()
-          splash2 = nil          
-          blackRect:removeSelf()
-          blackRect = nil
-      end      
-   end
+   local function loadRemoteTable(filename , callback )
 
-   if ( phase == "will" ) then
-      -- Called when the scene is still off screen (but is about to come on screen).
-      hero:reload()
-      local removeTimer  = 0
+        local function gpgsSnapshotOpenForReadListener( event )
+           print( "gpgsSnapshotOpenForReadListener")
+            if event.isError then
+              callback(commonData.loadTable(filename))
+            else  
+                local data = event.snapshot.contents.read() 
 
-      if splash2 then
-        timer.performWithDelay(2300, removeSplash2, 1)
-        removeTimer  = 2000
-      end
-     
-     timer.performWithDelay(2000 + removeTimer, removeSplash, 1)
-     extrasGroup.alpha = 0 
-     extraBackground.alpha = 0  
-     
-   elseif ( phase == "did" ) then
-    --print("shoooowowiwiw   selectedSkin")
-    hero:init()
-      hero:menuIdle()
-  
-    clouds:init()
-       if ( not commonData.gameData) then 
+                  
+                  local decryptedData = cipher:decrypt (decodeB64(data) , dataFileEncKey )
+                  print( decryptedData)
+                  myTable = json.decode(decryptedData);
 
-          commonData.gameData = commonData.loadTable(GAME_DATA_FILE)
+                 
+                  print( "Read successfully")
+                  print( "myTable:", json.prettify(myTable) )
+                  
+                callback(myTable)
+            end
+        end
+ 
+       if isSimulator or not commonData.gpgs.isConnected() then
+        print( "Load From Local")
+        callback(commonData.loadTable(filename))
+       else
+        print( "Load From Remote")
+          commonData.gpgs.snapshots.open({
+              filename = filename,
+              listener = gpgsSnapshotOpenForReadListener
+          })
+        end
+    end   
 
-          if ( not commonData.gameData) then 
-            commonData.gameData = {}
-            commonData.gameData.highScore = 0
-            commonData.gameData.coins = 0
-            commonData.gameData.usedcoins = 0
-            commonData.gameData.usedpacks = 0 
-            commonData.gameData.packs = 0
-            commonData.gameData.fbPacks = false
-            commonData.gameData.packsBought = 0             
-            commonData.gameData.gamesCount = 0
-            commonData.gameData.totalScore = 0
-            commonData.gameData.bounces = 0
-            commonData.gameData.bouncesPerfect = 0
-            commonData.gameData.bouncesGood = 0
-            commonData.gameData.bouncesEarly = 0
-            commonData.gameData.bouncesLate = 0
-            commonData.gameData.jumps = 0
-            commonData.gameData.adsPressed = 0
-            commonData.gameData.madePurchase = false
-            commonData.gameData.daysInARow = false
-            
-            commonData.gameData.unlockedAchivments = {}
-            commonData.gameData.unlockedChallenges = {}
-            commonData.gameData.selectedSkin = "littleDribbler"
-            commonData.gameData.selectedBall = "Ball001"
-            commonData.gameData.selectedShoes = "Default"
-            commonData.gameData.selectedPants = "default"
-            commonData.gameData.selectedShirt = "defaultShirt"
-
-            
-            commonData.gameData.isConnectedToFB  = false
-            commonData.gameData.appOpened = 0
-          end  
-
-        isFirstGame = (commonData.gameData.gamesCount==0)
-         
-         commonData.shopItems = commonData.loadTable(SHOP_FILE)
+    local function loadShopData(shopData )
+       commonData.shopItems = shopData
 
           if ( not commonData.shopItems) then 
             commonData.shopItems = {}
 
           end  
 
-          commonData.shopItems["littleDribbler"] =true
+          commonData.shopItems["Shakes"] =true
           --commonData.shopItems["Neymar"] =true
           commonData.shopItems["DribbleGirl"] =true
           
@@ -1767,54 +1771,16 @@ function scene:show( event )
           commonData.shopItems["defaultPants"] =true
           commonData.shopItems["Default"] =true
           commonData.shopItems["defaultShirt"] =true
-          commonData.shopItems["Ball001"] =true
+          commonData.shopItems["NormalBall"] =true
           commonData.shopItems["White"] =true
-          
-
-          if (not commonData.gameData.packs ) then
-            commonData.gameData.packs = 1
-          end
-
-          if (not commonData.gameData.packsBought ) then
-             commonData.gameData.packsBought = 0
-          end
-
-         
-
-
-          if (not commonData.gameData.usedcoins ) then
-            commonData.gameData.usedcoins = 0
-          end
-
-          if (not commonData.gameData.usedpacks ) then
-            commonData.gameData.usedpacks = 0
-          end
-
-          if (not commonData.gameData.adsPressed ) then
-            commonData.gameData.adsPressed = 0
-          end
-
-          if (not commonData.gameData.daysInARow ) then
-            commonData.gameData.daysInARow = 0
-          end
-
-          if (not commonData.gameData.appOpened ) then
-            commonData.gameData.appOpened = 0
-          end
-
-
-          if (not commonData.gameData.madePurchase ) then
-            commonData.gameData.madePurchase = false
-          end
-
           
        
           if (not commonData.gameData.selectedSkin or not commonData.shopItems[commonData.gameData.selectedSkin]) then
-            commonData.gameData.selectedSkin = "littleDribbler"
+            commonData.gameData.selectedSkin = "Shakes"
           end
 
           if (not commonData.gameData.selectedBall or not commonData.shopItems[commonData.gameData.selectedBall]) then
-            commonData.gameData.selectedBall = "Ball001"
+            commonData.gameData.selectedBall = "NormalBall"
           end
 
            if (not commonData.gameData.selectedShoes or not commonData.shopItems[commonData.gameData.selectedShoes]) then
@@ -1843,14 +1809,97 @@ function scene:show( event )
          hero:reload()
          hero:init()
 
+    end  
+
+    local function loadGameData(data )
+     commonData.gameData = data
+
+          if ( not commonData.gameData) then 
+            commonData.gameData = {}
+            commonData.gameData.highScore = 0
+            commonData.gameData.coins = 0
+            commonData.gameData.usedcoins = 0
+            commonData.gameData.usedpacks = 0 
+            commonData.gameData.packs = 0
+            commonData.gameData.fbPacks = false
+            commonData.gameData.packsBought = 0             
+            commonData.gameData.gamesCount = 0
+            commonData.gameData.totalScore = 0
+            commonData.gameData.bounces = 0
+            commonData.gameData.bouncesPerfect = 0
+            commonData.gameData.bouncesGood = 0
+            commonData.gameData.bouncesEarly = 0
+            commonData.gameData.bouncesLate = 0
+            commonData.gameData.jumps = 0
+            commonData.gameData.adsPressed = 0
+            commonData.gameData.madePurchase = false
+            commonData.gameData.daysInARow = false
+            
+            commonData.gameData.unlockedAchivments = {}
+            commonData.gameData.unlockedChallenges = {}
+            commonData.gameData.selectedSkin = "Shakes"
+            commonData.gameData.selectedBall = "NormalBall"
+            commonData.gameData.selectedShoes = "Default"
+            commonData.gameData.selectedPants = "default"
+            commonData.gameData.selectedShirt = "defaultShirt"
+
+            
+            commonData.gameData.isConnectedToFB  = false
+            commonData.gameData.appOpened = 0
+          end  
+
+          isFirstGame = (commonData.gameData.gamesCount==0)
+         
+        
+          
+
+          if (not commonData.gameData.packs ) then
+            commonData.gameData.packs = 1
+          end
+
+          if (not commonData.gameData.packsBought ) then
+             commonData.gameData.packsBought = 0
+          end
+         
+          if (not commonData.gameData.usedcoins ) then
+            commonData.gameData.usedcoins = 0
+          end
+
+          if (not commonData.gameData.usedpacks ) then
+            commonData.gameData.usedpacks = 0
+          end
+
+          if (not commonData.gameData.adsPressed ) then
+            commonData.gameData.adsPressed = 0
+          end
+
+          if (not commonData.gameData.daysInARow ) then
+            commonData.gameData.daysInARow = 0
+          end
+
+          if (not commonData.gameData.appOpened ) then
+            commonData.gameData.appOpened = 0
+          end
+
+           if (not commonData.gameData.appOpened ) then
+            commonData.gameData.appOpened = 0
+          end
+
+          if (not commonData.gameData.highestCombo ) then
+            commonData.gameData.highestCombo = 0
+          end
+
+
+          loadRemoteTable(SHOP_FILE , loadShopData)        
+          
 
          -- timer.performWithDelay(5000,function()
 
                  --print ("fb timer reached")
-               if commonData.gameData.isConnectedToFB  then
-                   --print ("was logged in")
-                  commonData.doFbLogin2()
-                end 
+         if commonData.gameData.isConnectedToFB  then
+             --print ("was logged in")
+            commonData.doFbLogin2()
+          end 
  
          --end,1)
 
@@ -1868,29 +1917,96 @@ function scene:show( event )
           end  
 
         end  
-       end 
 
-       commonData.globalHighScore = commonData.gameData.highScore 
-
-
-      if (commonData.gameData.packs > 0) then
-        packsIndicator.alpha = 1
-      else  
-        packsIndicator.alpha = 0
-      end
+         commonData.globalHighScore = commonData.gameData.highScore 
 
 
-       if (isFullLogin and not isLoginFromToken) then
-
-                          --print ("get friends after game")
-                    isGetMeRequest = false
-                    isGetAvatars = false
-                    isGetScores = true
-                    isPostAvatar = false
-                    isLoginFromToken = false
-                     local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                     facebook.request(fbAppID .."/scores","GET",scoreParams)            
+        if (commonData.gameData.packs > 0) then
+          -- TOOD: remove
+          packsIndicator.alpha = 0
+        else  
+          packsIndicator.alpha = 0
         end
+
+
+         if (isFullLogin and not isLoginFromToken) then
+
+                            --print ("get friends after game")
+                      isGetMeRequest = false
+                      isGetAvatars = false
+                      isGetScores = true
+                      isPostAvatar = false
+                      isLoginFromToken = false
+                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
+                       facebook.request(fbAppID .."/scores","GET",scoreParams)            
+          end
+        
+   end
+
+    local function removeSplash2()
+      
+      if splash2 then
+          splash2:removeSelf()
+          splash2 = nil          
+          blackRect:removeSelf()
+          blackRect = nil
+      end      
+   end
+
+   if ( phase == "will" ) then
+      -- Called when the scene is still off screen (but is about to come on screen).
+      hero:reload()
+      local removeTimer  = 0
+
+      if splash2 then
+        timer.performWithDelay(2300, removeSplash2, 1)
+        removeTimer  = 2000
+      end
+     
+          
+     timer.performWithDelay(2000 + removeTimer, removeSplash, 1)
+     extrasGroup.alpha = 0 
+     extraBackground.alpha = 0  
+     
+   elseif ( phase == "did" ) then
+    --print("shoooowowiwiw   selectedSkin")
+    hero:init()
+      hero:menuIdle()
+  
+    --clouds:init()
+       if (commonData.gameData) then 
+         commonData.globalHighScore = commonData.gameData.highScore 
+
+          if (commonData.gameData.packs > 0) then
+            -- TOOD: remove
+            packsIndicator.alpha = 0
+          else  
+            packsIndicator.alpha = 0
+          end
+
+         if (isFullLogin and not isLoginFromToken) then
+
+                            --print ("get friends after game")
+                      isGetMeRequest = false
+                      isGetAvatars = false
+                      isGetScores = true
+                      isPostAvatar = false
+                      isLoginFromToken = false
+                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
+                       facebook.request(fbAppID .."/scores","GET",scoreParams)            
+          end
+        
+       else 
+
+          print("no game data")
+          loadRemoteTable(GAME_DATA_FILE , loadGameData)        
+
+          commonData.loadAfterLogin = function ( )
+            print("loadAfterLogin")
+            loadRemoteTable(GAME_DATA_FILE , loadGameData)        
+          end
+       end -- end common data not exists
+
       
       -- Called when the scene is now on screen.
       -- Insert code here to make the scene come alive.
@@ -1920,7 +2036,7 @@ function scene:hide( event )
      
       --print("menuuuuusuububuubu hideeeee")
 
-      clouds:pause()
+      --clouds:pause()
    end
 end
 

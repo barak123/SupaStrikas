@@ -1225,8 +1225,9 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
           onEvent = backButtonListener
       }
       backButton:scale(0.5,0.5)
+      
+      backButton.x = display.screenOriginX  + backButton.contentWidth /2
 
-      backButton.x = backButton.x  - (display.actualContentWidth - display.contentWidth) /2
       buyButton.x = buyButton.x  - (display.actualContentWidth - display.contentWidth) /2
       useButton.x = useButton.x  - (display.actualContentWidth - display.contentWidth) /2
 

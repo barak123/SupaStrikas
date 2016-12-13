@@ -51,9 +51,12 @@ local gameStatus ={
     goalInARow = 0,
     isPrevLeft = false,
     shakeamount = 0,
+    shakeamount2 = 0,
     kickOverShowed = false,
     jumpOverShowed = false,
-    isStaticBall = false
+    isStaticBall = false,
+    newScore = 0,
+    kicksMulti = 0
 
 
 }
@@ -79,7 +82,7 @@ local sounds ={
  coinsGoalSound = nil,
  goalPostSound = nil,
  birdHitSound = nil,
- dogHitSound = nil,
+ 
  arsSound = nil,
  twoBoysSound = nil,
  kidSound = nil,
@@ -97,14 +100,14 @@ local sounds ={
  botKickSound = nil,
  challengeUnlockedSound = nil,
  stephPerfectSpreeSound = nil,
- transitionSound = nil,
+ --transitionSound = nil,
 
 
 }
 
 
 local ob = {
-  exitTutorialOverlay = nil,
+  
   shadow = nil,
   pausedOverlay = nil,
   goalDummy = nil,
@@ -122,7 +125,7 @@ local ob = {
   KID_INDEX = 2,
   TALL_KID_INDEX = 3,
   DOUBLE_KIDS_INDEX = 4,
-  BANANA_INDEX = 5,
+  TALL_INDEX = 5,
   CAN_INDEX = 6,
   BIRD_INDEX = 7,
   GOAL_INDEX = 8,
@@ -133,7 +136,7 @@ local ob = {
   goalBarLEdge = nil,
   goalBarREdge = nil,
   goalSpine = nil,
-  speedometer = nil,
+  
   backgroundMusicHdl = nil,
   backButton = nil,
   nextObsecalePos = 0,
@@ -158,9 +161,7 @@ local ob = {
   redRect = nil,
   stageGroup = nil,
   scoreTextMove = nil,
-  trees = nil, 
-  beach = nil, 
-
+  scoreBg = nil, 
   
 }
 
@@ -218,10 +219,11 @@ local coinsCountText = nil
 local coinsShadowText = nil
 local trophieCountText = nil
 local trophieShadowText = nil
+local multiText = nil
 local coinsSpine = nil
 
 
-local fireBubbleObj= nil
+--local fireBubbleObj= nil
 local ultraWave= nil
 --coinsCoun
 
@@ -269,7 +271,7 @@ local function buttonListener( event )
            end
 
 
-            if mRandom(1) == 1 then
+            if mRandom(1) == 2 then
               hero:saltaJump()
               gameStatus.isSalta = true
               commonData.playSound( sounds.saltaSound )   
@@ -298,7 +300,7 @@ function scene:create( event )
 display.setStatusBar(display.HiddenStatusBar)
 
  local heroSpine =  require ("hero")
- hero = heroSpine.new(0.3 , false)
+ hero = heroSpine.new(0.33 , false)
  ob.chaser =  require ("chaser")
  require ("game_config")
  require ("achivmentsManager")
@@ -348,7 +350,7 @@ local  notificationRect = display.newRect(240, 160, 700,400)
 ob.boosterMsgSpine =  require ("boosterMsg")
 ob.boosterMsg = ob.boosterMsgSpine.new(0.8, true)
 
-ob.boosterMsg.skeleton.group.x = 280
+ob.boosterMsg.skeleton.group.x = 190
 ob.boosterMsg.skeleton.group.y = 320
 
 ob.boosterButton = widget.newButton
@@ -405,11 +407,11 @@ sheetContentWidth = 3174,
 
 local ultraSheetSetup = 
 {
-width = 550,
-height = 400,
-numFrames = 16,
- sheetContentWidth = 8800,
-sheetContentHeight = 400
+width = 256,
+height = 140,
+numFrames = 51,
+ sheetContentWidth = 2048,
+sheetContentHeight = 1008
 }
 
 local kickOverSetup = 
@@ -436,11 +438,11 @@ numFrames = 13,
 
 local spriteSheet = graphics.newImageSheet("images/soccerSprite.png", imgsheetSetup);
 
-local fireBubbleSheet = graphics.newImageSheet("images/fireBubble.png", firesheetSetup);
+--local fireBubbleSheet = graphics.newImageSheet("images/fireBubble.png", firesheetSetup);
 
-local ultraWaveSheet = graphics.newImageSheet("images/ultraWave.png", ultraSheetSetup);
+local ultraWaveSheet = graphics.newImageSheet("images/UltraWaveSheetSmall.png", ultraSheetSetup);
 
-local kickOverSheet = graphics.newImageSheet("images/BallOverMarker.png", kickOverSetup);
+
 
 --Now we create a table that holds the sequence data for our animations
 
@@ -460,7 +462,8 @@ local bubbleData =
 
 local ultraData = 
 {
-{ name = "start", start = 1, count = 16, time = 1000, loopCount = 1}
+{ name = "start", start = 1, count = 20, time = 1000, loopCount = 1},
+{ name = "advance", start = 38, count = 13, time = 800, loopCount = 0}
 }
 
 
@@ -494,7 +497,7 @@ kickToStart:scale(0.45,0.45)
 gameStatus.inEvent = 0
 gameStatus.eventRun = 0
 
-ballon = display.newImage("balls/Ball001.png")
+ballon = display.newImage("balls/NormalBall.png")
 
 
         
@@ -522,6 +525,8 @@ local body_radius = 5
 
 ballSkinGroup = display.newGroup()
 newChallengeGroup = display.newGroup()
+ob.multiGroup = display.newGroup()
+ob.scoreboard = display.newGroup()
 
 fire = display.newGroup()
 fire.x = display.contentWidth / 6
@@ -563,10 +568,6 @@ fire.isFixedRotation = true
 gameStatus.ignoreClick = false
 gameStatus.isLeftLeg = false
 
-ob.trees = display.newGroup()
-ob.beach = display.newGroup()
-houses = display.newGroup()
-houses.alpha = 1
 
 ob.stageGroup = display.newGroup()
 ob.stageGroup.alpha = 1
@@ -583,21 +584,21 @@ ob.stageGroup.maskY = 160
 
 
 ultraWave = display.newSprite(ultraWaveSheet, ultraData);
-ob.kickOver = display.newSprite(kickOverSheet, kickOverData);
 
-ob.kickOver:scale(0.7,0.7)
-ultraWave:scale(1.1,0.5)
+ultraWave:scale(2.5,2)
 
 
 local backgroundData = {
   {path="images/background.png" , speedFactor = nil , y  = 160 , scale = 1 , isfull = true},
-  {path="images/bgfar1.png" , speedFactor = 35 , y  = 80 , scale = 1.3 },
+  {path="images/StadiumSmall.png" , speedFactor = 35 , y  = 120 , scale = 0.65 },
+   {path="images/GrassBig.png" , speedFactor = 25 , y  = 230 , scale = 0.3 },
+   {path="images/Goal.png" , speedFactor = 25 , y  = 183 , scale = 0.5 },
   {displayGroup = ultraWave} , 
-  {path="images/Houses/HousesFar.png" , speedFactor = 20 , y  = 130 , scale = 0.3, alpha = 0.4 , isFirstStage = true },  
-  {path="images/GrassBG Tile.png" , speedFactor = 10 , y  = 190 , scale = 1.4 , isFirstStage = true},
+  --{path="images/Houses/HousesFar.png" , speedFactor = 20 , y  = 130 , scale = 0.3, alpha = 0.4 , isFirstStage = true },  
+  --{path="images/GrassBG Tile.png" , speedFactor = 10 , y  = 190 , scale = 1.4 , isFirstStage = true},
   --{path="images/100mBG.png" , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 90 , endPos = 130 , isShowOnce = true },
   
-  {displayGroup = houses , backgroundStage="GAME" , isFirstStage = true } , --  , startPos = 0 , endPos = 37
+  --{displayGroup = houses , backgroundStage="GAME" , isFirstStage = true } , --  , startPos = 0 , endPos = 37
   -- {path="images/BrokenWall.png" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" , startPos = 40 , endPos = 3120},   --  speedFactor = 1.5
   -- {path="images/BrokenWallTransission.png" , speedFactor = 1 , y  = 210 , scale = 0.37 ,  isShowOnce = true ,
   --          backgroundStage="GAME" , startPos = 40 , endPos = 50},   --  speedFactor = 1.5
@@ -607,16 +608,13 @@ local backgroundData = {
   -- {path="images/GrassBG Tile.png" , speedFactor = 1 , y  = 190 ,  alpha = 1, scale = 1.4 , startPos = 96 , endPos = 30, showAndRotate = true},
   
   
-  {path="images/WallBright.jpg" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" ,isFirstStage = true },   --  speedFactor = 1.5  startPos = 0 , endPos = 30
-  {path="images/Beach/Water.png" ,  backgroundStage="GAME"  , speedFactor = 20 , y  = 150 , scale = 0.7, alpha = 1 , startPos = 97 , endPos = 1200, showAndRotate = true },  
-  {displayGroup = ob.trees , backgroundStage="GAME"} , --  , startPos = 0 , endPos = 37
-  {path="images/Beach/SandBG.png" ,backgroundStage="GAME"  ,  speedFactor = 10 , y  = 190 ,  alpha = 1, scale = 0.4 , startPos = 97 , endPos = 200, showAndRotate = true},
-  {displayGroup = ob.beach , backgroundStage="GAME"} , --  , startPos = 0 , endPos = 37
-  {path="images/GrassBG Tile.png" , backgroundStage="GAME"  ,  speedFactor = 10 , y  = 190 , scale = 1.4  ,startPos = 197 , endPos = 1830 , showAndRotate = true},
-  {path="images/100mBG.png" , backgroundStage="GAME"  , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 197 , endPos = 1830 , showAndRotate = true },
-  {path="images/BrokenWall.png" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" , startPos = 197 , endPos = 3120,showAndRotate = true},   --  speedFactor = 1.5
+  --{path="images/WallBright.jpg" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" ,isFirstStage = true },   --  speedFactor = 1.5  startPos = 0 , endPos = 30
+  -- {path="images/Beach/Water.png" ,  backgroundStage="GAME"  , speedFactor = 20 , y  = 150 , scale = 0.7, alpha = 1 , startPos = 97 , endPos = 1200, showAndRotate = true },  
+  -- {path="images/GrassBG Tile.png" , backgroundStage="GAME"  ,  speedFactor = 10 , y  = 190 , scale = 1.4  ,startPos = 197 , endPos = 1830 , showAndRotate = true},
+  -- {path="images/100mBG.png" , backgroundStage="GAME"  , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 197 , endPos = 1830 , showAndRotate = true },
+  -- {path="images/BrokenWall.png" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" , startPos = 197 , endPos = 3120,showAndRotate = true},   --  speedFactor = 1.5
   
-  {path="images/FenceTile.png" , speedFactor = 1 , y  = 210 , scale = 0.45 , backgroundStage="TUTORIAL"  , isFirstStage = true  },  
+  --{path="images/FenceTile.png" , speedFactor = 1 , y  = 210 , scale = 0.45 , backgroundStage="TUTORIAL"  , isFirstStage = true  },  
   
 }
 
@@ -626,14 +624,15 @@ backgrounds = display.newGroup()
 local foregroundData = {  
   -- {path="images/TransitionHouse.png" , speedFactor = 1 , y  = 160 , isfull = true , isShowOnce = true , 
   --         scale = 0.85 , alpha = 0, backgroundStage="GAME" , startPos = 30 , endPos = 40},
-  {path="images/Beach/FoorSeaDeck.jpg" , speedFactor = 1 , y  = 275 ,
-          scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 96 , endPos = 200 },
-  {path="images/Floor/Grass01.png" , speedFactor = 1 , y  = 270 ,
-          scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 195 , endPos = 8000 },
-  {path="images/TransitionEffect.png" , speedFactor = 1 , y  = 160 , isShowOnce = true , isTransition = true, label = "100M" , 
-          scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 95 , endPos = 30 , isEraser = true},
-  {path="images/TransitionEffect.png" , speedFactor = 1 , y  = 160 , isShowOnce = true , isTransition = true, label = "200M" , 
-          scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 195 , endPos = 30},
+  -- {path="images/Beach/FoorSeaDeck.jpg" , speedFactor = 1 , y  = 275 ,
+  --         scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 96 , endPos = 200 },
+  {path="images/GrassBig.png" , speedFactor = 1 , y  = 280 ,
+          scale = 0.3 , alpha = 1,  startPos = 0 , endPos = 8000 , isFirstStage = true  },
+
+  -- {path="images/TransitionEffect.png" , speedFactor = 1 , y  = 160 , isShowOnce = true , isTransition = true, label = "100M" , 
+  --         scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 95 , endPos = 30 , isEraser = true},
+  -- {path="images/TransitionEffect.png" , speedFactor = 1 , y  = 160 , isShowOnce = true , isTransition = true, label = "200M" , 
+  --         scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 195 , endPos = 30},
         
 
 
@@ -792,12 +791,6 @@ ob.shadow.y = 273
 ob.shadow:scale(0.3,0.3)
 
 
-ob.exitTutorialOverlay = display.newImage("images/Exit.png")
-ob.exitTutorialOverlay.x = 400
-ob.exitTutorialOverlay.y = 50
-ob.exitTutorialOverlay:scale(0.3,0.3)
-ob.exitTutorialOverlay.alpha = 0 
-
 tutorialScales = display.newImage("images/TutorialScales.png")
 tutorialScales.x = 240
 tutorialScales.y = 200
@@ -826,6 +819,50 @@ ob.holdDevice.alpha = 0
 
 
 local dontForgetBG = display.newImage("HeroMsg/Layer 66.png")
+ob.scoreBg = display.newImage("images/Scoreboard/ScoreBG.png")
+ob.scoreBg:scale(0.5,0.5)
+ob.scoreBg.x = 255 
+ob.scoreBg.y = display.screenOriginY +  ob.scoreBg.contentHeight/2 - 3
+
+
+ob.scoreFull = display.newImage("images/Scoreboard/SpreeUnitsFull.png")
+ob.scoreFull:scale(0.5,0.5)
+ob.scoreFull.x = 238
+ob.scoreFull.y = ob.scoreBg.y + 18
+ob.scoreFull.alpha = 0 
+
+local prevStreeX = 165 
+for a = 1, 8, 1 do
+  local sreeUnit = display.newImage("images/Scoreboard/SreeUnit" .. a .. ".png")
+  sreeUnit:scale(0.48,0.5)
+  sreeUnit.y = ob.scoreBg.y + 18
+  sreeUnit.x = prevStreeX +  sreeUnit.contentWidth / 2
+  sreeUnit.alpha = 0
+  ob.scoreboard:insert(sreeUnit )
+  prevStreeX = prevStreeX + sreeUnit.contentWidth / 2  + 8
+end
+
+
+scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 18)
+
+multiText = display.newText("", 0, 0 , "UnitedItalicRgHv" , 22)
+multiText.y = ob.scoreBg.y + 8
+multiText.x = ob.scoreBg.x + 100
+multiText:setFillColor(1,206/255,0)
+
+ob.scoreTextMove = display.newText("", 0, 0 , "troika" , 32)
+ob.scoreTextMove.alpha = 0
+ob.scoreTextMove:setFillColor(1,206/255,0)
+
+--This is important because if you dont have this line the text will constantly keep
+--centering itself rather than aligning itself up neatly along a fixed point
+--scoreText: sequenceData ReferencePoint(display.CenterLeftReferencePoint)
+scoreText.x = 240
+scoreText.y = 15
+
+ob.scoreTextMove.x = 840
+ob.scoreTextMove.y = 20
+
 
     
  dontForgetBG.xScale =  (displayActualContentWidth*0.6) / dontForgetBG.contentWidth
@@ -946,22 +983,11 @@ coinsSpine = display.newGroup()
 
 --variable to hold our game's score
 score = 0
+gameStatus.newScore = 0
 --scoreText is another variable that holds a string that has the score information
 --when we update the score we will always need to update this string as well
 --*****Note for android users, you may need to include the file extension of the font
-scoreText = display.newText("", 0, 0 , "troika" , 32)
-ob.scoreTextMove = display.newText("", 0, 0 , "troika" , 32)
-ob.scoreTextMove.alpha = 0
-ob.scoreTextMove:setFillColor(1,206/255,0)
 
---This is important because if you dont have this line the text will constantly keep
---centering itself rather than aligning itself up neatly along a fixed point
---scoreText: sequenceData ReferencePoint(display.CenterLeftReferencePoint)
-scoreText.x = 240
-scoreText.y = 20
-
-ob.scoreTextMove.x = 840
-ob.scoreTextMove.y = 20
 
 coinImg  = display.newImage("Coin/Coin.png")
 coinImg.x = 20
@@ -984,6 +1010,7 @@ local coinTextOptions =
 
 coinsCountText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
 coinsShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+
 --coinsCount = 0
 coinsCountText:setFillColor(1,206/255,0)
 coinsShadowText:setFillColor(128/255,97/255,40/255)
@@ -1122,36 +1149,14 @@ tutorialConfirm:insert(tutorialTextCon)
 
 tutorialConfirm:insert(ob.tutorialOkBtn)
 
-speedCircle = display.newCircle(240,0,60)
-speedCircle:setFillColor( 0.35 )
-
-speedCircle2 = display.newCircle(240,0,60)
-speedCircle2:setFillColor( 0.35 )
-
-speedCircleImg = display.newImage("images/BubbleClear.png")
-speedCircleImg.x = 240
-speedCircleImg.y = 27
-speedCircleImg:scale(0.3,0.3)
-
-speedCircleImg.alpha = 1
 
 
 
+--fireBubbleObj = display.newSprite(fireBubbleSheet, bubbleData);
 
-fireBubbleObj = display.newSprite(fireBubbleSheet, bubbleData);
 
-
-ultraWave.x = 240
+ ultraWave.x = 240
 ultraWave.y = 100
-
-ob.kickOver.x = 240
-ob.kickOver.y = 160
-ob.kickOver.alpha = 0
-
-fireBubbleObj.x = 243
-fireBubbleObj.y = 52
-fireBubbleObj:scale(1.3,1.3)
---setup some variables that we will use to position the ground
 
 ob.groundLevel = 280
 gameStatus.speed = 5;
@@ -1194,82 +1199,29 @@ for a = 1, 10, 1 do
 end
 
 dirt = display.newGroup()
-
+--dirt.alpha = 0
 
 local dirtImages = {}
-dirtImages[1] = "images/cracks01.png"
-dirtImages[2] = "images/cracks02.png"
-dirtImages[3] = "images/crap01.png"
-dirtImages[4] = "images/crap02.png"
-dirtImages[5] = "images/grass01.png"
-dirtImages[6] = "images/grass02.png"
-dirtImages[7] = "images/grass03.png"
-dirtImages[8] = "images/paper.png"
-dirtImages[9] =  "images/sewer.png"
+dirtImages[1] = "images/SpeedLines.png"
+-- dirtImages[2] = "images/cracks02.png"
+-- dirtImages[3] = "images/crap01.png"
+-- dirtImages[4] = "images/crap02.png"
+-- dirtImages[5] = "images/grass01.png"
+-- dirtImages[6] = "images/grass02.png"
+-- dirtImages[7] = "images/grass03.png"
+-- dirtImages[8] = "images/paper.png"
+-- dirtImages[9] =  "images/sewer.png"
 
 
 for i = 1, 9, 1 do
-  local img = display.newImage(dirtImages[i])
+  local img = display.newImage(dirtImages[1])
   img.isAlive = false
-  img:scale(0.5,0.5)
+  img.alpha = 0.2
+  img:scale(0.5,0.4)
   dirt:insert(img)
   
 end
 
-
-
-
-local treeImages = {}
-treeImages[1] = "images/Trees/Tree01.png"
-treeImages[2] = "images/Trees/Tree02.png"
-treeImages[3] = "images/Trees/Tree03.png"
-
-
-
-for i = 1, 9, 1 do
-  local img = display.newImage(treeImages[(i % 3) + 1])
-  img.isAlive = false
-  img:scale(0.5,0.5)
-  ob.trees:insert(img)  
-end
-
-
-
-local beachImages = {}
-beachImages[1] = "images/Beach/Chairs.png"
-beachImages[2] = "images/Beach/Kids.png"
-beachImages[3] = "images/Beach/PplSwimming.png"
-beachImages[4] = "images/Beach/SandCastle.png"
-
-
-
-for i = 1, 9, 1 do
-  local img = display.newImage(beachImages[(i % 4) + 1])
-  img.isAlive = false
-  img:scale(0.5,0.5)
-  ob.beach:insert(img)  
-end
-
-
-for a = 1, 8, 1 do
-   
-  numGen = mRandom(7)
-  local newBlock
-  
-  newBlock = display.newImage("images/Houses/House0".. numGen ..".png")
-  newBlock:scale(0.5,0.5)
-  
-  --to give it some member variables that will help us keep track
-  --of each block as well as position them where we want them.
-  newBlock.name = ("house" .. a)
-  newBlock.id = a
-  --because a is a variable that is being changed each run we can assign
-  --values to the block based on a. In this case we want the x position to
-  --be positioned the width of a block apart.
-  newBlock.x = (a * 300) - 300
-  newBlock.y = 127
-  houses:insert(newBlock)
-end
 
 --And assign it to the object hero using the display.newSprite function
 monster = display.newSprite(spriteSheet, sequenceData);
@@ -1307,7 +1259,8 @@ local trashElement = { friction=0.4, bounce=0.1, filter=coneCollisionFilter , ou
  ob.extras = display.newImage("ExtrasMenu/ExtasWindow.png")
  ob.extras.x = 240
  ob.extras.y = 0
- ob.extras:scale(1.6,0.3)
+ ob.extras.xScale =  1.1 * display.actualContentWidth / ob.extras.contentWidth 
+ ob.extras.yScale =  0.35 * display.actualContentHeight  / ob.extras.contentHeight
 
 local letterOutline = graphics.newOutline( 2, spriteSheet, 6 )
 local heroCollisionFilter = { categoryBits = 8, maskBits = 6 } -- collides cone
@@ -1350,21 +1303,21 @@ ob.defualtAlpha = 0
       commonData.friendsScore[126] = {id = "liad", name = "Liad Geva", avatarId="3", rank = 1}
       
       commonData.avatars = {}
-      commonData.avatars["1"] = {data = {ball = "Brainz" , 
-                     shirt = "RedJacket" ,
-                    skin = "Messi" ,
-                      pants = "CoolJeansFaded" , 
-                      shoes = "Didas Lizard"} }                 
-      commonData.avatars["2"] = {data ={ball = "Brainz" , 
-                     shirt = "RedJacket" ,
-                    skin = "Rolando" ,
-                      pants = "CoolJeansFaded" , 
-                      shoes = "Didas Lizard"}  }                
-      commonData.avatars["3"] = {data ={ball = "Watermelon" , 
-                     shirt = "RedJacket" ,
-                    skin = "Zombie" ,
-                      pants = "CoolJeansFaded" , 
-                      shoes = "Didas Lizard"}  }                                                            
+      -- commonData.avatars["1"] = {data = {ball = "Brainz" , 
+      --                shirt = "RedJacket" ,
+      --               skin = "Messi" ,
+      --                 pants = "CoolJeansFaded" , 
+      --                 shoes = "Didas Lizard"} }                 
+      -- commonData.avatars["2"] = {data ={ball = "Brainz" , 
+      --                shirt = "RedJacket" ,
+      --               skin = "Rolando" ,
+      --                 pants = "CoolJeansFaded" , 
+      --                 shoes = "Didas Lizard"}  }                
+      -- commonData.avatars["3"] = {data ={ball = "Watermelon" , 
+      --                shirt = "RedJacket" ,
+      --               skin = "Zombie" ,
+      --                 pants = "CoolJeansFaded" , 
+      --                 shoes = "Didas Lizard"}  }                                                            
      else     
       playButton.y = 720
     end
@@ -1409,7 +1362,7 @@ ob.jumpLeg.isSensor = true
 monster.isSensor = true
 
 
-ob.redRect = display.newRect(240 , 277, 600,84)
+ob.redRect = display.newRect(240 , 280, 600,84)
 ob.redRect:setFillColor(1, 0, 0)
 
 local gameOverRect = display.newRect(240 , 280, 600,10)
@@ -1479,26 +1432,26 @@ monster.alpha = ob.defualtAlpha
   chaserRect.gravityScale=0
  --defenders = display.newGroup()
 
-local dogSpineAn = require "dog" 
+
  obstecales = display.newGroup()
 ob.obstecaleSpines = display.newGroup()
 
 --smallDefender  = display.newSprite(spriteSheetDef, sequenceDataDef);
 --smallDefender:scale(0.5,0.5)
-local smallDefender = display.newRect(500, 900 , 60,50)
-smallDefender.strokeWidth = 1
-smallDefender:setFillColor(140, 140, 140)
-smallDefender:setStrokeColor(180, 180, 180)
-smallDefender.alpha = ob.defualtAlpha
-smallDefender.isDog = true
---smallDefender.alpha = 0 
-smallDefender.spine = dogSpineAn.new()
+-- local smallDefender = display.newRect(500, 900 , 60,50)
+-- smallDefender.strokeWidth = 1
+-- smallDefender:setFillColor(140, 140, 140)
+-- smallDefender:setStrokeColor(180, 180, 180)
+-- smallDefender.alpha = ob.defualtAlpha
+-- smallDefender.isDog = true
+-- --smallDefender.alpha = 0 
+-- smallDefender.spine = dogSpineAn.new()
 
 
---medDefender  = display.newSprite(spriteSheetDef, sequenceDataDef);
-obstecales:insert(smallDefender)
-ob.obstecaleSpines:insert(smallDefender.spine.skeleton.group)
-physics.addBody( obstecales[1], "kinematic" , defenderBodyElement )
+-- --medDefender  = display.newSprite(spriteSheetDef, sequenceDataDef);
+-- obstecales:insert(smallDefender)
+-- ob.obstecaleSpines:insert(smallDefender.spine.skeleton.group)
+-- physics.addBody( obstecales[1], "kinematic" , defenderBodyElement )
 
 local arsSpineAn = require "ars"
 
@@ -1507,7 +1460,7 @@ local arsSpineAn = require "ars"
 scoreMarks = display.newGroup()
 
 
-for i = 1, 3, 1 do
+for i = 1, 5, 1 do
 
     local ars = display.newImage("images/AnnoyingKid0".. i .."Hitbox.png")
     ars.alpha = ob.defualtAlpha
@@ -1527,7 +1480,9 @@ for i = 1, 3, 1 do
     ars.isFixedRotation = true
     ars.alpha = ob.defualtAlpha
 
+
     ars.spine =  arsSpineAn.new(i)
+    ars.spine.skeleton.group.xScale = -1
     ob.obstecaleSpines:insert(ars.spine.skeleton.group)
     obstecales:insert(ars)
     local arsOutline = graphics.newOutline( 2, "images/AnnoyingKid0" .. i .."Hitbox.png" )
@@ -1622,7 +1577,7 @@ obstecales:insert(bird)
 obstecales[ob.KID_INDEX].isArs = true
 obstecales[ob.TALL_KID_INDEX].isKid = true
 obstecales[ob.DOUBLE_KIDS_INDEX].isTwoBoys = true
-obstecales[ob.DOUBLE_KIDS_INDEX].isHard = true
+obstecales[ob.TALL_INDEX].isHard = true
 
 
 ob.goalBarL = display.newRect(0, 15 , 10,45)
@@ -1691,10 +1646,6 @@ leftHand.skeleton.group.y = 200
 rightHand.skeleton.group.y = 200
 
 leftHand.skeleton.group.xScale = -1
-local speedoSpineAn = require "speedometer" 
-ob.speedometer = speedoSpineAn.new() 
-ob.speedometer.skeleton.group.x = 295
-ob.speedometer.skeleton.group.y = 11
 
 sounds.coinSound = audio.loadSound( "coin.mp3" )
 sounds.perfectSpreeSound = audio.loadSound( "Comments/Perfect Spree 1.mp3" )
@@ -1735,12 +1686,11 @@ end
 
 
 
-sounds.goalBrainzSound = audio.loadSound( "ZombieGoal.mp3" )
   
 
 sounds.jumpSound = audio.loadSound( "Kid_Jump.mp3" )
 sounds.saltaSound = audio.loadSound( "sounds/FlipWhoosh.mp3" )
-sounds.transitionSound = audio.loadSound( "sounds/LvlTransition01.mp3" )
+--sounds.transitionSound = audio.loadSound( "sounds/LvlTransition01.mp3" )
 
 
 sounds.ballFallSound = audio.loadSound( "sounds/BallHitGround.mp3" )
@@ -1750,21 +1700,13 @@ sounds.kickTimeoutSound = audio.loadSound( "SlideOnGround.mp3" )
 sounds.crashConeSound = audio.loadSound( "trafficConeHit.mp3" )
 sounds.crashTrashSound = audio.loadSound( "Bucket Hit.mp3" )
 sounds.birdHitSound = audio.loadSound( "Crow.mp3" )
-sounds.dogHitSound = audio.loadSound( "DogGO.mp3" )
+
 sounds.twoBoysSound = audio.loadSound( "2BoysLaugh.mp3" )
 sounds.arsSound = audio.loadSound( "tallArsLaugh.mp3" )
 sounds.kidSound = audio.loadSound( "smallKidLaugh.mp3" )
 sounds.catchSound = audio.loadSound( "BadGuyPunch3.mp3" )
 
 
-sounds.CristianoGoalSound = audio.loadSound( "Ronaldo_scream.mp3" )
-sounds.MessiGoalSound = audio.loadSound( "messi.mp3" )
-sounds.ZlatanGoalSound = audio.loadSound( "zlatan.mp3" )
-sounds.neymarGoalSound = audio.loadSound( "sounds/Choochaa.mp3" )
-sounds.rooneyGoalSound = audio.loadSound( "sounds/GoalMate.mp3" )
-sounds.stephGoalSound = audio.loadSound( "sounds/BoomChaka.mp3" )
-
-sounds.PewdsGoalSound = audio.loadSound( "pewds.mp3" )
 
 
 local backgroundMusic = audio.loadStream( "Ambiant.mp3" )
@@ -2056,12 +1998,13 @@ sceneGroup:insert(scoreMarks)
 sceneGroup:insert(ob.highScoreLine)
 --sceneGroup:insert(defenders)
 sceneGroup:insert(ob.instructionBlocker)
-sceneGroup:insert(ob.speedometer.skeleton.group)
-sceneGroup:insert(speedCircle2)
-sceneGroup:insert(speedCircle)
-sceneGroup:insert(speedCircleImg)
-sceneGroup:insert(fireBubbleObj)
 
+
+
+
+sceneGroup:insert(ob.scoreBg )
+sceneGroup:insert(ob.scoreboard )
+sceneGroup:insert(ob.scoreFull )
 
 
 sceneGroup:insert(scoreText)
@@ -2099,7 +2042,7 @@ sceneGroup:insert(tutorialScales)
 sceneGroup:insert(ob.chaser.skeleton.group)
 sceneGroup:insert(rightHand.skeleton.group)
 sceneGroup:insert(leftHand.skeleton.group)
-sceneGroup:insert(ob.kickOver)
+
 sceneGroup:insert(comments.skeleton.group)
 sceneGroup:insert(hero.skeleton.group)
 sceneGroup:insert(collisionRect)
@@ -2108,7 +2051,7 @@ sceneGroup:insert(ob.shadow)
 sceneGroup:insert(gameOverRect)
 sceneGroup:insert(gameOverRect2)
 
-sceneGroup:insert(ob.exitTutorialOverlay)
+
 sceneGroup:insert(fire)
 
 
@@ -2119,6 +2062,9 @@ sceneGroup:insert(ultraBall)
 
 sceneGroup:insert(kickToStart)
 
+
+ob.multiGroup:insert(multiText)
+sceneGroup:insert(ob.multiGroup)
 sceneGroup:insert(coinsShadowText)
 sceneGroup:insert(coinsCountText)
 sceneGroup:insert(trophieShadowText)
@@ -2175,6 +2121,29 @@ ob.getNextObstecalePos =  function(min , range)
     --nextObsecalePos = score +2
 end
 
+ob.updateScoreboard =  function(num)
+
+        if num > 7 then
+          ob.scoreFull.alpha = 1
+        else
+          ob.scoreFull.alpha = 0
+        end
+          
+       for a = 1, ob.scoreboard.numChildren, 1 do
+            if(a <= num ) then
+              ob.scoreboard[a].alpha = 1
+                 
+            else
+              ob.scoreboard[a].alpha = 0
+            end
+       end    
+
+       if num + 1 > gameStats.combo then
+        gameStats.combo = num + 1
+       end 
+end  
+
+
 
 ob.nextCoinPos = 0
 ob.getNextCoinPos = function(min , range)  
@@ -2194,7 +2163,7 @@ ob.exitUltraMode = function()
       ultraBall.alpha = 0 
       gameStatus.isUltraMode = false
       ultraWave.alpha = 0
-      fireBubbleObj.alpha = 0
+      
       ob.ultraCoinsCollected = 0
 
       if (ballSkin) then             
@@ -2203,7 +2172,7 @@ ob.exitUltraMode = function()
 
 
       ultraWave:pause()
-      fireBubbleObj:pause()
+      
 
        if (exitUltraModeHandle) then
          timer.cancel( exitUltraModeHandle )
@@ -2235,8 +2204,8 @@ ob.exitUltraMode = function()
     end
     
     local function advanceUltraMode()
-       fireBubbleObj:setSequence("fire")
-        fireBubbleObj:play()
+       ultraWave:setSequence("advance")
+       ultraWave:play()
     end
 
     ob.enterUltraMode = function ()
@@ -2263,17 +2232,14 @@ ob.exitUltraMode = function()
          end  
 
         exitUltraModeHandle = timer.performWithDelay(ULTRA_MODE_DURATION, ob.exitUltraMode, 1)
-        advanceUltraModeHandle = timer.performWithDelay(600 , advanceUltraMode, 1)
+        advanceUltraModeHandle = timer.performWithDelay(1000 , advanceUltraMode, 1)
      --   ultraRect.alpha = 0.86
         ultraWave.alpha = 1
-        fireBubbleObj.alpha = 1
+        
       
         ultraWave:setSequence("start")
         ultraWave:play()
 
-        fireBubbleObj:setSequence("start")
-        fireBubbleObj:play()
-        
     end
 
     
@@ -2300,7 +2266,7 @@ function restartGame()
               ballSkin = nil
       end
           
-      if (commonData.selectedBall == "Ball001") then
+      if (commonData.selectedBall == "NormalBall") then
         ballon.alpha = 1
       else  
 
@@ -2330,10 +2296,11 @@ function restartGame()
       gameStatus.ignoreHeader = false
        --reset the score
      score = 0
+     gameStatus.newScore = 0
 
      --reset the game speed
      gameStatus.speed = 6
-     ob.speedometer:setSpeed(gameStatus.speed)
+     
      gameStatus.inEvent=0
      ob.wasOnGround = true
      -- reset the pause button
@@ -2349,7 +2316,7 @@ function restartGame()
      fire.x = ballon.x
      fire.y = ballon.y
      fire.alpha = 0
-     ob.exitTutorialOverlay.alpha =0
+     
 
      ultraBall.x = ballon.x
      ultraBall.y = ballon.y
@@ -2380,7 +2347,7 @@ function restartGame()
      ob.jumpLeg.width=0
      ob.jumpLeg.x = 0
      
-     ob.kickOver.alpha = 0
+     
       
      for a = 1, blocks.numChildren, 1 do
           --blocks[a].x = (a * blocks[a].contentWidth) - blocks[a].contentWidth
@@ -2389,6 +2356,7 @@ function restartGame()
           --print()
      end
 
+     blocks.alpha=0
      for a = 1, coins.numChildren, 1 do
           coins[a].y = 600
           coins[a].isAlive = false
@@ -2538,9 +2506,10 @@ function restartGame()
       gameStats.bouncesEarly = 0
       gameStats.bouncesLate = 0
       gameStats.jumps = 0
+      gameStats.combo = 0
       gameStats.finishReason = nil
       gameStats.isGoalScoredInTheGame = false
-      scoreText.text = score .. "M"
+      scoreText.text = gameStatus.newScore 
       
       startGameTracking()
       leftHand.skeleton.group.alpha = 0
@@ -2563,8 +2532,7 @@ function restartGame()
               kickToStart.alpha = 0
               pauseButton.alpha = 0
               ob.backButton.alpha = 1
-              speedCircle.alpha = 0
-              speedCircle2.alpha = 0
+              
               ob.extras.alpha = 1
 
               coinsCountText.alpha = 0
@@ -2572,7 +2540,7 @@ function restartGame()
               trophieCountText.alpha = 0
               trophieShadowText.alpha = 0
 
-              speedCircleImg.alpha = 0
+              
               coinImg.alpha = 0
               trophieImg.alpha = 0
               tutorialScales.alpha = 1
@@ -2583,9 +2551,7 @@ function restartGame()
 
               ob.holdDevice.alpha = 1        
               ob.holdDeviceBlocker.alpha = 0.85
-
-              ob.kickOver:setSequence("start")
-              ob.kickOver:play()
+              
 
               gameStatus.isConfirmationRequired = true
 
@@ -2615,10 +2581,13 @@ function restartGame()
 
                 commonData.gameData.kickOverShowed = false
                 commonData.gameData.jumpOverShowed = false
-              
+                ob.multiGroup.alpha = 0
+                
 
       else
-
+        ob.updateScoreboard(0)
+        multiText.text = "x1"
+        ob.multiGroup.alpha = 1
         
         tutorialScales.alpha = 0
 
@@ -2634,10 +2603,9 @@ function restartGame()
         tutorialShadowText.alpha = 0
         tutorialCountText.alpha = 0
         tutorialCountShadowText.alpha = 0
-        speedCircle.alpha = 1
-        speedCircle2.alpha = 1
+        
         ob.extras.alpha = 0
-        speedCircleImg.alpha = 1
+        
         coinImg.alpha = 1
         trophieImg.alpha = 1
 
@@ -2664,7 +2632,7 @@ function restartGame()
 
       end
 
-      ob.speedometer:init()
+      
 
        if ob.backgroundMusicHdl and not commonData.isMute then
         audio.resume(ob.backgroundMusicHdl)
@@ -2677,6 +2645,7 @@ function restartGame()
 
  --     gameStatus.sombreroCount = 0
       consecutivePerfects = 0
+      gameStatus.kicksMulti  = 0
       hero:reload()
       hero:init()
       hero:cancelKick()
@@ -2741,18 +2710,7 @@ function restartGame()
      end 
 
 
-     for a = 1, ob.trees.numChildren, 1 do
-        ob.trees[a].isAlive = false
-        ob.trees[a].x = -300
-             
-     end 
-
-     for a = 1, ob.beach.numChildren, 1 do
-        ob.beach[a].isAlive = false
-        ob.beach[a].x = -300
-             
-     end 
-
+     
      
       timer.resume(gameStatus.mainTimer)
     
@@ -2824,8 +2782,8 @@ function scene:show( event )
 
           if (additionalCount) then
 
-          coinsShadowText.text = ob.coinsCount .. "   +" .. additionalCount
-          coinsCountText.text =  ob.coinsCount .. "   +" .. additionalCount
+            coinsShadowText.text = ob.coinsCount .. "   +" .. additionalCount
+            coinsCountText.text =  ob.coinsCount .. "   +" .. additionalCount
 
           end
 
@@ -2858,12 +2816,12 @@ function scene:show( event )
       elseif (score > EASY_MODE_LENGTH) then
         -- 5 normal obs + 3 logical index for compund - bird + kid
         local rnd = mRandom(8)
-        if (rnd <= 6) then 
+        --if (rnd <= 6) then 
           newIndexes[1] = rnd
-        else  
-          newIndexes[1] =  mRandom(2)
-          newIndexes[2] = ob.BIRD_INDEX -- bird idx
-         end  
+        -- else  
+        --   newIndexes[1] =  mRandom(2)
+        --   newIndexes[2] = ob.BIRD_INDEX -- bird idx
+        --  end  
       else
 
         local totalProbability =  P_BANANA + P_CAN + P_BIRD + P_DOG + P_KID  + P_TALL_KID + P_BIRD_DOG + P_BIRD_KID  
@@ -2871,7 +2829,7 @@ function scene:show( event )
 
 
         if (easyRnd <= P_BANANA) then
-          newIndexes[1]  = ob.BANANA_INDEX
+          newIndexes[1]  = ob.TALL_INDEX
         elseif  (easyRnd <= P_BANANA + P_CAN) then
           newIndexes[1]  = ob.CAN_INDEX
         elseif  (easyRnd <= P_BANANA + P_CAN + P_BIRD) then
@@ -2886,11 +2844,13 @@ function scene:show( event )
           newIndexes[1]  = ob.DOUBLE_KIDS_INDEX
         elseif  (easyRnd <= P_BANANA + P_CAN + P_BIRD + P_DOG + P_KID + P_TALL_KID + P_DOUBLE_KID + P_BIRD_DOG) then
           newIndexes[1] = ob.DOG_INDEX
-          newIndexes[2] = ob.BIRD_INDEX -- bird idx      
+      --    newIndexes[2] = ob.BIRD_INDEX -- bird idx      
         elseif  (easyRnd <= P_BANANA + P_CAN + P_BIRD + P_DOG + P_KID + P_TALL_KID + P_DOUBLE_KID + P_BIRD_DOG +  P_BIRD_KID) then  
           newIndexes[1] = ob.KID_INDEX
-          newIndexes[2] = ob.BIRD_INDEX -- bird idx      
+        --  newIndexes[2] = ob.BIRD_INDEX -- bird idx      
         end  
+
+        print(easyRnd .. "  " .. newIndexes[1])
 
       end
 
@@ -3039,7 +2999,7 @@ function scene:show( event )
               if (score == ob.nextCoinPos) then
                       gameStatus.inEvent = 14
                       gameStatus.eventRun = 1
-                      ob.getNextCoinPos(20 ,10)
+                      ob.getNextCoinPos(10 ,10)
 
               end
                         --the more frequently you want events to happen then
@@ -3048,31 +3008,23 @@ function scene:show( event )
                       gameStatus.inEvent = 12
                       gameStatus.eventRun = 1
 
-                      local minPos = 8 -- score /100
-                      if (score > 400) then
-                        minPos = 8 - (score - 400) / 100
-
-                        if minPos < 5 then
-                          minPos = 5
-                        end  
-                      end
-
+                   
                       local nextObstecaleRnd =  mRandom(10)
                       if (score < gameStatus.firstStage) then
                         if (nextObstecaleRnd >2 ) then
-                          ob.getNextObstecalePos(minPos ,4)
+                          ob.getNextObstecalePos(8 ,4)
                         else
-                          ob.getNextObstecalePos(4 , 4 )
+                          ob.getNextObstecalePos(6 , 6 )
                         end  
                       elseif (score < gameStatus.secondStage) then
                         if (nextObstecaleRnd > 5 ) then
-                          ob.getNextObstecalePos(minPos ,4)
+                          ob.getNextObstecalePos(8 ,4)
                         else
-                          ob.getNextObstecalePos(4 , 4 )
+                          ob.getNextObstecalePos(5 , 5 )
                         end
                       elseif (score < 400) then
                         if (nextObstecaleRnd > 8 ) then
-                          ob.getNextObstecalePos(minPos ,4)
+                          ob.getNextObstecalePos(8 ,4)
                         else
                           ob.getNextObstecalePos(4 , 4 )
                         end
@@ -3083,9 +3035,6 @@ function scene:show( event )
                           ob.getNextObstecalePos(4, 3 )
                         end 
                       end  
-
-                      
-                      --getNextObstecalePos(minPos ,10)
               
               end
          end
@@ -3141,12 +3090,14 @@ function scene:show( event )
 
           if ballon.y > 250 then
             gameStatus.speed   = gameStatus.speed - gameStatus.speed/100
-            ob.speedometer:setSpeed(gameStatus.speed)
-            
+
             if (gameStatus.speed < MIN_SPEED - 1) then
               gameStatus.speed = MIN_SPEED -1 
             end
 
+             hero:setWalkSpeed(gameStatus.speed)
+            
+           
 
             if ob.redRect.alpha < 0.6 then
               ob.redRect.alpha = ob.redRect.alpha + 0.01
@@ -3163,6 +3114,17 @@ function scene:show( event )
               sceneGroup.y =  math.random( -shake, shake )
               gameStatus.shakeamount = gameStatus.shakeamount - 1
           end
+
+          if  gameStatus.shakeamount2 > 0 then
+              local shake2 = math.random( math.floor( gameStatus.shakeamount2 /2) +1  )
+              
+              ob.multiGroup.x =  math.random( -shake2, shake2 )
+              ob.multiGroup.y =  math.random( -shake2, shake2 )
+              gameStatus.shakeamount2 = gameStatus.shakeamount2 - 1
+          
+          end
+
+          
           
           local shadowScale = SHADOW_MAX_SCALE *  (1 - ((ob.shadow.y  - ballon.y  ) / ob.shadow.y))
 
@@ -3198,35 +3160,12 @@ function scene:show( event )
                       end
                     end  
 
-                     local treeIndex = mRandom(100)
-                    if (treeIndex <= ob.trees.numChildren and treeIndex >0) then
-
-
-                      if (not ob.trees[treeIndex].isAlive and score > 200) then
-                          
-                          ob.trees[treeIndex].isAlive = true
-                          ob.trees[treeIndex].x = displayActualContentWidth/2 + 240 +  ob.trees[treeIndex].contentWidth/2 
-                          ob.trees[treeIndex].y = 110
-                          ob.trees[treeIndex].alpha = 1
-                      end
-                    end  
-
-                      local beachIndex = mRandom(100)
-                    if (beachIndex <= ob.beach.numChildren and beachIndex >0) then
-
-
-                      if (not ob.beach[beachIndex].isAlive and score > 100 and  score < 200) then
-                          
-                          ob.beach[beachIndex].isAlive = true
-                          ob.beach[beachIndex].x = displayActualContentWidth/2 + 240 + ob.beach[beachIndex].contentWidth/2
-                          ob.beach[beachIndex].y = 200
-                          ob.beach[beachIndex].alpha = 1
-                      end
-                    end  
+                  
                     
 
                     score = score + 1
-                    scoreText.text = score .. "M"
+                    gameStatus.newScore = gameStatus.newScore  + gameStatus.speed * (gameStatus.kicksMulti +1)
+                    scoreText.text = string.format("%.00f", gameStatus.newScore) 
                     if (commonData.friendsScore[score + 7] and commonData.friendsScore[score + 7].markIndex ) then
                       scoreMarks[commonData.friendsScore[score + 7].markIndex].isAlive = true
                       scoreMarks[commonData.friendsScore[score + 7].markIndex + 1].isAlive = true
@@ -3252,7 +3191,7 @@ function scene:show( event )
                     end
                    end
 
-                   if (score % 20 == 0 and score > 0  ) then
+                   if (score % 20 == 0 and score > 150  ) then
                       chaserRect.speed = chaserRect.speed + REFEREE_ACCELERATION
                       if (chaserRect.speed > REFEREE_MAX_SPEED ) then
                         chaserRect.speed = REFEREE_MAX_SPEED
@@ -3272,13 +3211,13 @@ function scene:show( event )
                     elseif (score == 100) then  
                       reportChallenge("reacehedMeters100")
                       achivmentAlert("LittleBigBolt")
-                       commonData.playSound( sounds.transitionSound )   
+                       --commonData.playSound( sounds.transitionSound )   
                     elseif (score == 150) then  
                       reportChallenge("reacehedMeters150")
                     elseif (score == 200) then    
                       achivmentAlert("PiniBalili")
                       reportChallenge("reacehedMeters200")
-                      commonData.playSound( sounds.transitionSound )   
+                      --commonData.playSound( sounds.transitionSound )   
                      elseif (score == 300) then                          
                       reportChallenge("reacehedMeters300")  
                     end
@@ -3296,11 +3235,11 @@ function scene:show( event )
 
                            for index, obsIndex in pairs( obsIndexs ) do
                           
-                                 for i=1,5 do                                  
-                                   if (obstecales[obsIndex].isAlive or (score < 40 and obstecales[obsIndex].isHard)) then
+                                 for i=1,4 do                                  
+                                   if (obstecales[obsIndex].isAlive or (score < 70 and obstecales[obsIndex].isHard)) then
                                       obsIndex = obsIndex - 1
                                       if ( obsIndex == 0) then
-                                        obsIndex = 5
+                                        obsIndex = 4
                                       end 
 
                                       skipCompund = true
@@ -3418,7 +3357,7 @@ function scene:show( event )
     --then update them appropriately
     local function updateObstecales()
 
-        local shouldDisplayKickOver = false
+        
         for a = 1, obstecales.numChildren, 1 do
             if(obstecales[a].isAlive == true) then
 
@@ -3428,14 +3367,14 @@ function scene:show( event )
                   (goal[i]):translate(gameStatus.speed * -1, 0)
                 end
 
-                if(ob.goalBarR.x < -80) then
+                if(ob.goalBarR.x < -120) then
                   goal.isAlive = false
 
                 end
               else  
                 
                 (obstecales[a]):translate(gameStatus.speed * -1, 0)
-                if(obstecales[a].x < -80) then
+                if(obstecales[a].x < -120) then
                     obstecales[a].x = 900
                     obstecales[a].y = 500
                     obstecales[a].isAlive = false
@@ -3471,11 +3410,7 @@ function scene:show( event )
                             end
                         end
 
-                        if (gameStatus.isTutorial and  obstecales[a].x > 150 and obstecales[a].x < 600) then
-                              ob.kickOver.x = obstecales[a].x - 50
-                              shouldDisplayKickOver = true                                          
-                        end    
-
+                        
                         if (not gameStatus.isTutorial and not commonData.gameData.kickOverShowed 
                                 and obstecales[a].x > 260 and obstecales[a].x < 300) then                              
 
@@ -3507,7 +3442,7 @@ function scene:show( event )
                               
                                handleFisrtObstacle()                               
                                commonData.gameData.jumpOverShowed = true
-                               ballon.y = 140
+                               ballon.y = 120
                                ballon.x = BALL_X       
                                gameStatus.preventKick = true
 
@@ -3544,11 +3479,7 @@ function scene:show( event )
           end
         end -- obsteacales loop
 
-        if shouldDisplayKickOver then
-          ob.kickOver.alpha = 1        
-        else
-          ob.kickOver.alpha = 0          
-        end  
+        
     end
 
 
@@ -3579,8 +3510,8 @@ function scene:show( event )
 
              gameStatus.chaserLocation = gameStatus.chaserLocation + gap
           
-            if (gameStatus.chaserLocation< -50) then
-              gameStatus.chaserLocation = -50
+            if (gameStatus.chaserLocation< -200) then
+              gameStatus.chaserLocation = -200
             end  
             
             if (gameStatus.chaserLocation < 0  and prevX >= 0 ) then 
@@ -3592,8 +3523,8 @@ function scene:show( event )
               
             end  
 
-            if (display.screenOriginX > gameStatus.chaserLocation) then
-              ob.chaser.skeleton.group.x = display.screenOriginX            
+            if (display.screenOriginX - 200 > gameStatus.chaserLocation) then
+              ob.chaser.skeleton.group.x = display.screenOriginX    - 200        
             else
               ob.chaser.skeleton.group.x = gameStatus.chaserLocation
             end
@@ -3707,38 +3638,21 @@ function scene:show( event )
           end
 
            for a = 1, dirt.numChildren, 1 do
-               if (dirt[a].isAlive) then
-                  
-                    dirt[a].x =  dirt[a].x - gameStatus.speed
+               if (dirt[a].isAlive and gameStatus.speed >6) then
+                    
+                    dirt[a].alpha = 0.2
+                    dirt[a].x =  dirt[a].x - gameStatus.speed * 3
 
                     if (dirt[a].x  < -100) then
                         dirt[a].isAlive = false
                     end
+                else   
+                  dirt[a].alpha = 0
                 end  
            end 
 
 
-            for a = 1, ob.trees.numChildren, 1 do
-               if (ob.trees[a].isAlive) then
-                  
-                    ob.trees[a].x =  ob.trees[a].x - gameStatus.speed / 10
-
-                    if (ob.trees[a].x  < -100) then
-                        ob.trees[a].isAlive = false
-                    end
-                end  
-           end 
-            for a = 1, ob.beach.numChildren, 1 do
-               if (ob.beach[a].isAlive) then
-                  
-                    ob.beach[a].x =  ob.beach[a].x - gameStatus.speed / 10
-
-                    if (ob.beach[a].x  < -100) then
-                        ob.beach[a].isAlive = false
-                    end
-                end  
-           end 
-
+            
       
           
           moveElements(backgrounds)         
@@ -3799,19 +3713,19 @@ function scene:show( event )
           end
                     
 
-          for a = 1, houses.numChildren, 1 do
+          -- for a = 1, houses.numChildren, 1 do
                 
-                 if(houses[a].x < -220) then
-                    houses[a].x = 2300                    
-                 else   
-                  houses[a].x = houses[a].x - (gameStatus.speed/10)
-                end
+          --        if(houses[a].x < -220) then
+          --           houses[a].x = 2300                    
+          --        else   
+          --         houses[a].x = houses[a].x - (gameStatus.speed/10)
+          --       end
 
-                -- if eraserX and eraserX < houses[a].x - houses[a].contentWidth/2 then
-                --   houses[a].alpha = 0                
-                -- end   
+          --       -- if eraserX and eraserX < houses[a].x - houses[a].contentWidth/2 then
+          --       --   houses[a].alpha = 0                
+          --       -- end   
                 
-           end
+          --  end
 
            
   
@@ -3964,96 +3878,6 @@ function scene:show( event )
          
           
           timer.performWithDelay(1000, startGravity, 1)
-
-        elseif (ob.tutorialStage == 7 ) then
-          gameStatus.preventJump = false
-          showTutorialText(getTransaltedText("JumpObstecales"))
-          ballon.gravityScale=0
-          ballon:setLinearVelocity(0,0)
-
-           gameStatus.speed = 6
-           hero:walk()
-           hero:setWalkSpeed(6)
-
-          ballon.y = -200
-          ballon.alpha = 0
-          if (ballSkin) then
-            ballSkin.alpha = 0
-          end  
-          
-            leftHand.skeleton.group.alpha = 0
-             rightHand.skeleton.group.alpha = 0            
-             leftHand:cancelLegByLeg()
-              leftHand.skeleton.group.x = 50
-          --timer.performWithDelay(3000, function ()
-            
-            activateObstecale(ob.BANANA_INDEX, false, 900)
-          --end, 1)
-
-          --timer.performWithDelay(6000, function ()
-            
-            activateObstecale(ob.CAN_INDEX, false,2000)
-          --end, 1)
-
-           timer.performWithDelay(2000,function ()
-             leftHand.skeleton.group.alpha = 1
-             rightHand.skeleton.group.alpha = 1
-              
-             leftHand:tapLeft()
-            rightHand:tapRight()
-
-           end, 1) 
-            timer.performWithDelay(4000,function ()
-             leftHand.skeleton.group.alpha = 0
-             rightHand.skeleton.group.alpha = 0              
-
-           end, 1) 
-
-          ob.exitTutorialOverlay.alpha = 0
-         elseif (ob.tutorialStage == 8 ) then
-          showTutorialText(getTransaltedText("KickOver"))
-          ballon.gravityScale=0
-          ballon:setLinearVelocity(0,0)
-          ballon.y = 20
-          ballon.alpha = 1
-          if (ballSkin) then
-            ballon.alpha = 0
-            ballSkin.alpha = 1
-          end  
-
-          obstecales[ob.BANANA_INDEX].isAlive = false 
-          obstecales[ob.CAN_INDEX].isAlive = false 
-          obstecales[ob.BANANA_INDEX].x = -200
-          obstecales[ob.CAN_INDEX].x = -200
-
-
-          activateObstecale(ob.DOG_INDEX, false, 900)
-                  
-          activateObstecale(ob.TALL_KID_INDEX, false,2000)
-        
-         --legByLeg()
-          --print("activateObstecale")
-          timer.performWithDelay(1000, startGravity, 1)
-
-          ob.exitTutorialOverlay.alpha = 0  
-        -- elseif (ob.tutorialStage == 9 ) then
-        --   showTutorialText("AWESOME! You are ready to go!")
-        --   ballon.gravityScale=0
-        --   ballon:setLinearVelocity(0,0)
-        --   ballon.y = 20
-          
-        --   timer.performWithDelay(1000, startGravity, 1)
-
-        --   exitTutorialOverlay.alpha = 0
-   
-          -- collisionRect.isSensor = true
-          -- isTutorial = false
-          -- ballon.gravityScale=0
-          -- ballon:setLinearVelocity(0,0)
-          -- ballon.y = 20
-          
-          -- timer.performWithDelay(1000, startGravity, 1)
-
         end
 
         gameStatus.prevStage = ob.tutorialStage
@@ -4073,10 +3897,10 @@ gameStatus.isGameActive = true
         hero:pause()
         ob.chaser:pause()
         --comments:pause()
-        ob.speedometer:pause()
+        
         pauseButton.alpha = 0
         physics.pause()
-         gameStats.gameScore = score
+         gameStats.gameScore = tonumber(string.format("%.00f", gameStatus.newScore)  )  
          audio.pause( ob.backgroundMusicHdl )
          if (exitUltraModeHandle) then
            timer.cancel( exitUltraModeHandle )
@@ -4230,7 +4054,6 @@ gameStatus.isGameActive = true
     end
 
     
-
     local function updateMonster()
 
         if (ballSkin) then
@@ -4619,8 +4442,8 @@ gameStatus.isGameActive = true
     local initKickColorHandle = nil
     
     local function initKickColor()      
-      --speedCircle:setFillColor( 0.5 )
-      speedCircle.alpha = speedCircle.alpha - 0.01
+      
+      
       initKickColorHandle = nil
     end
 
@@ -4743,23 +4566,23 @@ gameStatus.isGameActive = true
             fire.x = BALL_X
             ultraBall.x = BALL_X
             
-              if (commonData.selectedSkin == "Rolando") then
-                commonData.playSound(sounds.CristianoGoalSound)
-              elseif (commonData.selectedSkin == "Nessi") then
-                 commonData.playSound(sounds.MessiGoalSound)
-              elseif (commonData.selectedSkin == "Zlatan") then
-                 commonData.playSound(sounds.ZlatanGoalSound)
-              elseif (commonData.selectedSkin == "Neymar") then  
-                commonData.playSound(sounds.neymarGoalSound)
-              elseif (commonData.selectedSkin == "Rooney") then  
-                commonData.playSound(sounds.rooneyGoalSound)
-              elseif (commonData.selectedSkin == "Steph") then  
-                commonData.playSound(sounds.stephGoalSound)
-              elseif (commonData.selectedSkin == "PewDiePie") then  
-                commonData.playSound(sounds.PewdsGoalSound)  
-              elseif (commonData.selectedSkin == "Zombie") then  
-                commonData.playSound(sounds.goalBrainzSound)                
-              end  
+              -- if (commonData.selectedSkin == "Rolando") then
+              --   commonData.playSound(sounds.CristianoGoalSound)
+              -- elseif (commonData.selectedSkin == "Nessi") then
+              --    commonData.playSound(sounds.MessiGoalSound)
+              -- elseif (commonData.selectedSkin == "Zlatan") then
+              --    commonData.playSound(sounds.ZlatanGoalSound)
+              -- elseif (commonData.selectedSkin == "Neymar") then  
+              --   commonData.playSound(sounds.neymarGoalSound)
+              -- elseif (commonData.selectedSkin == "Rooney") then  
+              --   commonData.playSound(sounds.rooneyGoalSound)
+              -- elseif (commonData.selectedSkin == "Steph") then  
+              --   commonData.playSound(sounds.stephGoalSound)
+              -- elseif (commonData.selectedSkin == "PewDiePie") then  
+              --   commonData.playSound(sounds.PewdsGoalSound)  
+              -- elseif (commonData.selectedSkin == "Zombie") then  
+              --   commonData.playSound(sounds.goalBrainzSound)                
+              -- end  
       end
 
     
@@ -4772,7 +4595,7 @@ gameStatus.isGameActive = true
         hero:init()
         hero:cancelKick()
         hero:stand(true)
-        scoreText.text = "0M"
+        scoreText.text = "0"
         
         if (ballSkin) then
           ballSkin.alpha = 1
@@ -4798,20 +4621,20 @@ gameStatus.isGameActive = true
          timer.cancel( initKickColorHandle )
         end 
 
-        speedCircle.alpha = 1
+        
         initKickColorHandle = timer.performWithDelay(4, initKickColor, 100)
            
 
         if (type == "perfect") then
-          speedCircle:setFillColor(0 ,  1  , 0)
+          
           commonData.playSound( sounds.perfectKickSound )  
           scoreText.text = "GOOD"
         elseif (type == "good") then
-          speedCircle:setFillColor(1 ,  1  , 0)
+          
           commonData.playSound( sounds.perfectKickSound )  
           scoreText.text = "FINE"
         else  
-          speedCircle:setFillColor(1 ,  0  , 0)
+          
           commonData.playSound( sounds.badKickSound ) 
           scoreText.text = "BAD"
         end
@@ -4892,7 +4715,7 @@ gameStatus.isGameActive = true
              end 
 
         else  
-           speedCircle.alpha = 1
+           
            initKickColorHandle = timer.performWithDelay(4, initKickColor, 100)
            
          end
@@ -5026,7 +4849,7 @@ gameStatus.isGameActive = true
           end    
         end                    
         
-        ob.speedometer:setSpeed(gameStatus.speed)
+        
 
         if (isBadKick and ob.onGround) then
           
@@ -5058,7 +4881,10 @@ gameStatus.isGameActive = true
 
         if (isPerfectKcick) then
            consecutivePerfects = consecutivePerfects + 1
-
+           gameStatus.kicksMulti = gameStatus.kicksMulti + 1 
+           ob.updateScoreboard(gameStatus.kicksMulti)
+           gameStatus.shakeamount2 = 10
+           
            if ( consecutivePerfects >= 20 ) then
               achivmentAlert("DribbleMaster")
            elseif ( consecutivePerfects >= 8 ) then
@@ -5083,51 +4909,28 @@ gameStatus.isGameActive = true
             if ( consecutivePerfects == 6) then
               reportChallenge("perfect6")
             
-             end
+            end
 
-
-           
-
-           if ( consecutivePerfects == ULTRA_MODE_PERFECTS ) then
+           if ( gameStatus.kicksMulti == ULTRA_MODE_PERFECTS ) then
               ob.enterUltraMode()
            end
-
-           if (consecutivePerfects == 4) then
-                local shouldAdd  = false
-                
-                 if ((commonData.selectedSkin == "Rolando" or 
-                      commonData.selectedSkin == "Nessi" )  and
-                      mRandom(2) == 1 ) then
-                    shouldAdd  = true
-                elseif ( (commonData.selectedSkin == "Zlatan" or commonData.selectedSkin == "Neymar" or 
-                  commonData.selectedSkin == "Rooney" or commonData.selectedSkin == "Totti" or 
-                    commonData.selectedSkin == "Steph" ) and  mRandom(5) == 1) then
-                    shouldAdd  = true
-                end 
-                
-                if (shouldAdd) then
-                    ob.coinsCount = ob.coinsCount  + 1            
-                    additionalCount = 1
-                    setCoinsCount()
-                    gameStats.coins = gameStats.coins + 1
-
-                    timer.performWithDelay(4000, initAdditionalCoins, 1)
-                  
-                    commonData.playSound( sounds.coinSound ) 
-                end  
- 
-          end  
            
         else
+
+          if consecutivePerfects == 0 then
+            gameStatus.kicksMulti = 0
+          end  
+
           consecutivePerfects = 0             
+          ob.updateScoreboard(gameStatus.kicksMulti)
         end
         
+
         
         if (gameStatus.speed >= LITTLE_RUNNER_SPEED) then
           achivmentAlert("YouLittleRunner")
           reportChallenge("maxSpeed")
           
-
         end 
         
         --speed = gameStatus.speed + 0.7
@@ -5157,13 +4960,13 @@ gameStatus.isGameActive = true
         end
 
         if (gameStatus.isPrevLeft == gameStatus.isLeftLeg and not gameStatus.isAnyLeg) then
-          speedCircle:setFillColor(1 ,  0  , 0)
+          --speedCircle:setFillColor(1 ,  0  , 0)
          --  ballon:setFillColor(1 ,  0  , 0)
          --  if (ballSkin) then
          --    ballSkin:setFillColor(1 ,  0  , 0)
          -- end  
         else
-          speedCircle:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
+          --speedCircle:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
          --  ballon:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
          --  if (ballSkin) then
          --    ballSkin:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
@@ -5177,6 +4980,17 @@ gameStatus.isGameActive = true
         gameStatus.isAnyLeg = false
          gameStatus.kickStart = system.getTimer()
 
+        
+        --  local power = consecutivePerfects
+        --    if (power > 8) then
+        --       power = 8
+        --    end
+
+        --     ob.coinsCount = math.pow (2,power)
+        -- setCoinsCount()
+
+
+         multiText.text = "x" .. gameStatus.kicksMulti + 1
         
       end
 
@@ -5276,8 +5090,10 @@ gameStatus.isGameActive = true
                                elseif (shotPower > 0.8) then
                                   shotPower = 0.8 + (shotPower - 0.8) *3/7   
 
-                              elseif (shotPower < MINIMAL_SHOT_POWER) then
+                              elseif (shotPower < MINIMAL_SHOT_POWER and ballon.y < 250 ) then
                                     shotPower = 0
+                              elseif (ballon.y > 250 and shotPower < WEAK_SHOT_POWER ) then      
+                                 shotPower = 0.7
                                elseif (shotPower < WEAK_SHOT_POWER) then     
                                   shotPower = WEAK_SHOT_POWER
                                end
@@ -5421,8 +5237,12 @@ gameStatus.isGameActive = true
                                     --collisionRect.isSensor = false
                                     ballon.isSleepingAllowed = false
                                     
-                                    speedCircle:setFillColor(1 ,  0  , 0)
+                                    
                                      consecutivePerfects = 0
+                                     gameStatus.kicksMulti = 0
+                                     ob.updateScoreboard(gameStatus.kicksMulti)
+                                      multiText.text = "x" .. gameStatus.kicksMulti + 1
+                                      
                                      gameStatus.speed  = gameStatus.speed - (gameStatus.speed / MAX_SPEED) / 3
                                      
 
@@ -5484,7 +5304,7 @@ gameStatus.isGameActive = true
                                       gameStats.finishReason = "hitDog"
                                     end
                                     
-                                    commonData.playSound( sounds.dogHitSound ) 
+                                    
                                 end
 
                                 if ( event.object1.isArs  or  event.object2.isArs ) then

@@ -19,7 +19,7 @@ function ballPack.new (skeletonData)
 
 	self.json = spine.SkeletonJson.new()
 	self.json.scale = 0.5
-	self.skeletonData = self.json:readSkeletonDataFile("BallPackAnimation.json")
+	self.skeletonData = self.json:readSkeletonDataFile("PacksScreen/PacksScreen.json")
 
 	self.skeleton = {}
 	self.skeleton = spine.Skeleton.new(self.skeletonData)
@@ -101,6 +101,7 @@ function ballPack.new (skeletonData)
 
 	function self:init()	
 		Runtime:addEventListener("enterFrame", handleFrame)
+		self.state:setAnimationByName(0, "Empty", false, 1)
 	end
 
 	function self:open()	
@@ -114,21 +115,21 @@ function ballPack.new (skeletonData)
 		isFirst = true
 		isSpecial = true
 	
-		self.state:setAnimationByName(0, "Open2", false, 1)
+		self.state:setAnimationByName(0, "Open", false, 1)
 	end
 	
 
 	function self:drop()	
 		isFirst = true
 		isSpecial = false
-		self.state:setAnimationByName(0, "Drop", false, 1)
-		self.state:setAnimationByName(0, "Spin", true, 0)
+		self.state:setAnimationByName(0, "NewBall", false, 1)
+	--	self.state:setAnimationByName(0, "Spin", true, 0)
 
 	end
 
 	function self:spin()	
 		isSpecial = false
-		self.state:setAnimationByName(0, "Spin", true, 0)
+		self.state:setAnimationByName(0, "Idel", true, 0)
 	end
 
 

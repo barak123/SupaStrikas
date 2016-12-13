@@ -6,6 +6,10 @@ display.setStatusBar(display.HiddenStatusBar)
 --"classes" that you created in outside files.
 local composer = require( "composer" )
 local mainGroup = display.newGroup()
+
+local licensing = require( "licensing" )
+licensing.init( "google" )
+
 local main = function()
      --this creates a view that we will use to load
      --the other scenes into, so as our game progresses

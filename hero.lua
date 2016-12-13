@@ -183,7 +183,7 @@ function hero.new (scale, showBall, isFromShop , avatar)
 		local rightShoeObj = nil
 		local rightTopObj = nil
 		local rightBottomObj = nil
-		local rightShoeObj = nil
+		
 		function self.skeleton:createImage (attachment)
 			-- Customize where images are loaded.
 			
@@ -252,32 +252,30 @@ function hero.new (scale, showBall, isFromShop , avatar)
 				
 				 newPart =  display.newImage("balls/" .. attachmentImg .. ".png")
 						
-			elseif (attachment.name == "HeroResized/MessiSkin/LegFrontShoe" or 
-					attachment.name == "HeroResized/DribbleGuySkin/LegFrontShoe" or
-					attachment.name == "HeroResized/MessiSkin/LegBackShoe" or
-					attachment.name == "HeroResized/DribbleGuySkin/LegBackShoe") then
-				
-				if 	attachment.name == "HeroResized/DribbleGuySkin/LegFrontShoe" or
-					attachment.name == "HeroResized/MessiSkin/LegFrontShoe"  then
+			elseif string.ends(attachment.name , "Shoe") then				
+				newPart = display.newImage( attachmentImg .. ".png")
+				if 	string.ends(attachment.name , "LegFrontShoe")  then
 					
-					if skinToDisplay == "DribbleBot" then
-						newPart =  display.newImage("HeroResized/Dribblebot/Shoe.png")
-					else
-						newPart =  display.newImage("shoes/" .. shoeToDisplay .. "/LegFrontShoe.png")
-					end
+					-- if skinToDisplay == "DribbleBot" then
+					-- 	newPart =  display.newImage("HeroResized/Dribblebot/Shoe.png")
+					-- else
+					-- 	newPart =  display.newImage("shoes/" .. shoeToDisplay .. "/LegFrontShoe.png")
+					-- end
 					rightShoeObj = newPart
 					
 				else
 
-					if skinToDisplay == "DribbleBot" then
-						newPart =  display.newImage("HeroResized/Dribblebot/Shoe.png")
-					else
-						newPart =  display.newImage("shoes/" .. shoeToDisplay .. "/LegBackShoe.png")
-					end	
+					-- if skinToDisplay == "DribbleBot" then
+					-- 	newPart =  display.newImage("HeroResized/Dribblebot/Shoe.png")
+					-- else
+					-- 	newPart =  display.newImage("shoes/" .. shoeToDisplay .. "/LegBackShoe.png")
+					-- end	
 					leftShoeObj = newPart
 
 					
 				end	
+
+
 
 			elseif (skinToDisplay == "littleDribbler" or 
 					skinToDisplay == "KSI" or 
@@ -340,6 +338,11 @@ function hero.new (scale, showBall, isFromShop , avatar)
 				elseif string.ends(attachment.name , "LegFrontBottom") then
 					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontBottom.png")
 					rightBottomObj  = newPart	
+				elseif string.ends(attachment.name , "LegFrontBottom") then
+					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontBottom.png")
+					rightBottomObj  = newPart		
+
+					
 				else
 					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontTop.png")		
 					rightTopObj  = newPart	
@@ -364,8 +367,7 @@ function hero.new (scale, showBall, isFromShop , avatar)
 				leftBottomObj  = newPart	
 			elseif string.ends(attachment.name , "LegBackTop") then
 				leftTopObj  = newPart	
-			elseif string.ends(attachment.name , "LegFrontBottom") then
-				
+			elseif string.ends(attachment.name , "LegFrontBottom") or string.ends(attachment.name , "LegFrontBotom") then				
 				rightBottomObj  = newPart	
 			elseif string.ends(attachment.name , "LegFrontTop") then
 				
@@ -619,13 +621,12 @@ function hero.new (scale, showBall, isFromShop , avatar)
 			
 			legAngle = -82
 			isFirstFrame = true
-			local rnd = math.random(3)
+			local rnd = math.random(2)
 			if (rnd == 1)  then
 				self.state:setAnimationByName(0, "Bummer01", true)	
-			elseif (rnd == 2) then				
-				self.state:setAnimationByName(0, "Bummer02", false)	
+				
 			else
-				self.state:setAnimationByName(0, "Bummer03", false)	
+				self.state:setAnimationByName(0, "Bummer02", false)								
 			end
 			
 			
@@ -672,10 +673,19 @@ function hero.new (scale, showBall, isFromShop , avatar)
 						self.state:setAnimationByName(0, "BotDribbleRight", true)
 					end
 			else	
-				if pIsLeftLeg then
-					self.state:setAnimationByName(0, "DribbleLeft", true)
-				else
-					self.state:setAnimationByName(0, "DribbleRight", true)
+
+				if walkSpeed > 6 then				
+					if pIsLeftLeg then
+						self.state:setAnimationByName(0, "DribbleRunLeft", true)
+					else
+						self.state:setAnimationByName(0, "DribbleRunRight", true)
+					end
+				else	
+					if pIsLeftLeg then
+						self.state:setAnimationByName(0, "DribbleLeft", true)
+					else
+						self.state:setAnimationByName(0, "DribbleRight", true)
+					end
 				end
 			end
 
@@ -742,6 +752,7 @@ function hero.new (scale, showBall, isFromShop , avatar)
 
 
 		function self:walk( )
+			--self.skeleton.group.x = display.contentWidth * 0.25 
 
 			resetFill()
 
@@ -758,8 +769,14 @@ function hero.new (scale, showBall, isFromShop , avatar)
 					self.state:setAnimationByName(0, "ZombieWalk", true)
 				elseif commonData.selectedSkin == "DribbleBot" then
 					self.state:setAnimationByName(0, "BotWalk", true)
-				else						
-					self.state:setAnimationByName(0, "Walk", true)
+				else		
+
+					if walkSpeed > 6 then				
+					--self.state:setAnimationByName(0, "Walk", true)
+						self.state:setAnimationByName(0, "Run", true)
+					else
+						self.state:setAnimationByName(0, "Walk", true)
+					end
 				end
 
 				legAngle = -82
@@ -791,21 +808,32 @@ function hero.new (scale, showBall, isFromShop , avatar)
 
 		function self:jump( )
 			
+		--	self.skeleton.group.x = display.contentWidth * 0.25 + 20
 			resetFill()
 			self.skeleton:setToSetupPose()
 			legAngle = -82
 			
-
+			local lowDuration = 0
 			if commonData.selectedSkin == "DribbleBot" then
 				self.state:setAnimationByName(0, "BotJump", false)			
 			else	
-				local rnd = math.random(2)
+				local rnd = 1--math.random(2)
 				if (rnd == 1)  then
 					self.state:setAnimationByName(0, "Jump", false)
+					lowDuration = skeletonData:findAnimation("Jump").duration * 1000
 				else			
 					self.state:setAnimationByName(0, "Jump2", false)			
+					lowDuration = skeletonData:findAnimation("Jump2").duration * 1000
 				end
 			end
+
+
+			-- timer.performWithDelay( lowDuration/ 20  , function ()
+		 -- 		self.skeleton.group.x = self.skeleton.group.x -1 
+		 -- 		print(self.skeleton.group.x)
+			
+		 -- 	end, 20)
+		 	
 			
 			isJumping = true
 			isKicking = false
@@ -1060,6 +1088,18 @@ function hero.new (scale, showBall, isFromShop , avatar)
 
 
 		function self:setWalkSpeed(newSpeed)
+			
+			if (not isJumping) then
+				if newSpeed  > 6 and walkSpeed <=6 then				
+				--self.state:setAnimationByName(0, "Walk", true)
+					self.state:setAnimationByName(0, "Run", true)
+				end
+
+				if newSpeed  < 6 and walkSpeed >=6 then						
+					self.state:setAnimationByName(0, "Walk", true)
+				end
+			end				
+			
 			walkSpeed = newSpeed
 		end
 
