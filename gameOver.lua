@@ -1368,6 +1368,7 @@ function scene:create( event )
      --everything from here down to the return line is what makes
      --up the scene so... go crazy
      background = display.newImage("images/EndGameBG.png")
+     -- background = display.newImage("images/EndGameBG Blue.png")
 
     
      background.xScale =  (display.actualContentWidth*0.7) / background.contentWidth
@@ -1665,7 +1666,7 @@ function scene:create( event )
       playButton = widget.newButton
       {
           x = 410,
-          y = 165,
+          y = 180,
           id = "playButton",
           defaultFile = buttonsSet .. "/End/TryAgainUp.png",
           overFile = buttonsSet .. "/End/TryAgainDown.png",
@@ -1680,7 +1681,7 @@ function scene:create( event )
       local menuButton = widget.newButton
       {
           x = 240,
-          y = 272,
+          y = 280,
           id = "menuButton",
           defaultFile = buttonsSet .. "/End/MainMenuUp.png",
           overFile = buttonsSet .. "/End/MainMenuDown.png",
@@ -1737,7 +1738,7 @@ function scene:create( event )
       shareButton = widget.newButton
       {
           x = 120,
-          y = 270,
+          y = 278,
           id = "share",
           defaultFile = buttonsSet .. "/End/ShareScoreUp.png",
           overFile = buttonsSet .. "/End/ShareScoreDown.png",
@@ -1751,7 +1752,7 @@ function scene:create( event )
       local openPkgButton = widget.newButton
       {
           x = 360,
-          y = 270,
+          y = 278,
           id = "openPkgButton",
           defaultFile = buttonsSet .. "/End/OpenPacksUp.png",
           overFile = buttonsSet .. "/End/OpenPacksDown.png",

@@ -370,46 +370,51 @@
       items.skins[skinIdx].id = "Shakes" 
 
 
-   --    skinIdx =skinIdx +  1
-   --    items.skins[skinIdx] = {}
-   --    items.skins[skinIdx].name = "Rachel"
-   --    items.skins[skinIdx].coinsCost = 300
-   --    items.skins[skinIdx].image = "images/shop/skins/Rachel.png"
-   --    items.skins[skinIdx].id = "Rachel" 
-
-
-   --    skinIdx =skinIdx +  1
-   --    items.skins[skinIdx] = {}
-   --    items.skins[skinIdx].name = "Vik"
-   --    items.skins[skinIdx].coinsCost = 400
-   --    items.skins[skinIdx].image = "images/shop/skins/Vik.png"
-   --    items.skins[skinIdx].id = "Vik" 
-
-   --      skinIdx =skinIdx +  1
-   --    items.skins[skinIdx] = {}
-   --    items.skins[skinIdx].name = "Kodi"
-   --    items.skins[skinIdx].coinsCost = 400
-   --    items.skins[skinIdx].image = "images/shop/skins/Kodi.png"
-   --    items.skins[skinIdx].id = "Kodi" 
-
-
-   --    skinIdx =skinIdx +  1
-   --    items.skins[skinIdx] = {}
-   --    items.skins[skinIdx].name = "Daniel"
-   --    items.skins[skinIdx].coinsCost = 400
-   --    items.skins[skinIdx].image = "images/shop/skins/Dannie.png"
-   --    items.skins[skinIdx].id = "Dannie" 
+      skinIdx =skinIdx +  1
 
 
 
 
-   --    skinIdx =skinIdx +  1
-   --    items.skins[skinIdx] = {}
-   --    items.skins[skinIdx].name = "Little Harry"
-   --    items.skins[skinIdx].coinsCost = 1000
-   --    items.skins[skinIdx].image = "images/shop/skins/W2S.png"
-   --    items.skins[skinIdx].id = "W2S" 
-   --    items.skins[skinIdx].googleStoreId = "rvstyle.little.w2s"
+
+      items.skins[skinIdx] = {}
+      items.skins[skinIdx].name = "CoolJoe"
+      items.skins[skinIdx].coinsCost = 300
+      items.skins[skinIdx].image = "images/shop/skins/CoolJoe.png"
+      items.skins[skinIdx].id = "CoolJoe" 
+
+
+      skinIdx =skinIdx +  1
+      items.skins[skinIdx] = {}
+      items.skins[skinIdx].name = "ElMatador"
+      items.skins[skinIdx].coinsCost = 400
+      items.skins[skinIdx].image = "images/shop/skins/ElMatador.png"
+      items.skins[skinIdx].id = "ElMatador" 
+
+        skinIdx =skinIdx +  1
+      items.skins[skinIdx] = {}
+      items.skins[skinIdx].name = "Klaus"
+      items.skins[skinIdx].coinsCost = 400
+      items.skins[skinIdx].image = "images/shop/skins/Klaus.png"
+      items.skins[skinIdx].id = "Klaus" 
+
+
+      skinIdx =skinIdx +  1
+      items.skins[skinIdx] = {}
+      items.skins[skinIdx].name = "NorthShaw"
+      items.skins[skinIdx].coinsCost = 400
+      items.skins[skinIdx].image = "images/shop/skins/NorthShaw.png"
+      items.skins[skinIdx].id = "NorthShaw" 
+
+
+
+
+      skinIdx =skinIdx +  1
+      items.skins[skinIdx] = {}
+      items.skins[skinIdx].name = "TwistingTiger"
+      items.skins[skinIdx].coinsCost = 1000
+      items.skins[skinIdx].image = "images/shop/skins/TwistingTiger.png"
+      items.skins[skinIdx].id = "TwistingTiger" 
+   
 
 
    --    skinIdx =skinIdx +  1

@@ -2657,9 +2657,9 @@ function restartGame()
 
       ob.exitUltraMode()
       
-      if commonData.gameData.gamesCount == commonData.gameData.gamesCountForInstruct and not gameStatus.isTutorial then
-        ob.kickInstruct()
-      end
+      -- if commonData.gameData.gamesCount == commonData.gameData.gamesCountForInstruct and not gameStatus.isTutorial then
+      --   ob.kickInstruct()
+      -- end
 
 
 
@@ -4167,7 +4167,14 @@ gameStatus.isGameActive = true
                         end
     	           end 
 
-                 if ( monster.kickTimer == 1 and system.getTimer() - gameStatus.kickStart > KICK_TIMEUOT_DURATION
+                 local timeoutDuration = 1
+
+                 if IS_AUTO_KICK then
+                  timeoutDuration = KICK_TIMEUOT_DURATION_AUTO
+                 else
+                  timeoutDuration = KICK_TIMEUOT_DURATION
+                 end 
+                 if ( monster.kickTimer == 1 and system.getTimer() - gameStatus.kickStart > timeoutDuration
                   and gameStatus.isGameActive  and table.maxn(touchIDs) > 0 and (not gameStatus.isTutorial or ob.tutorialStage > 5 ) ) then
                         
                                 hero:fall() 
@@ -4208,7 +4215,17 @@ gameStatus.isGameActive = true
                     collisionRect.y = 300
                   end
                  -- collisionRect.height = 60
-                  
+                   
+                      if IS_AUTO_KICK then
+                       if (ob.onGround and not gameStatus.preventKick) then
+                           gameStatus.lastTime =event.time                    
+                           collisionRect.alpha=ob.defualtAlpha
+                           
+                           gameStatus.lastY =  gameStatus.lastY - 30 
+
+                       end 
+                     end
+
                  
                    local deltaYm = gameStatus.lastY - gameStatus.startY
                   
@@ -4283,7 +4300,16 @@ gameStatus.isGameActive = true
 
     	                  --local line = display.newLine( event.xStart, event.yStart, event.x, event.y )
     	                  --line.strokeWidth = 5
-    	                  endKickHandle = timer.performWithDelay(KICK_ASSIST_DURATION,finishTouch, 1)                         
+                        local assitTime = 1
+
+                        if IS_AUTO_KICK then
+                          assitTime = KICK_ASSIST_DURATION_AUTO
+                        else
+                          assitTime = KICK_ASSIST_DURATION
+                        end
+
+
+    	                  endKickHandle = timer.performWithDelay(assitTime,finishTouch, 1)                         
     	               end
 
                      if (gameStatus.isTutorial  ) then
@@ -4416,14 +4442,16 @@ gameStatus.isGameActive = true
                    end
 
                      if(event.phase == "moved") then
-                  
-                      if (monster.kickTimer > 0 and ob.onGround and not gameStatus.preventKick) then
-                           gameStatus.lastTime =event.time                    
-                           collisionRect.alpha=ob.defualtAlpha
-                           
-                             gameStatus.lastY =  event.y
+                      
+                      if not IS_AUTO_KICK then
+                        if (monster.kickTimer > 0 and ob.onGround and not gameStatus.preventKick) then
+                             gameStatus.lastTime =event.time                    
+                             collisionRect.alpha=ob.defualtAlpha
+                             
+                               gameStatus.lastY =  event.y
 
-                       end 
+                         end 
+                      end
 
 
 
@@ -4770,6 +4798,10 @@ gameStatus.isGameActive = true
               end
               
             end
+
+            if IS_AUTO_KICK then
+              shotPower = 0.8
+            end
         else
             ballon.angularVelocity = 0
 
@@ -4802,53 +4834,61 @@ gameStatus.isGameActive = true
 
         -- TRYING OUT PERFECT POSITION BY Y (not timing)
          
-         kickRange = kickRange * gameStatus.heightFactor
-         
-        if not ob.onGround then
-            gameStatus.speed = gameStatus.speed - decSpeed
-            isBadKick = true
 
-        elseif (gameStatus.isLeftLeg == gameStatus.isPrevLeft and not gameStatus.isAnyLeg and ob.onGround) then
-            gameStatus.speed = gameStatus.speed - decSpeed
-            isBadKick = true
+         if IS_AUTO_KICK then
 
-            if (not gameStatus.isTutorial or ob.tutorialStage >= 5) then
-              gameStatus.shakeamount = 10
-            end  
-            
-            
-        elseif (kickRange >= PERFECT_POSITION - PERFECT_MARGIN and kickRange <= PERFECT_POSITION + PERFECT_MARGIN ) then
-            gameStatus.speed = gameStatus.speed + incSpeed
-           -- kickPos.text = "P"
-            
-            gameStats.bouncesPerfect =  gameStats.bouncesPerfect + 1
-            isPerfectKcick = true
-           
-        elseif ((kickRange >= PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE  and kickRange <= PERFECT_POSITION - PERFECT_MARGIN ) or
-               (kickRange >=  PERFECT_POSITION + PERFECT_MARGIN   and kickRange <=  PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE)) then   
-           --kickPos.text = "G"
-            if (shotPower < 0.5 and shotPower > 0.4) then
-                 gameStatus.speed = gameStatus.speed + incSpeed
-            end                       
-            
-            gameStats.bouncesGood =  gameStats.bouncesGood + 1
+            print (ballon.y)
+                   kickRange = ballon.y - 180
+         else 
+                   kickRange = kickRange * gameStatus.heightFactor
+         end                    
+
+                  if not ob.onGround then
+                      gameStatus.speed = gameStatus.speed - decSpeed
+                      isBadKick = true
+
+                  elseif (gameStatus.isLeftLeg == gameStatus.isPrevLeft and not gameStatus.isAnyLeg and ob.onGround and not IS_AUTO_KICK) then
+                      gameStatus.speed = gameStatus.speed - decSpeed
+                      isBadKick = true
+
+                      if (not gameStatus.isTutorial or ob.tutorialStage >= 5) then
+                        gameStatus.shakeamount = 10
+                      end  
+                      
+                      
+                  elseif (kickRange >= PERFECT_POSITION - PERFECT_MARGIN and kickRange <= PERFECT_POSITION + PERFECT_MARGIN ) then
+                      gameStatus.speed = gameStatus.speed + incSpeed
+                     -- kickPos.text = "P"
+                      
+                      gameStats.bouncesPerfect =  gameStats.bouncesPerfect + 1
+                      isPerfectKcick = true
+                     
+                  elseif ((kickRange >= PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE  and kickRange <= PERFECT_POSITION - PERFECT_MARGIN ) or
+                         (kickRange >=  PERFECT_POSITION + PERFECT_MARGIN   and kickRange <=  PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE)) then   
+                     --kickPos.text = "G"
+                      if (shotPower < 0.5 and shotPower > 0.4) then
+                           gameStatus.speed = gameStatus.speed + incSpeed
+                      end                       
+                      
+                      gameStats.bouncesGood =  gameStats.bouncesGood + 1
 
 
-        elseif (kickRange >= PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE  ) then
-          --kickPos.text = "TL"
-          gameStatus.speed = gameStatus.speed - decSpeed/2          
-          isBadKick = true
-           gameStats.bouncesLate =  gameStats.bouncesLate + 1
+                  elseif (kickRange >= PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE  ) then
+                    --kickPos.text = "TL"
+                    gameStatus.speed = gameStatus.speed - decSpeed/2          
+                    isBadKick = true
+                     gameStats.bouncesLate =  gameStats.bouncesLate + 1
 
-        elseif (kickRange <=  PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE   ) then       
-          --kickPos.text = "TE"
-          gameStatus.speed = gameStatus.speed - decSpeed/2
-          isBadKick = true
-          if (ob.onGround) then            
-             gameStats.bouncesEarly =  gameStats.bouncesEarly + 1  
-          end    
-        end                    
-        
+                  elseif (kickRange <=  PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE   ) then       
+                    --kickPos.text = "TE"
+                    gameStatus.speed = gameStatus.speed - decSpeed/2
+                    isBadKick = true
+                    if (ob.onGround) then            
+                       gameStats.bouncesEarly =  gameStats.bouncesEarly + 1  
+                    end    
+                  end     
+        -- end                        
+                  
         
 
         if (isBadKick and ob.onGround) then

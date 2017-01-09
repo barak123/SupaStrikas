@@ -14,7 +14,7 @@ kidTypes[1].anim = "EnemyCrouch"
 
 kidTypes[2] = {}
 kidTypes[2].json = "Hero.json"
-kidTypes[2].skin = "BadGuy01"
+kidTypes[2].skin = "BadGuy03"
 kidTypes[2].scale = 0.4
 kidTypes[2].anim = "EnemyCrouch2"
 
@@ -26,7 +26,7 @@ kidTypes[3].anim = "EnemyStand"
 
 kidTypes[4] = {}
 kidTypes[4].json = "Hero.json"
-kidTypes[4].skin = "BadGuy01"
+kidTypes[4].skin = "BadGuy03"
 kidTypes[4].scale = 0.4
 kidTypes[4].anim = "EnemySlide"
 
