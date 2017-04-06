@@ -351,7 +351,6 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
       backButton.x = display.screenOriginX  + backButton.contentWidth /2
 
-      
     
        local buyTrophie = widget.newButton
       {
@@ -362,7 +361,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
           overFile = "PacksScreen/GetTrophieDown.png",
           onEvent = getTrophieListener
       }
-      buyTrophie:scale(0.8,0.8)
+      buyTrophie:scale(0.4,0.4)
 
       buyTrophieDisabled  = display.newImage("PacksScreen/GetTrophieDisabled.png")
       
@@ -614,10 +613,10 @@ local function handleItemPrize()
         if (itemToBuy.image) then
             itemRewardImg = display.newImage(itemToBuy.image) -- "",0,0, "troika" , 24)
              if (itemRewardImg) then
-                 itemRewardImg.y = 100 
+                 itemRewardImg.y = 95 
                  itemRewardImg.x = 240
                  if (itemToBuy.imgScale) then
-                  itemRewardImg:scale(itemToBuy.imgScale * 0.6, itemToBuy.imgScale * 0.6)
+                  itemRewardImg:scale(itemToBuy.imgScale * 0.5, itemToBuy.imgScale * 0.5)
                  end
 
                  if (itemToBuy.color) then

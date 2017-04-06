@@ -19,8 +19,7 @@ local playButton = nil
 local background = nil
 
 local rateUsButton = nil
-local fbLoginButton = nil
-local fbLoginButton2 = nil
+
 local achivmetBarFull = nil
 local achivmetBar = nil
 local highScoreShadowText = nil
@@ -28,12 +27,11 @@ local parent = nil
 local scoreText  = nil
 local scoreTextS  = nil
 local packsIndicator = nil
- local LoginDisclamer = nil
+ 
  local highScoreText = nil
 
 local boosterMsgSpine =  nil
 local boosterMsg = nil
-local avatarsInProgress = 0
 
 local shareButton = nil
 
@@ -58,8 +56,6 @@ local notificationData = nil
 local scoreBox = nil
 local chalengesData = nil
 local chalengesBox = nil
-local friendsBox =nil
-local friendsData =nil
 
 local tip = nil
 local tip2 = nil
@@ -307,368 +303,15 @@ local function pairsByHighScore (t)
       return iter
     end
 
-
-local function buildFriendsPart(gameData)
-                     
-  
-                     if gameData.isConnectedToFB  or isSimulator then
-                        fbLoginButton2.alpha = 0 
-                        LoginDisclamer.alpha = 0 
-                      else
-                        fbLoginButton2.alpha = 1 
-                        LoginDisclamer.alpha = 1
-                      end  
-
-                    if not friendsData then
-                      --print("no friendsData")
-                      return
-                    end  
-
-                    if friendsData.numChildren then
-                      for j = 1, friendsData.numChildren do                       
-                          
-                            friendsData[1]:removeSelf()          
-                          
-                      end
-                    end
-
-                    
-                    local  friendPos = 1
-
-                    local freindTextOptions = 
-                          {
-                              --parent = textGroup,
-                              text = "",     
-                              x = 420,
-                              y = 20,
-                              width = 70,     --required for multi-line and alignment
-                              font = "UnitedSansRgHv",   
-                              fontSize = 15,
-                              align = "left"  --new alignment parameter
-                          }
-                    local freindTextOptions2 = 
-                        {
-                            --parent = textGroup,
-                            text = "",     
-                            x = 420,
-                            y = 20,
-                            width = 70,     --required for multi-line and alignment
-                            --height = 10,
-                            font = "UnitedSansRgHv",   
-                            fontSize = 10,
-                            align = "left"  --new alignment parameter
-                        }
-
-                    local localPlayerRank  = 1
-                    local isPlayerInTop  = 0
-
-                                        
-                    for index, friend in pairsByHighScore( commonData.friendsScore ) do
-  
-                    local isAvatarExists = friend.avatarId and commonData.avatars and commonData.avatars[friend.avatarId] 
-                            
-                            if index > gameData.highScore
-                            then
-                              localPlayerRank = localPlayerRank + 1
-                            elseif (isPlayerInTop == 0  and (gameData.isConnectedToFB or isSimulator))  then 
-                              isPlayerInTop = 1
-
-                              -- draw local player
-                              local heroBack = display.newImage("images/FriendBox.png")
-                               local heroAvatar = heroSpine.new(0.15, true, false)
-                                heroBack:scale(0.4,0.4)
-                               
-                               if friendPos % 2 == 1 then
-                                 heroBack.x = 160 
-                               else
-                                 heroBack.x = 300 
-                                
-                               end
-
-                               if friendPos > 2 then
-                                 heroBack.y = 210 
-                                 heroBack.x = 160 
-                                 heroBack.xScale = -0.4
-                               else
-                                 heroBack.y = 140 
-                               end
-
-                               heroBack:setFillColor(0,0.5,0.5)
-                               heroAvatar.skeleton.group.x = heroBack.x + 40
-                               heroAvatar.skeleton.group.y = heroBack.y + 25
-
-                               heroAvatar.skeleton.group.xScale = -1
-                               
-                              
-
-                               local heroText = display.newText(freindTextOptions)
-                               local heroText1 = display.newText(freindTextOptions)
-                               heroText.text = friendPos .. ". YOU " 
-                               heroText1.text = gameData.highScore .. "M"
-                               heroText.x = heroBack.x - 15
-                               heroText.y = heroBack.y - 15
-
-                               heroText1.x = heroBack.x 
-                               heroText1.y = heroBack.y + 7
-
-                               heroText1:setFillColor(1,206/255,0)
-                               --heroBack:setFillColor(19/256,236/256,254/256)
-                               heroBack:setFillColor(0,1,0)
-                               
-                               avatarsInProgress = avatarsInProgress + 1
-                               heroAvatar:init()
-
-                               timer.performWithDelay(1, function () 
-                                  
-                                 heroAvatar:pause()
-                                 avatarsInProgress = avatarsInProgress - 1
-                               end , 1)
-
-
-                               local friendGroup = display.newGroup()
-                               friendGroup:insert(heroBack)
-                               friendGroup:insert(heroAvatar.skeleton.group)
-                               friendGroup:insert(heroText)
-                               friendGroup:insert(heroText1)
-
-                               if friendsData and friendsData.isVisible then
-                                 friendsData:insert(friendGroup)
-                               else
-                                 friendGroup.alpha = 0 
-                               end
-                               
-                            end  
-                      
-                          if friendPos < 3 then
-                                 local avatarToLoad = nil
-                                  if isAvatarExists then
-                                    avatarToLoad = commonData.avatars[friend.avatarId].data
-                                  else
-                                     avatarToLoad = {pants = "defaultPants",
-                                                  shirt = "defaultShirt",
-                                                  shoes = "Default",
-                                                  ball = "Ball001",
-                                                  skin = "littleDribbler"
-                                                }  
-                                  end  
-                                  
-
-                                 local friendBack = display.newImage("images/FriendBox.png")
-                                 local friendAvatar = heroSpine.new(0.15, true, false, avatarToLoad)
-                                  friendBack:scale(0.4,0.4)
-                                 
-                                 if (friendPos + isPlayerInTop) % 2 == 1 then
-                                   friendBack.x = 160 
-                                 else
-                                   friendBack.x = 300 
-                                  
-                                 end
-
-                                 if (friendPos + isPlayerInTop) > 2 then
-                                   friendBack.y = 210 
-                                   friendBack.xScale = -0.4
-                                 else
-                                   friendBack.y = 140 
-                                 end
-
-                                 friendAvatar.skeleton.group.x = friendBack.x + 40
-                                 friendAvatar.skeleton.group.y = friendBack.y + 25
-
-                                 friendAvatar.skeleton.group.xScale = -1
-                                 
-                                 local friendText = display.newText(freindTextOptions)
-
-                                 local friendText2 = display.newText(freindTextOptions)
-                                 local friendText3 = display.newText(freindTextOptions2)
-                                 local friendText4 = display.newText(freindTextOptions)
-
-                                 friendText.text = (friendPos + isPlayerInTop) .. ". " 
-
-                                 local isFirst = true
-                                 friendText3.text = ""
-                                 for i in string.gmatch(friend.name, "%S+") do
-                                   
-                                   if isFirst then
-                                      friendText2.text = i
-                                   else
-                                    friendText3.text = friendText3.text ..  i .. " "
-                                   end 
-                                   isFirst = false
-
-                                 end
-                                 --friendText2.text = string.gmatch(friend.name, "%S+")[1] -- split(friend.name)[1] 
-                                 --friendText3.text = friend.name 
-                                 friendText4.text =  index .. "M"
-
-                                 friendText.x = friendBack.x - 15
-                                 friendText.y = friendBack.y - 15
-
-                                 friendText2.x = friendBack.x 
-                                 friendText2.y = friendBack.y - 15
-                                
-                                 friendText3.x = friendBack.x 
-                                 friendText3.y =  friendText2.y + friendText2.contentHeight / 2 + friendText3.contentHeight / 2  - 5
-                                
-                                 friendText4.x = friendBack.x 
-                                 --friendText4.y = friendBack.y + 15
-                                 friendText4.y =  friendText3.y + friendText3.contentHeight / 2 + friendText4.contentHeight / 2 
-                               
-                                 friendText4:setFillColor(1,206/255,0)
-                                
-                                 avatarsInProgress = avatarsInProgress + 1 
-                                 friendAvatar:init()
-                                 timer.performWithDelay(1, function () 
-                                  
-                                   friendAvatar:pause()
-                                   avatarsInProgress = avatarsInProgress - 1
-                                 end , 1)
-
-                                 
-
-                                  local friendGroup = display.newGroup()
-                                friendGroup:insert(friendBack)
-                                 friendGroup:insert(friendAvatar.skeleton.group)
-                                 friendGroup:insert(friendText)
-                                 friendGroup:insert(friendText2)
-                                 friendGroup:insert(friendText3)
-                                 friendGroup:insert(friendText4)
-
-                                 if friendsData and friendsData.isVisible then
-                                   friendsData:insert(friendGroup)
-                                 else
-                                   friendGroup.alpha = 0 
-                                 end
-                         end
-
-                         friendPos = friendPos + 1
-                        
-                      
-                    end -- end loop
-
-
-                                  if (isPlayerInTop == 0  and (gameData.isConnectedToFB or isSimulator))  then
-                                          isPlayerInTop = 1
-
-                                          -- draw local player
-                                                      local heroBack = display.newImage("images/FriendBox.png")
-                                                       local heroAvatar = heroSpine.new(0.15, true, false)
-                                                        heroBack:scale(0.4,0.4)
-                                                       
-                                                       local friendPos2 = friendPos
-                                                        if (friendPos2 > 3) then
-                                                          friendPos2 = 3
-                                                        end
-
-                                                       if friendPos2 % 2 == 1 then
-                                                         heroBack.x = 160 
-                                                       else
-                                                         heroBack.x = 300 
-                                                        
-                                                       end
-
-                                                       if friendPos2 > 2 then
-                                                         heroBack.y = 210 
-                                                         heroBack.xScale = -0.4
-                                                       else
-                                                         heroBack.y = 140 
-                                                       end
-
-                                                       heroAvatar.skeleton.group.x = heroBack.x + 40
-                                                       heroAvatar.skeleton.group.y = heroBack.y + 25
-
-                                                       heroAvatar.skeleton.group.xScale = -1
-                                                       
-                                                       local heroText = display.newText(freindTextOptions)
-                                                       local heroText1 = display.newText(freindTextOptions)
-                                                       heroText.text = friendPos .. ". YOU " 
-                                                       heroText1.text = gameData.highScore .. "M"
-                                                       heroText.x = heroBack.x - 15
-                                                       heroText.y = heroBack.y - 15
-
-                                                       heroText1.x = heroBack.x 
-                                                       heroText1.y = heroBack.y + 7
-
-                                                       heroText1:setFillColor(1,206/255,0)
-                                                       --heroBack:setFillColor(19/256,236/256,254/256)
-                                                       heroBack:setFillColor(0,1,0)
-                                                       avatarsInProgress = avatarsInProgress + 1
-                                                       heroAvatar:init()
-                                                       timer.performWithDelay(1, function () 
-                                                        --print("stop avatar")
-                                                         heroAvatar:pause()
-                                                         avatarsInProgress = avatarsInProgress - 1
-                                                       end , 1)
-
-                                                      local friendGroup = display.newGroup()
-                                                      friendGroup:insert(heroBack)
-                                                      friendGroup:insert(heroAvatar.skeleton.group)
-                                                      friendGroup:insert(heroText)
-                                                      friendGroup:insert(heroText1)
-
-                                                     if friendsData and friendsData.isVisible then
-                                                       friendsData:insert(friendGroup)
-                                                     else
-                                                       friendGroup.alpha = 0 
-                                                     end
-                                end 
-                                 if (gameData.isConnectedToFB or isSimulator)  then
-                                          friendPos = friendPos + 1
-                                                     if friendPos > 3 then
-                                                        friendPos = 4
-                                                     end 
-                                                     
-                                                      local heroBack1 = widget.newButton
-                                                      {
-                                                          x = 410,
-                                                          y = 165,
-                                                          id = "playButton",
-                                                          defaultFile = "images/InviteBTNUp.png",
-                                                          overFile = "images/InviteBTNDown.png",
-                                                          onEvent = commonData.fbInviteListener
-                                                      }
-                                                    
-                                                     heroBack1:scale(0.4,0.4)
-                                                       
-                                                       if friendPos % 2 == 1 then
-                                                         heroBack1.x = 160 
-                                                       else
-                                                         heroBack1.x = 300 
-                                                        
-                                                       end
-
-                                                       if friendPos > 2 then
-                                                         heroBack1.y = 210 
-                                                        -- heroBack1.xScale = -0.4
-                                                       else
-                                                         heroBack1.y = 140 
-                                                       end
-                                                       
-                                                    
-                                                      local friendGroup1 = display.newGroup()
-                                                      friendGroup1:insert(heroBack1)
-                                                      
-                                                     if friendsData and friendsData.isVisible then
-                                                       friendsData:insert(friendGroup1)
-                                                     else
-                                                       friendGroup1.alpha = 0 
-                                                     end
-                                end    
-            end -- end build friends
-
-
 local function showActiveScreen()
       if activeScreen == 1 then        
         scoreBox.alpha = 1 
-        chalengesBox.alpha = 0
-        friendsBox.alpha = 0
-      elseif activeScreen == 2 then        
+        chalengesBox.alpha = 0              
+        
+      else  
         scoreBox.alpha = 0 
         chalengesBox.alpha = 1
-        friendsBox.alpha = 0
-      else  
-        scoreBox.alpha = 0
-        chalengesBox.alpha = 0
-        friendsBox.alpha = 1
+        
       end  
     end  
 
@@ -717,7 +360,7 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.selectedShirt = "defaultShirt"
 
             
-            commonData.gameData.isConnectedToFB  = false
+            
 
           end  
        end 
@@ -787,13 +430,13 @@ local function showGameOver( gameResult , isFirstLoad)
                       if challeges[i].isUnlocked then
                       --      challegesText:setFillColor(19/256,236/256,254/256)
                         challegesCoinsText:setFillColor(1,206/255,0)
-                        challegesText:setFillColor(109/256,219/255,255/256)
+                        challegesText:setFillColor(1,206/255,0)
                         bullet = display.newImage("images/ChallengeBulletComplete.png")
                         
 
                       else
-                        challegesCoinsText:setFillColor(194/256,236/256,254/256)
-                        challegesText:setFillColor(194/256,236/256,254/256)
+                        challegesCoinsText:setFillColor(1,1,1)
+                        challegesText:setFillColor(1,1,1)
                         bullet = display.newImage("images/ChallengeBullet.png")
                                           
                       end
@@ -845,7 +488,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
             
             rateUsButton.alpha =0
-            fbLoginButton.alpha =0
+            
             local function postScoreSubmit( event )
                
                --whatever code you need following a score submission...                
@@ -912,7 +555,7 @@ local function showGameOver( gameResult , isFirstLoad)
               scoreTitleText.text = "NEW HIGH SCORE:"
               scoreTitleTextS.text = "NEW HIGH SCORE:"
 
-              submitHighScoreToFacebook()                 
+              
             else
 
               scoreTitleText.text = "YOU REACHED:"
@@ -943,12 +586,6 @@ local function showGameOver( gameResult , isFirstLoad)
             comboText.alpha = 1
             comboTextS.alpha = 1
 
-            if (isFirstLoad or isHighScore) then
-              timer.performWithDelay(1,function ()
-                
-                buildFriendsPart(commonData.gameData)
-              end,1)      
-            end  
 
             local  t = os.date( '*t' )
             
@@ -1233,7 +870,7 @@ local function showGameOver( gameResult , isFirstLoad)
            --      end    
 
                
-           elseif (commonData.gameData.gamesCount > 100 and isHighScore and not commonData.gameData.rateUsShown ) then   
+           elseif (commonData.gameData.gamesCount > 100 and isHighScore and not commonData.gameData.rateUsShown  ) then   
            
               local rateImg = display.newImage("images/Rate.png")
               rateImg:scale(0.7,0.7)
@@ -1257,24 +894,7 @@ local function showGameOver( gameResult , isFirstLoad)
               --showPrizeNotification("NICE SCORE!" , "Rate us if you like our game")
               showPrizeNotification("" , "",nil,false)
               commonData.gameData.rateUsShown = true
-            elseif (not commonData.gameData.isConnectedToFB and commonData.gameData.gamesCount == 50)  then
-            --elseif (not gameData.isConnectedToFB ) then
-              local rateImg = display.newImage("images/LoginWithFacebook.png")
-              rateImg:scale(0.65,0.65)
-              rateImg.x =190
-              rateImg.y =140
-
-               local currentSceneName = composer.getSceneName( "current" )
-                
-                if ( currentSceneName== "game" ) then
-                  notificationData:insert(rateImg)
-                else
-                  rateImg:removeSelf()
-                end
-              
-              fbLoginButton.alpha =1
-              --showPrizeNotification("NICE SCORE!" , "Rate us if you like our game")
-              showPrizeNotification("" , "",nil,false)
+            
             end    
 
 
@@ -1339,7 +959,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
             
             else
-              activeScreen = math.random(3)
+              activeScreen = math.random(2)
             
             end    
 
@@ -1361,8 +981,6 @@ function scene:create( event )
      scoreBox = display.newGroup()
      chalengesBox = display.newGroup()
      chalengesData = display.newGroup()
-     friendsBox = display.newGroup()
-     friendsData= display.newGroup()
      
      buttonsSet = "BlueSet"
      --everything from here down to the return line is what makes
@@ -1385,15 +1003,6 @@ function scene:create( event )
      
      chalengesTable.x = 240
      chalengesTable.y = 160
-
-      LoginDisclamer = display.newImage("images/LoginDisclamer.png")
-
-
-      LoginDisclamer.xScale =  (display.actualContentWidth*0.5) / LoginDisclamer.contentWidth
-      LoginDisclamer.yScale =  LoginDisclamer.xScale
-     
-     LoginDisclamer.x = 240
-     LoginDisclamer.y = 200
 
 
       boosterMsgSpine =  require ("boosterMsg")
@@ -1443,27 +1052,21 @@ function scene:create( event )
      end
 
     local function goToMenu()
-      if avatarsInProgress == 0 then
+      
        local options = {params = {gameData = commonData.gameData}}
-       composer.gotoScene( "menu" , options )
-      end 
-
+       composer.gotoScene( "menu" , options )      
     end 
+
     local function menuListener( event )
           
           if ( "ended" == event.phase ) then
             
             commonData.buttonSound()
 
-            if avatarsInProgress > 0 then
-              timer.performWithDelay(500, goToMenu , 1)
-            else  
-              local options = {params = {gameData = commonData.gameData}}
-              composer.gotoScene( "menu" , options )
-
-            end  
-
             
+            local options = {params = {gameData = commonData.gameData}}
+            composer.gotoScene( "menu" , options )
+
        
           end
           return true
@@ -1601,12 +1204,10 @@ function scene:create( event )
   
 
     local function goToPacks()
-       if avatarsInProgress == 0 then
-    
-         local options = {params = {gameData = commonData.gameData}}
-         composer.gotoScene( "packs" , options )
-       end  
-
+       
+       local options = {params = {gameData = commonData.gameData}}
+       composer.gotoScene( "packs" , options )
+     
     end 
 
     local function packsListener( event )
@@ -1615,13 +1216,8 @@ function scene:create( event )
             
             commonData.buttonSound()
 
-            if avatarsInProgress > 0 then
-              timer.performWithDelay(500, goToPacks , 1)
-            else  
-              local options = {params = {gameData = commonData.gameData}}
-              composer.gotoScene( "packs" , options )
-
-            end  
+            local options = {params = {gameData = commonData.gameData}}
+            composer.gotoScene( "packs" , options )
           end  
 
            return true
@@ -1704,35 +1300,9 @@ function scene:create( event )
       rateUsButton.yScale = rateUsButton.xScale  
       rateUsButton.x =  rateUsButton.x - (display.actualContentWidth - display.contentWidth) /2
 
-      fbLoginButton = widget.newButton
-      {
-          x = 240,
-          y = 265,
-          id = "fbLoginButton",
-          defaultFile = "ExtrasMenu/FBLogin.png",
-          overFile = "ExtrasMenu/FBLoginDown.png",
-          onEvent = commonData.fbLoginListener
-      }
-      fbLoginButton.xScale =  (display.contentWidth*0.25) / fbLoginButton.width
-      fbLoginButton.yScale = fbLoginButton.xScale  
-      fbLoginButton.x =  fbLoginButton.x - (display.actualContentWidth - display.contentWidth) /2
-      
-      fbLoginButton2 = widget.newButton
-      {
-          x = 280,
-          y = 155,
-          id = "fbLoginButton2",
-          defaultFile = "ExtrasMenu/FBLogin.png",
-          overFile = "ExtrasMenu/FBLoginDown.png",
-          onEvent = commonData.fbLoginListener
-      }
-      fbLoginButton2.xScale =  (display.contentWidth*0.25) / fbLoginButton2.width
-      fbLoginButton2.yScale = fbLoginButton2.xScale  
-      fbLoginButton2.x =  fbLoginButton2.x - (display.actualContentWidth - display.contentWidth) /2
       
 
       rateUsButton.alpha = 0
-      fbLoginButton.alpha = 0
       
 
       shareButton = widget.newButton
@@ -1973,13 +1543,10 @@ function scene:create( event )
     local function changeScreenListener( event )
      if ( "ended" == event.phase ) then
       commonData.buttonSound()
-      if event.target.id == "rightArrow" then
-        activeScreen = activeScreen + 1
-      else
-        activeScreen = activeScreen + 2 -- equal to -1
-      end 
-
-      activeScreen = activeScreen % 3
+      
+      activeScreen = activeScreen + 1
+      
+      activeScreen = activeScreen % 2
 
       showActiveScreen()
       
@@ -1998,10 +1565,10 @@ function scene:create( event )
         onEvent = changeScreenListener
     }
 
-    leftArrowButton.xScale =  (display.actualContentWidth*0.06) / leftArrowButton.width
-    leftArrowButton.yScale = leftArrowButton.xScale
+    leftArrowButton.xScale = -1* (display.actualContentWidth*0.05) / leftArrowButton.width
+    leftArrowButton.yScale = -1* leftArrowButton.xScale
 
-    leftArrowButton:rotate(180)
+    --leftArrowButton:rotate(180)
 
     local rightArrowButton = widget.newButton
     {
@@ -2013,7 +1580,7 @@ function scene:create( event )
         onEvent = changeScreenListener
     }
 
-    rightArrowButton.xScale =  (display.actualContentWidth*0.06) / rightArrowButton.width
+    rightArrowButton.xScale =  (display.actualContentWidth*0.05) / rightArrowButton.width
     rightArrowButton.yScale = rightArrowButton.xScale  
   --  rightArrowButton:rotate(-180)
     
@@ -2034,37 +1601,14 @@ function scene:create( event )
     scoreScreenText.y = 160 - background.contentHeight/2 + scoreScreenText.contentHeight/2 + 3
     scoreScreenText.text = "SCORE" 
 
-    local friendsScreenText = display.newText(boosterHeaderTextOptions)
-    friendsScreenText:setFillColor(255/255,241/255,208/255)
-    friendsScreenText.x = 240
-    friendsScreenText.y = 160 - background.contentHeight/2 + friendsScreenText.contentHeight/2 + 3
-    friendsScreenText.text = "TOP FRIENDS" 
-
-    fbLoginButton2.alpha = 0
-    LoginDisclamer.alpha = 0
-
-    friendsScreenText.isConstant = true
-    fbLoginButton2.isConstant = true
-    LoginDisclamer.isConstant = true
-
     
-    rightArrowButton.y = friendsScreenText.y 
+    rightArrowButton.y = scoreScreenText.y 
     leftArrowButton.y = rightArrowButton.y 
 
 
     chalengesBox:insert(chalengesTable)
     chalengesBox:insert(challengesText)
     chalengesBox:insert(chalengesData)
-    
-    
-    friendsBox:insert(friendsScreenText)
-    friendsBox:insert(fbLoginButton2)
-    friendsBox:insert(LoginDisclamer)
-    friendsBox:insert(friendsData)
-    
-    
-          
-
        
      sceneGroup:insert(blackRect)
 
@@ -2088,7 +1632,7 @@ function scene:create( event )
 
      
 
-     sceneGroup:insert(friendsBox)     
+     
      sceneGroup:insert(scoreBox)     
      sceneGroup:insert(chalengesBox)     
      sceneGroup:insert(confetti)   
@@ -2100,7 +1644,7 @@ function scene:create( event )
        
      scoreBox.alpha = 1
      chalengesBox.alpha = 0
-     friendsBox.alpha = 0
+     
      
      sceneGroup:insert(playButton)
      
@@ -2123,7 +1667,7 @@ function scene:create( event )
      notificationData:insert(boosterCoinImg)   
      notificationData:insert(boosterHandImg) 
      notificationData:insert(rateUsButton) 
-     notificationData:insert(fbLoginButton) 
+     
          
      
      notificationData.x = 15
@@ -2210,10 +1754,6 @@ function scene:destroy( event )
 end
 
 
-function scene:outerDrawFriends(gameData)
-    --code to resume game
- buildFriendsPart(gameData)
-end
 
 function scene:outerRefreshResults(gameResult)
     --code to resume game

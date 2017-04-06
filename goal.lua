@@ -18,7 +18,7 @@ function goal.new (skeletonData)
 
 
 	self.json = spine.SkeletonJson.new()
-	self.json.scale = 0.5
+	self.json.scale = 0.65
 	self.skeletonData = self.json:readSkeletonDataFile("Goal/Goal.json")
 
 	self.skeleton = {}
@@ -93,12 +93,16 @@ function goal.new (skeletonData)
 	function self:init()	
 		Runtime:addEventListener("enterFrame", handleFrame)		
 		self.skeleton:setToSetupPose()
-		self.state:setAnimationByName(0, "animation", true, 0) --
+		 timer.performWithDelay( 800  , function ()
+				self.state:setAnimationByName(0, "GoalIn", true, 1) --	
+		 	end, 1)
+
+		
 	end
 
 	function self:goal()			
 		self.skeleton:setToSetupPose()
-		self.state:setAnimationByName(0, "Goal", false) --
+		self.state:setAnimationByName(0, "Score", false) --
 	end
 
 	

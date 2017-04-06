@@ -88,6 +88,7 @@ local sounds ={
  kidSound = nil,
  badKickSound = nil,
  jumpSound = nil,
+ heroFallSound = nil,
  saltaSound = nil,
  ballFallSound = nil,
  glassBreakSound =  nil,
@@ -127,8 +128,9 @@ local ob = {
   DOUBLE_KIDS_INDEX = 4,
   TALL_INDEX = 5,
   CAN_INDEX = 6,
-  BIRD_INDEX = 7,
-  GOAL_INDEX = 8,
+  CONE_INDEX = 7,
+  BIRD_INDEX = 8,
+  GOAL_INDEX = 9,
   goalBarL = nil,
   goalBarR = nil,
   goalBarU = nil,
@@ -165,6 +167,10 @@ local ob = {
   
 }
 
+if ( "simulator" == system.getInfo("environment"))  then
+  ob.isSimulator = true
+end
+
 local actualHeightInches = system.getInfo( "androidDisplayHeightInInches" )
 local heightInches = 2.56
 
@@ -196,6 +202,7 @@ local kickToStart = nil
 local consecutivePerfects = 0
 
 local pauseButton = nil
+
 local backgrounds = nil
 
 
@@ -225,13 +232,13 @@ local coinsSpine = nil
 
 --local fireBubbleObj= nil
 local ultraWave= nil
+--local ultraFloor= nil
 --coinsCoun
 
 local comments = nil
 local goal = nil
 
 
-local scoreMarks = nil
 
 local shotPower = 1
 local tutorialText = nil
@@ -280,6 +287,7 @@ local function buttonListener( event )
               gameStatus.isSalta = false
             end
             
+            commonData.playSound( sounds.jumpSound )   
             ob.onGround = false
             --shotPower = 1.2
             gameStatus.lastTime = system.getTimer()
@@ -302,6 +310,8 @@ display.setStatusBar(display.HiddenStatusBar)
  local heroSpine =  require ("hero")
  hero = heroSpine.new(0.33 , false)
  ob.chaser =  require ("chaser")
+ ob.coach =  require ("coach")
+ ob.bubble =  require ("bubble").new()
  require ("game_config")
  require ("achivmentsManager")
 
@@ -408,10 +418,10 @@ sheetContentWidth = 3174,
 local ultraSheetSetup = 
 {
 width = 256,
-height = 140,
+height = 145,
 numFrames = 51,
  sheetContentWidth = 2048,
-sheetContentHeight = 1008
+--sheetContentHeight = 1024
 }
 
 local kickOverSetup = 
@@ -441,6 +451,7 @@ local spriteSheet = graphics.newImageSheet("images/soccerSprite.png", imgsheetSe
 --local fireBubbleSheet = graphics.newImageSheet("images/fireBubble.png", firesheetSetup);
 
 local ultraWaveSheet = graphics.newImageSheet("images/UltraWaveSheetSmall.png", ultraSheetSetup);
+--local ultraFloorSheet = graphics.newImageSheet("images/UltraFloorSheet.png", ultraSheetSetup);
 
 
 
@@ -462,9 +473,15 @@ local bubbleData =
 
 local ultraData = 
 {
-{ name = "start", start = 1, count = 20, time = 1000, loopCount = 1},
-{ name = "advance", start = 38, count = 13, time = 800, loopCount = 0}
+{ name = "start", start = 1, count = 40, time = 1000, loopCount = 1},
+{ name = "advance", start = 41, count = 8, time = 800, loopCount = 0}
 }
+
+-- local ultraData = 
+-- {
+-- { name = "start", start = 1, count = 20, time = 1000, loopCount = 1},
+-- { name = "advance", start = 38, count = 13, time = 800, loopCount = 0}
+-- }
 
 
 local kickOverData = 
@@ -510,6 +527,7 @@ ballon:scale(0.23,0.23)
 ballon.isFixedRotation = true
 
 
+
 ultraBall = display.newImage("images/UltraBall.png")
 ultraBall.name = "fire"
 ultraBall.x = BALL_X
@@ -527,6 +545,43 @@ ballSkinGroup = display.newGroup()
 newChallengeGroup = display.newGroup()
 ob.multiGroup = display.newGroup()
 ob.scoreboard = display.newGroup()
+ob.pausedGroup = display.newGroup()
+
+ob.leftCtrl =  display.newImage("images/Touchpad.png")
+--ob.leftCtrl:setFillColor(1,0,0)
+--ob.leftCtrl.alpha  = 0.5
+ob.leftCtrl.x = 60
+ob.leftCtrl.y = 250
+ob.leftCtrl:scale(0.4,0.4)
+
+ob.leftCtrl.x = ob.leftCtrl.x  - (displayActualContentWidth - display.contentWidth) /2
+
+ob.rightCtrl = display.newImage("images/Touchpad.png")
+--ob.rightCtrl:setFillColor(1,0,0)
+--ob.rightCtrl.alpha  = 0.5
+ob.rightCtrl.x = 420
+ob.rightCtrl.y = 250
+ob.rightCtrl:scale(0.4,0.4)
+ob.rightCtrl.x = ob.rightCtrl.x  + (displayActualContentWidth - display.contentWidth) /2
+
+ob.leftTimer =  display.newImage("images/TouchpadTimer.png")
+--ob.leftCtrl:setFillColor(1,0,0)
+--ob.leftCtrl.alpha  = 0.5
+ob.leftTimer.x = 60
+ob.leftTimer.y = 250
+ob.leftTimer:scale(0.4,0.4)
+
+ob.leftTimer.x = ob.leftTimer.x  - (displayActualContentWidth - display.contentWidth) /2
+
+ob.rightTimer = display.newImage("images/TouchpadTimer.png")
+--ob.rightCtrl:setFillColor(1,0,0)
+--ob.rightCtrl.alpha  = 0.5
+ob.rightTimer.x = 420
+ob.rightTimer.y = 250
+ob.rightTimer:scale(0.6,0.6)
+ob.rightTimer.x = ob.rightTimer.x  + (displayActualContentWidth - display.contentWidth) /2
+
+
 
 fire = display.newGroup()
 fire.x = display.contentWidth / 6
@@ -584,16 +639,36 @@ ob.stageGroup.maskY = 160
 
 
 ultraWave = display.newSprite(ultraWaveSheet, ultraData);
+--ultraWave:scale(2.5,2)
 
-ultraWave:scale(2.5,2)
+
+ultraWave.xScale = display.actualContentWidth / ultraWave.contentWidth 
+ultraWave.yScale = 1.1 * display.actualContentHeight  / ultraWave.contentHeight
+
+-- ultraFloor = display.newSprite(ultraFloorSheet, ultraData);
+-- ultraFloor:scale(2.5,2.5)
 
 
 local backgroundData = {
-  {path="images/background.png" , speedFactor = nil , y  = 160 , scale = 1 , isfull = true},
-  {path="images/StadiumSmall.png" , speedFactor = 35 , y  = 120 , scale = 0.65 },
-   {path="images/GrassBig.png" , speedFactor = 25 , y  = 230 , scale = 0.3 },
-   {path="images/Goal.png" , speedFactor = 25 , y  = 183 , scale = 0.5 },
-  {displayGroup = ultraWave} , 
+  -- {path="images/background.png" , speedFactor = nil , y  = 160 , scale = 1 , isfull = true},
+   {path="images/StadiumSmall.png" , speedFactor = 35 , y  = 120 , scale = 0.65 , level = 1  },
+    {path="images/GrassBig.png" , speedFactor = 25 , y  = 230 , scale = 0.5 , level = 1 ,top = 180 },
+    {path="images/Goal.png" , speedFactor = 25 , y  = 183 , scale = 0.5 , level = 1 , top = 180},
+   {path="images/Glacier/IceSky.png" , speedFactor = nil , y  = 160 , scale = 3 , isfull = true , level = 2},
+   {path="images/Glacier/IceBack.png" , speedFactor = 35 , y  = 230 , scale = 0.5 , level = 2 , top = 190 },
+  {path="images/Glacier/IceBergs.png" , speedFactor = 25 , y  = 187 , scale = 0.2 , level = 2 , top = 190}, 
+  {path="images/Desert/DesertSky.png" , speedFactor = nil , y  = 160 , scale = 1 , isfull = true , level = 4},
+   {path="images/Desert/DesertBack.png" , speedFactor = 35 , y  = 230 , scale = 0.7 , level = 4 ,top = 170},
+   {path="images/Glacier/IceSky.png" , speedFactor = nil , y  = 160 , scale = 3 , isfull = true , level = 3},
+   {path="images/Castle/Ice mountains.png" , speedFactor = 35 , y  = 230 , scale = 0.6 , level = 3 ,top = 110},
+   {path="images/Castle/Castle.png" , speedFactor = 25 , y  = 230 , scale = 0.6 , level = 3 ,top = 40},
+   {path="images/EagleField/EagleSky.png" , speedFactor = nil , y  = 160 , scale = 3 , isfull = true , level = 5},
+   {path="images/EagleField/GrassBig.png" , speedFactor = 25 , y  = 230 , scale = 0.5 , level = 5 ,top = 180 },
+   {path="images/EagleField/Stadium.png" , speedFactor = 35 , y  = 120 , scale = 0.35 , level = 5  },
+    {path="images/EagleField/Goal.png" , speedFactor = 25 , y  = 183 , scale = 0.5 , level = 5 , top = 180},
+   
+   --{displayGroup = ultraWave} , 
+  
   --{path="images/Houses/HousesFar.png" , speedFactor = 20 , y  = 130 , scale = 0.3, alpha = 0.4 , isFirstStage = true },  
   --{path="images/GrassBG Tile.png" , speedFactor = 10 , y  = 190 , scale = 1.4 , isFirstStage = true},
   --{path="images/100mBG.png" , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 90 , endPos = 130 , isShowOnce = true },
@@ -626,8 +701,17 @@ local foregroundData = {
   --         scale = 0.85 , alpha = 0, backgroundStage="GAME" , startPos = 30 , endPos = 40},
   -- {path="images/Beach/FoorSeaDeck.jpg" , speedFactor = 1 , y  = 275 ,
   --         scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 96 , endPos = 200 },
-  {path="images/GrassBig.png" , speedFactor = 1 , y  = 280 ,
-          scale = 0.3 , alpha = 1,  startPos = 0 , endPos = 8000 , isFirstStage = true  },
+  {path="images/GrassBig.png" , speedFactor = 1 , y  = 280 , level = 1,  top  = 240,
+          scale = 0.6 , scaleY = -0.6 , alpha = 1 },
+{path="images/Glacier/IceFront.png" , speedFactor = 1 , y  = 300 , level = 2, top  = 240,
+          scale = 1  , alpha = 1  },   
+  {path="images/Desert/DesertFront.png" , speedFactor = 1 , y  = 280 , level = 4 ,top  = 240,
+          scale = 0.7  , alpha = 1  },               
+   {path="images/Castle/Floor.png" , speedFactor = 1 , y  = 280 , level = 3 ,top  = 240,
+          scale = 1  , alpha = 1  },                
+  {path="images/EagleField/GrassBigFront.png" , speedFactor = 1 , y  = 280 , level = 5,  top  = 240,
+          scale = 0.6 , scaleY = -0.6 , alpha = 1 },               
+--{displayGroup = ultraFloor} ,           
 
   -- {path="images/TransitionEffect.png" , speedFactor = 1 , y  = 160 , isShowOnce = true , isTransition = true, label = "100M" , 
   --         scale = 0.5 , alpha = 1, backgroundStage="GAME" , startPos = 95 , endPos = 30 , isEraser = true},
@@ -657,6 +741,11 @@ local function buildBackground(disGroup, data)
                   ob.stageGroup:insert(v.displayGroup)
                  end 
               else  
+                local yScale = v.scale
+                if v.scaleY then
+                  yScale = v.scaleY
+                end  
+
                local img = display.newImage(v.path)
                if  v.isfull then
                 img.x = 240
@@ -664,7 +753,17 @@ local function buildBackground(disGroup, data)
                 img.xScale = displayActualContentWidth / img.contentWidth 
                 img.yScale = display.actualContentHeight  / img.contentHeight
                else 
-                 img:scale(v.scale , v.scale)
+
+                
+                 img:scale(v.scale , yScale)
+
+                 if v.top then
+                  v.y = v.top + img.contentHeight / 2
+                 end
+
+                 if v.bottom then
+                  v.y = v.bottom - img.contentHeight /2
+                 end
                  
                  img.y = v.y
                  img.x = img.contentWidth  / 2  - (displayActualContentWidth - display.contentWidth) /2   
@@ -686,6 +785,7 @@ local function buildBackground(disGroup, data)
                img.isShowOnce = v.isShowOnce
                img.isTransition = v.isTransition
                img.label = v.label
+               img.level = v.level
                 
                img.showAndRotate = v.showAndRotate
                
@@ -703,7 +803,8 @@ local function buildBackground(disGroup, data)
                   img2.xScale = displayActualContentWidth / img2.contentWidth 
                   img2.yScale = display.actualContentHeight  / img2.contentHeight
                 else 
-                  img2:scale(v.scale , v.scale)
+
+                  img2:scale(v.scale , yScale)
                 end
                 img2.constWidth = img2.width * img2.xScale
                 img2.y = v.y
@@ -714,6 +815,7 @@ local function buildBackground(disGroup, data)
                 img2.startPos = v.startPos
                 img2.endPos = v.endPos
                 img2.showAndRotate = v.showAndRotate
+                img2.level = v.level
                
              
 
@@ -742,7 +844,7 @@ local function buildBackground(disGroup, data)
                       img3.xScale = displayActualContentWidth / img3.contentWidth 
                       img3.yScale = display.actualContentHeight  / img3.contentHeight
                     else 
-                      img3:scale(v.scale , v.scale)
+                      img3:scale(v.scale , yScale)
                     end
                     
                     img3.constWidth = img3.width * img3.xScale
@@ -758,6 +860,7 @@ local function buildBackground(disGroup, data)
                     img2.groupCount = additionalCount + 2
                     img3.groupCount = additionalCount + 2
                     img3.showAndRotate = v.showAndRotate
+                    img3.level = v.level
 
                      if v.alpha then
                       img3.alpha = v.alpha
@@ -789,6 +892,13 @@ ob.shadow = display.newImage("HeroResized/DribbleGuySkin/Shadow.png")
 ob.shadow.x = BALL_X
 ob.shadow.y = 273
 ob.shadow:scale(0.3,0.3)
+
+ob.ultraGlow = display.newImage("images/UltraHighlight.png") 
+ob.ultraGlow.x = hero.skeleton.group.x
+ob.ultraGlow.y = 273
+--ob.ultraGlow:scale(0.3,0.3)
+ob.ultraGlow.alpha = 0
+
 
 
 tutorialScales = display.newImage("images/TutorialScales.png")
@@ -964,16 +1074,6 @@ exitTutorialButton.alpha = 0
 
 
 
-
-
-
---create a new group to hold all of our blocks
-
-ob.pausedOverlay = display.newImage("images/Paused.png")
-ob.pausedOverlay.x = 240
-ob.pausedOverlay.y = 160
-ob.pausedOverlay:scale(0.3,0.3)
-ob.pausedOverlay.alpha = 0 
 
 blocks = display.newGroup()
 
@@ -1156,7 +1256,10 @@ tutorialConfirm:insert(ob.tutorialOkBtn)
 
 
  ultraWave.x = 240
-ultraWave.y = 100
+ultraWave.y = 160
+
+-- ultraFloor.x = 240
+-- ultraFloor.y = 170
 
 ob.groundLevel = 280
 gameStatus.speed = 5;
@@ -1250,11 +1353,14 @@ local fireFilter = { categoryBits = 64, maskBits = 0 } -- collides with leg , bo
 local redBody = { density=3, friction=0.1, bounce=0, radius=13.0, filter=ballFilter }
 
 local coneOutline = graphics.newOutline( 2, "images/ConeHitbox.png" )
-local trashOutline = graphics.newOutline( 2, "images/TrashCanHitbox.png" )
+local trashOutline = graphics.newOutline( 2, "images/Barrel_Hitbox.png" )
 
 local coneCollisionFilter = { categoryBits = 4, maskBits = 9 } -- collides with leg and hero
 local coneElement = { friction=0.4, bounce=0.1, filter=coneCollisionFilter , outline=coneOutline }
 local trashElement = { friction=0.4, bounce=0.1, filter=coneCollisionFilter , outline=trashOutline }
+local birdOutline = graphics.newOutline( 2, "WaterBot/Hitbox.png" )
+--local birdCollisionFilter =  {categoryBits = 4, maskBits = 9 } --- collides with ball and hero
+local birdBodyElement = { friction=0.4, bounce=0.3, filter=coneCollisionFilter ,  outline = birdOutline }
 
  ob.extras = display.newImage("ExtrasMenu/ExtasWindow.png")
  ob.extras.x = 240
@@ -1281,9 +1387,6 @@ local coinOutline = graphics.newOutline( 2, "images/coin.png" )
     
 local coinBodyElement = { isSensor=true,  filter=defenderCollisionFilter ,  outline = coinOutline }
 
-local birdOutline = graphics.newOutline( 2, "images/birdHitbox.png" )
-local birdCollisionFilter = { categoryBits = 32, maskBits = 10 } -- collides with ball and hero
-local birdBodyElement = { friction=0.4, bounce=0.3, filter=birdCollisionFilter ,  outline = birdOutline }
 
 
 
@@ -1295,29 +1398,7 @@ ob.defualtAlpha = 0
       playButton.y = 220
       ob.defualtAlpha = 0
 
-      commonData.friendsScore = {}
-      commonData.friendsScore[12] = {id = "barak", name="Barak Eliahu the first", avatarId="1" , rank = 3}
-      commonData.friendsScore[15] = {id = "rafi" , name = "רפי אלהרר", avatarId="2", rank = 2}
-      commonData.friendsScore[19] = {id = "dudu" , name = "dudu from afula", avatarId="9", rank = 2}
-      commonData.friendsScore[46] = {id = "shai" , name = "Shay Hay", avatarId="2", rank = 2}
-      commonData.friendsScore[126] = {id = "liad", name = "Liad Geva", avatarId="3", rank = 1}
       
-      commonData.avatars = {}
-      -- commonData.avatars["1"] = {data = {ball = "Brainz" , 
-      --                shirt = "RedJacket" ,
-      --               skin = "Messi" ,
-      --                 pants = "CoolJeansFaded" , 
-      --                 shoes = "Didas Lizard"} }                 
-      -- commonData.avatars["2"] = {data ={ball = "Brainz" , 
-      --                shirt = "RedJacket" ,
-      --               skin = "Rolando" ,
-      --                 pants = "CoolJeansFaded" , 
-      --                 shoes = "Didas Lizard"}  }                
-      -- commonData.avatars["3"] = {data ={ball = "Watermelon" , 
-      --                shirt = "RedJacket" ,
-      --               skin = "Zombie" ,
-      --                 pants = "CoolJeansFaded" , 
-      --                 shoes = "Didas Lizard"}  }                                                            
      else     
       playButton.y = 720
     end
@@ -1457,8 +1538,6 @@ local arsSpineAn = require "ars"
 
 --ars = display.newRect(500, 900 , 30,65)
 
-scoreMarks = display.newGroup()
-
 
 for i = 1, 5, 1 do
 
@@ -1524,20 +1603,20 @@ cone.name = "cone"
 
 cone.x = 900
 cone.y = 1500
-
+--cone:scale(0.4,0.4)
 cone.isAlive = false
 physics.addBody( cone, "dynamic" , coneElement )
 cone.gravityScale=0
 
 
-local trashCan = display.newImage("images/TrashCanFull.png")
+local trashCan = display.newImage("images/Barrel.png")
 
 trashCan.name = "trash"
 
 
 trashCan.x = 900
 trashCan.y = 1500
--- trashCan:scale(0.3,0.3)
+--trashCan:scale(0.3,0.3)
 trashCan.isAlive = false
 physics.addBody( trashCan, "dynamic" , trashElement )
 trashCan.gravityScale=0
@@ -1552,7 +1631,7 @@ obstecales:insert(trashCan)
 local birdSpineAn = require "bird"
 
 --bird = display.newRect(500, 900 , 30,65)
-local bird = display.newImage("images/birdHitbox.png")
+local bird = display.newImage("WaterBot/Hitbox.png")
 bird.alpha = ob.defualtAlpha
 
 --bird = display.newImage("images/bird.png")
@@ -1564,9 +1643,10 @@ bird.x = 900
 bird.y = 500
 bird.isAlive = false
 --bird:scale(0.5,0.5)
-physics.addBody( bird, "kinematic" , birdBodyElement )
+physics.addBody( bird, "dynamic" , birdBodyElement )
 bird.gravityScale=0
 bird.isFixedRotation = true
+bird.isHard = true
 bird.alpha = ob.defualtAlpha
 
 bird.spine =  birdSpineAn.new()
@@ -1580,29 +1660,19 @@ obstecales[ob.DOUBLE_KIDS_INDEX].isTwoBoys = true
 obstecales[ob.TALL_INDEX].isHard = true
 
 
-ob.goalBarL = display.newRect(0, 15 , 10,45)
-ob.goalBarR = display.newRect(110, 15 , 10,45)
-ob.goalBarU = display.newRect(55, 0 , 110,10)
-ob.goalNet = display.newRect(55, 0 , 90,35)
+ob.goalNet = display.newRect(55, 0 , 170,55)
 ob.goalDummy = display.newRect(55, 0 , 1,1)
 
-ob.goalBarLEdge = display.newCircle(0,35,3)
-ob.goalBarREdge = display.newCircle(110,35,3)
 
 goal = {}
 
-goal.numChildren = 7
+goal.numChildren = 2
 goal.isAlive = false
 local goalSpineAn = require "goal" 
 ob.goalSpine  = goalSpineAn.new() 
 
-goal[1] = ob.goalBarL
-goal[2] = ob.goalBarR
-goal[3] = ob.goalBarLEdge
-goal[4] = ob.goalBarREdge
-goal[5] = ob.goalNet
-goal[6] = ob.goalDummy
-goal[7] = ob.goalBarU
+goal[1] = ob.goalNet
+goal[2] = ob.goalDummy
 
 for i = 1, goal.numChildren, 1 do
   local v = goal[i]
@@ -1617,11 +1687,6 @@ for i = 1, goal.numChildren, 1 do
 
 end
 
-ob.goalBarL.name = "bar"
-ob.goalBarR.name = "bar"
-ob.goalBarU.name = "bar"
-ob.goalBarLEdge.name = "bar"
-ob.goalBarREdge.name = "bar"
 
 ob.goalNet.name = "net"
 ob.goalNet.isSensor = true
@@ -1650,6 +1715,7 @@ leftHand.skeleton.group.xScale = -1
 sounds.coinSound = audio.loadSound( "coin.mp3" )
 sounds.perfectSpreeSound = audio.loadSound( "Comments/Perfect Spree 1.mp3" )
 sounds.perfectSpreeSound2 = audio.loadSound( "Comments/SpreeFireSFX.mp3" )
+sounds.perfectSpreeSound3 = audio.loadSound( "sounds/combo1.mp3" )
 
 sounds.badKickSound = audio.loadSound( "Ball_Kick_Bad.mp3" )
 --goodKickeSound = audio.loadSound( "Ball_Kick_Good.wav" )
@@ -1690,6 +1756,7 @@ end
 
 sounds.jumpSound = audio.loadSound( "Kid_Jump.mp3" )
 sounds.saltaSound = audio.loadSound( "sounds/FlipWhoosh.mp3" )
+sounds.lookoutSound = audio.loadSound( "sounds/players/CoachLookout01.mp3" )
 --sounds.transitionSound = audio.loadSound( "sounds/LvlTransition01.mp3" )
 
 
@@ -1701,20 +1768,34 @@ sounds.crashConeSound = audio.loadSound( "trafficConeHit.mp3" )
 sounds.crashTrashSound = audio.loadSound( "Bucket Hit.mp3" )
 sounds.birdHitSound = audio.loadSound( "Crow.mp3" )
 
-sounds.twoBoysSound = audio.loadSound( "2BoysLaugh.mp3" )
-sounds.arsSound = audio.loadSound( "tallArsLaugh.mp3" )
-sounds.kidSound = audio.loadSound( "smallKidLaugh.mp3" )
-sounds.catchSound = audio.loadSound( "BadGuyPunch3.mp3" )
+-- sounds.twoBoysSound = audio.loadSound( "2BoysLaugh.mp3" )
+-- sounds.arsSound = audio.loadSound( "tallArsLaugh.mp3" )
+-- sounds.kidSound = audio.loadSound( "smallKidLaugh.mp3" )
+-- sounds.catchSound = audio.loadSound( "BadGuyPunch3.mp3" )
 
 
-
-
-local backgroundMusic = audio.loadStream( "Ambiant.mp3" )
-ob.backgroundMusicHdl = commonData.playSound( backgroundMusic, { loops=-1 } )
+local backgroundMusic = audio.loadStream( "sounds/generic1.mp3" )
+ob.backgroundMusicHdl = commonData.playSound( backgroundMusic, { loops=-1 ,  fadein = 5000 } )
 
 if ob.backgroundMusicHdl then
   audio.pause( ob.backgroundMusicHdl )
 end
+
+local backgroundMusic2 = audio.loadStream( "sounds/generic2.mp3" )
+ob.backgroundMusicHdl2 = commonData.playSound( backgroundMusic2, { loops=-1 ,  fadein = 5000} )
+
+if ob.backgroundMusicHdl2 then
+  audio.pause( ob.backgroundMusicHdl2 )
+end
+
+local backgroundMusic3 = audio.loadStream( "sounds/generic3.mp3" )
+ob.backgroundMusicHdl3 = commonData.playSound( backgroundMusic3, { loops=-1 ,  fadein = 5000} )
+
+if ob.backgroundMusicHdl3 then
+  audio.pause( ob.backgroundMusicHdl3 )
+end
+
+ob.activeMusicHdl = backgroundMusicHdl
 
 local function resumeGame()
         timer.resume(gameStatus.mainTimer)
@@ -1723,12 +1804,11 @@ local function resumeGame()
 
         hero:resume()
         ob.chaser:resume()
+        ob.coach:resume()
 
-        if ob.backgroundMusicHdl and not commonData.isMute then
-          audio.resume(ob.backgroundMusicHdl)
+        if ob.activeMusicHdl and not commonData.isMute then
+          audio.resume(ob.activeMusicHdl)
         end
-
-
 
         if (exitUltraModeHandle) then
             timer.resume( exitUltraModeHandle )                  
@@ -1750,11 +1830,22 @@ commonData.pauseGame = function ()
                 local length = comments:resume()
 
                 timer.performWithDelay(length * 1000, resumeGame, 1)
-                ob.pausedOverlay.alpha = 0 
+                ob.pausedGroup.alpha = 0 
                 pauseButton.alpha = 0
+                ob.muteButton.alpha = 0              
+                ob.unMuteButton.alpha = 0
               elseif gameStatus.speed > 0 then
+
+                if commonData.isMute then
+                  ob.muteButton.alpha = 0              
+                  ob.unMuteButton.alpha = 1
+                else
+                  ob.muteButton.alpha = 1              
+                  ob.unMuteButton.alpha = 0
+                end
+
                 pauseButton.alpha = 1
-                ob.pausedOverlay.alpha = 1
+                ob.pausedGroup.alpha = 1
                 if (gameStatus.mainTimer) then
                   timer.pause(gameStatus.mainTimer)
                 end 
@@ -1762,9 +1853,13 @@ commonData.pauseGame = function ()
                 physics.pause()
                 hero:pause()
                 ob.chaser:pause()
-                if (ob.backgroundMusicHdl) then
-                  audio.pause(ob.backgroundMusicHdl)
+                ob.coach:pause()
+                
+                if (ob.activeMusicHdl) then
+                  audio.pause(ob.activeMusicHdl)
                 end
+
+
                 touchIDs = {}
                 if (monster.kickTimer ==1) then
                   monster.kickTimer = 0    
@@ -1778,6 +1873,12 @@ commonData.pauseGame = function ()
                   if (advanceUltraModeHandle) then
                     timer.pause( advanceUltraModeHandle )                  
                  end 
+
+                 if ob.ultraMusicHdl then
+                   audio.pause( ob.ultraMusicHdl )
+                   ob.ultraMusicHdl  = nil
+                 end 
+
                   gameStatus.isGamePaused = true
 
               end
@@ -1802,6 +1903,7 @@ commonData.pauseGame = function ()
 
 
 local  goBackHandle = nil
+
 
 local function goBack(event)
 
@@ -1907,7 +2009,7 @@ ob.finishTutorial = function()
           overFile = "images/PauseBtnDown.png",
           onEvent = pauseListener
       }
-      pauseButton.xScale =  (display.contentWidth*0.07) / pauseButton.width
+      pauseButton.xScale =  (display.actualContentWidth*0.07) / pauseButton.width
       pauseButton.yScale = pauseButton.xScale  
 
   ob.backButton = widget.newButton
@@ -1919,11 +2021,105 @@ ob.finishTutorial = function()
           overFile = "images/BackBtnDown.png",
           onEvent = backListener
       }
-      ob.backButton.xScale =  (display.contentWidth*0.07) / ob.backButton.width
+      ob.backButton.xScale =  (display.actualContentWidth*0.07) / ob.backButton.width
       ob.backButton.yScale = ob.backButton.xScale  
 
 pauseButton.x = pauseButton.x + (displayActualContentWidth - display.contentWidth) /2
 ob.backButton.x =ob.backButton.x + (displayActualContentWidth - display.contentWidth) /2
+
+      local function muteListener( event )
+         if ( "ended" == event.phase ) then
+
+              commonData.isMute = true
+              ob.muteButton.alpha = 0              
+              ob.unMuteButton.alpha = 1
+          
+          end
+           return true
+     end
+
+     local function unMuteListener( event )
+         if ( "ended" == event.phase ) then
+
+              commonData.isMute = false
+              ob.muteButton.alpha = 1              
+              ob.unMuteButton.alpha = 0
+              
+          end
+           return true
+     end
+ 
+     
+    ob.muteButton = widget.newButton
+      {
+          x = 420,
+          y = 23,
+          id = "muteButton",
+          defaultFile = "ExtrasMenu/Mute.png",
+          overFile = "ExtrasMenu/UnMuteDown.png",
+          onEvent = muteListener
+      }
+
+       ob.muteButton.xScale =  (display.actualContentWidth*0.07) / ob.muteButton.width
+      ob.muteButton.yScale = ob.muteButton.xScale 
+
+    ob.unMuteButton = widget.newButton
+      {
+          x = 420,
+          y = 23,
+          id = "unMuteButton",
+          defaultFile = "ExtrasMenu/UnMute.png",
+          overFile = "ExtrasMenu/MuteDown.png",
+          onEvent = unMuteListener
+      }
+
+       ob.unMuteButton.xScale =  (display.actualContentWidth*0.07) / ob.unMuteButton.width
+      ob.unMuteButton.yScale = ob.unMuteButton.xScale 
+      ob.unMuteButton.alpha = 0
+
+      ob.muteButton.x = ob.muteButton.x + (displayActualContentWidth - display.contentWidth) /2
+      ob.unMuteButton.x = ob.unMuteButton.x + (displayActualContentWidth - display.contentWidth) /2
+
+
+
+ local paused2 = widget.newButton
+{
+    x = 315,
+    y = 200,
+    id = "paused2",
+    defaultFile = "images/PauseScreen/PauseResumeUp.png",
+    overFile = "images/PauseScreen/PauseResumeDown.png",
+    onEvent = commonData.pauseGame
+    
+}
+
+local paused3 = widget.newButton
+{
+    x = 165,
+    y = 200,
+    id = "paused3",
+    defaultFile = "images/PauseScreen/PauseExitUP.png",
+    overFile = "images/PauseScreen/PauseExitDown.png",
+    onEvent = goBack
+    
+}
+
+paused2:scale(0.4,0.4)
+paused3:scale(0.4,0.4)
+--create a new group to hold all of our blocks
+
+ob.pausedOverlay = display.newImage("images/Paused.png")
+ob.pausedOverlay.x = 240
+ob.pausedOverlay.y = 160
+ob.pausedOverlay:scale(0.4,0.4)
+
+
+
+ob.pausedGroup:insert(ob.pausedOverlay)
+ob.pausedGroup:insert(paused3)
+ob.pausedGroup:insert(paused2)
+
+
 
 
 
@@ -1988,13 +2184,20 @@ Runtime:addEventListener( "system", onSystemEvent )
 sceneGroup:insert(backgrounds)
 sceneGroup:insert(ob.stageGroup)
 sceneGroup:insert(blocks)
-sceneGroup:insert(dirt)
+
 sceneGroup:insert(ob.foregrounds)
+sceneGroup:insert(dirt)
 sceneGroup:insert(ob.scoreTextMove)
 
 sceneGroup:insert(ob.redRect)
 
-sceneGroup:insert(scoreMarks)
+
+sceneGroup:insert(ob.coach.skeleton.group)
+sceneGroup:insert(ob.bubble.skeleton.group)
+
+sceneGroup:insert(ultraWave)
+sceneGroup:insert(ob.ultraGlow)
+
 sceneGroup:insert(ob.highScoreLine)
 --sceneGroup:insert(defenders)
 sceneGroup:insert(ob.instructionBlocker)
@@ -2012,14 +2215,14 @@ sceneGroup:insert(ob.extras)
 
 sceneGroup:insert(pauseButton)
 sceneGroup:insert(ob.backButton)
+sceneGroup:insert(ob.muteButton)
+sceneGroup:insert(ob.unMuteButton)
 
 sceneGroup:insert(coins)
 sceneGroup:insert(tutorialShadowText)
 sceneGroup:insert(tutorialText)
 sceneGroup:insert(tutorialCountShadowText)
 sceneGroup:insert(tutorialCountText)
-
-
 
 
 sceneGroup:insert(monster)
@@ -2039,15 +2242,26 @@ sceneGroup:insert(ob.rewards[2].skeleton.group)
 sceneGroup:insert(ob.rewards[3].skeleton.group)
 
 sceneGroup:insert(tutorialScales)
+
 sceneGroup:insert(ob.chaser.skeleton.group)
+
+
 sceneGroup:insert(rightHand.skeleton.group)
 sceneGroup:insert(leftHand.skeleton.group)
+
+sceneGroup:insert(ob.leftTimer)
+sceneGroup:insert(ob.rightTimer)
+
+sceneGroup:insert(ob.leftCtrl)
+sceneGroup:insert(ob.rightCtrl)
 
 sceneGroup:insert(comments.skeleton.group)
 sceneGroup:insert(hero.skeleton.group)
 sceneGroup:insert(collisionRect)
 sceneGroup:insert(ob.jumpLeg)
 sceneGroup:insert(ob.shadow)
+
+
 sceneGroup:insert(gameOverRect)
 sceneGroup:insert(gameOverRect2)
 
@@ -2077,7 +2291,7 @@ sceneGroup:insert(newChallengeGroup)
 sceneGroup:insert(tutorialConfirm)
 
 sceneGroup:insert(playButton)
-sceneGroup:insert(ob.pausedOverlay)
+sceneGroup:insert(ob.pausedGroup)
 
 sceneGroup:insert(dontForgetGroup)
 sceneGroup:insert(ob.holdDeviceBlocker)
@@ -2123,20 +2337,30 @@ end
 
 ob.updateScoreboard =  function(num)
 
-        if num > 7 then
-          ob.scoreFull.alpha = 1
-        else
-          ob.scoreFull.alpha = 0
-        end
+        -- if num > 7 then
+        --   ob.scoreFull.alpha = 1
+        -- else
+        --   ob.scoreFull.alpha = 0
+        -- end
           
-       for a = 1, ob.scoreboard.numChildren, 1 do
-            if(a <= num ) then
-              ob.scoreboard[a].alpha = 1
-                 
-            else
-              ob.scoreboard[a].alpha = 0
-            end
-       end    
+       if num == 0 then   
+         for a = 1, ob.scoreboard.numChildren, 1 do
+              -- if(a <= num ) then
+               
+
+              --   -- if num /12 >= 1 then
+              --   --   ob.scoreboard[a]:setFillColor(0/256,2000/256,0/256)
+              --   -- end
+
+                   
+              -- else
+                ob.scoreboard[a].alpha = 0
+             -- end
+         end  
+       else  
+         ob.scoreboard[(num -1) % 8 +1 ].alpha = 1
+         ob.scoreboard[(num -1) % 8 +1 ]:setFillColor(1,1,(10- 3*math.floor( (num-1)/8 ))/10)
+       end  
 
        if num + 1 > gameStats.combo then
         gameStats.combo = num + 1
@@ -2163,15 +2387,23 @@ ob.exitUltraMode = function()
       ultraBall.alpha = 0 
       gameStatus.isUltraMode = false
       ultraWave.alpha = 0
-      
+      --ultraFloor.alpha = 0
+      ob.scoreFull.alpha = 0
       ob.ultraCoinsCollected = 0
+      ob.ultraGlow.alpha = 0
 
       if (ballSkin) then             
             ballSkin.alpha = 1
       end  
 
+      if ob.activeMusicHdl and not commonData.isMute then
+          audio.resume(ob.activeMusicHdl)
+      end
+
+      ob.ultraMusicHdl = nil
 
       ultraWave:pause()
+      --ultraFloor:pause()
       
 
        if (exitUltraModeHandle) then
@@ -2195,6 +2427,14 @@ ob.exitUltraMode = function()
             end
        end
 
+
+       for a = 1, obstecales.numChildren, 1 do
+            if(obstecales[a].isAlive and obstecales[a].name ~= "goal") then
+            
+              obstecales[a].isSensor  = false 
+            end
+       end
+       
        if (gameStatus.inEvent == 14) then
         gameStatus.inEvent = 0
        end
@@ -2206,16 +2446,61 @@ ob.exitUltraMode = function()
     local function advanceUltraMode()
        ultraWave:setSequence("advance")
        ultraWave:play()
+
+       -- ultraFloor:setSequence("advance")
+       -- ultraFloor:play()
     end
 
+    local function moveToNextLevel()
+
+        gameStatus.level  = gameStatus.level % LEVELS_COUNT + 1 
+         for a = 1, backgrounds.numChildren, 1 do
+
+            if (backgrounds[a].level)    then           
+               if (backgrounds[a].level == gameStatus.level ) then
+                 backgrounds[a].alpha = 1
+                  
+                  if (not backgrounds[a].isGroup) then
+                      backgrounds[a].x =  backgrounds[a].constWidth * (backgrounds[a].internalIdx + 0.5)
+                      -- adjust actual content width
+                      backgrounds[a].x = backgrounds[a].x  - (displayActualContentWidth - display.contentWidth) /2
+                  end
+               else   
+                backgrounds[a].alpha = 0
+              end
+          end  
+         end
+
+
+         for a = 1, ob.foregrounds.numChildren, 1 do
+
+            if (ob.foregrounds[a].level)  then            
+               if (ob.foregrounds[a].level == gameStatus.level ) then
+                 ob.foregrounds[a].alpha = 1
+                  
+                  if (not ob.foregrounds[a].isGroup) then
+                      ob.foregrounds[a].x =  ob.foregrounds[a].constWidth * (ob.foregrounds[a].internalIdx + 0.5)
+                      -- adjust actual content width
+                      ob.foregrounds[a].x = ob.foregrounds[a].x  - (displayActualContentWidth - display.contentWidth) /2
+                  end
+               else   
+                ob.foregrounds[a].alpha = 0
+              end
+          end  
+         end
+    end  
+
     ob.enterUltraMode = function ()
-        if commonData.selectedSkin == "Steph" then
-          commonData.playSound( sounds.stephPerfectSpreeSound )  
-        else
-          commonData.playSound( sounds.perfectSpreeSound )  
-        end  
         
+        --commonData.playSound( sounds.perfectSpreeSound )  
+        if ob.activeMusicHdl and not commonData.isMute then
+          audio.pause( ob.activeMusicHdl )
+        end
+
+        
+        comments:showReward(true)     
         commonData.playSound(sounds.perfectSpreeSound2) 
+        ob.ultraMusicHdl = commonData.playSound(sounds.perfectSpreeSound3) 
         ob.nextCoinPos = score +1
         ob.ultraCoinsCollected = 0
         gameStatus.isUltraMode = true
@@ -2233,12 +2518,32 @@ ob.exitUltraMode = function()
 
         exitUltraModeHandle = timer.performWithDelay(ULTRA_MODE_DURATION, ob.exitUltraMode, 1)
         advanceUltraModeHandle = timer.performWithDelay(1000 , advanceUltraMode, 1)
+
+        timer.performWithDelay(50 , moveToNextLevel, 1)
+
+        timer.performWithDelay(30 , function() 
+          ob.ultraGlow.alpha =  ob.ultraGlow.alpha + 0.05
+        end, 16)
+
+        
+        
      --   ultraRect.alpha = 0.86
         ultraWave.alpha = 1
-        
+        --ultraFloor.alpha = 1
+        ob.scoreFull.alpha = 1
       
         ultraWave:setSequence("start")
         ultraWave:play()
+
+        for a = 1, obstecales.numChildren, 1 do
+            if(obstecales[a].isAlive) then
+          
+              obstecales[a].isSensor  = true 
+            end
+       end
+       
+        -- ultraFloor:setSequence("start")
+        -- ultraFloor:play()
 
     end
 
@@ -2255,11 +2560,15 @@ function restartGame()
       -- gameStatus.kickOverShowed = false
        collisionRect.isSensor = false
        ballon.isSleepingAllowed = false
-          
+       ob.muteButton.alpha = 0              
+       ob.unMuteButton.alpha = 0   
 
       ob.notification.alpha = 0
       ob.redRect.alpha = 0
       ob.scoreTextMove.alpha = 0
+      ob.scoreFull.alpha = 0
+      ob.rightTimer.alpha = 0
+      ob.leftTimer.alpha = 0
 
       if (ballSkin) then
               ballSkin:removeSelf()
@@ -2281,7 +2590,7 @@ function restartGame()
 
      ob.highScoreLine.isAlive = false
       ob.highScoreLine.x = -90
-    ob.pausedOverlay.alpha = 0
+    ob.pausedGroup.alpha = 0
 --    dontForget.alpha=0
     collisionRect.isSensor = false
  
@@ -2297,6 +2606,7 @@ function restartGame()
        --reset the score
      score = 0
      gameStatus.newScore = 0
+     gameStatus.level = 1
 
      --reset the game speed
      gameStatus.speed = 6
@@ -2339,6 +2649,10 @@ function restartGame()
      chaserRect.y = 235
      chaserRect.speed = 0
      ob.chaser.skeleton.group.x = 0
+     ob.coach.skeleton.group.x = 20
+     ob.bubble.skeleton.group.x = 40
+     ob.bubble.skeleton.group.y = 170
+     
      gameStatus.chaserLocation = -50
      gameStatus.preventJump = true
      collisionRect.width = 0
@@ -2426,6 +2740,14 @@ function restartGame()
           if (backgrounds[a].startPos and backgrounds[a].startPos > 0 ) then
               backgrounds[a].alpha = 0
           end
+
+           if (backgrounds[a].level) then
+            if  (backgrounds[a].level ~= gameStatus.level ) then
+              backgrounds[a].alpha = 0
+            else  
+              backgrounds[a].alpha = 1
+            end  
+          end
     end
 
      for a = 1,  ob.stageGroup.numChildren, 1 do
@@ -2485,6 +2807,15 @@ function restartGame()
 
        if (ob.foregrounds[a].startPos and ob.foregrounds[a].startPos > 0 ) then
               ob.foregrounds[a].alpha = 0
+       end
+
+        
+         if (ob.foregrounds[a].level) then
+            if  (ob.foregrounds[a].level ~= gameStatus.level ) then
+              ob.foregrounds[a].alpha = 0
+            else  
+              ob.foregrounds[a].alpha = 1
+            end  
           end
     end
 
@@ -2524,6 +2855,8 @@ function restartGame()
               rightHand:init()
               
               ob.chaser.skeleton.group.alpha = 0
+              ob.coach.skeleton.group.alpha = 0
+              
               tutorialText.alpha = 1
               tutorialShadowText.alpha = 1
               tutorialCountText.alpha = 1
@@ -2612,6 +2945,8 @@ function restartGame()
         kickToStart.alpha = 1
 
         ob.chaser.skeleton.group.alpha = 1
+        ob.coach.skeleton.group.alpha = 1
+        
 
            -- Start standing
           ballon.isSleepingAllowed = false
@@ -2633,10 +2968,32 @@ function restartGame()
       end
 
       
+      local musicRnd = math.random(3)
 
-       if ob.backgroundMusicHdl and not commonData.isMute then
-        audio.resume(ob.backgroundMusicHdl)
-      end
+      if (musicRnd == 1 ) then
+        if ob.backgroundMusicHdl and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl)
+          audio.resume(ob.backgroundMusicHdl)
+          ob.activeMusicHdl = ob.backgroundMusicHdl
+        end
+      elseif (musicRnd == 1 ) then
+        if ob.backgroundMusicHdl2 and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl2)
+          audio.resume(ob.backgroundMusicHdl2)
+          ob.activeMusicHdl = ob.backgroundMusicHdl2
+        end
+      else
+        if ob.backgroundMusicHdl3 and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl3)
+          audio.resume(ob.backgroundMusicHdl3)
+          ob.activeMusicHdl = ob.backgroundMusicHdl3
+        end
+      end   
+      
+       
       
       gameStatus.firstStage = mRandom(80 ) + 80
       gameStatus.secondStage = gameStatus.firstStage + mRandom(80 ) + 70
@@ -2653,6 +3010,14 @@ function restartGame()
       
       ob.chaser:init()
       ob.chaser:stand()
+
+      ob.coach:init()
+      ob.coach:stand()
+
+       ob.bubble:init()
+
+
+      
       --comments:init()
 
       ob.exitUltraMode()
@@ -2663,45 +3028,8 @@ function restartGame()
 
 
 
-      
-      -- try to load friends photos
-      for index, friend in pairs( commonData.friendsScore ) do
-         
-         local  isFriendLoaded = false
+                     
 
-         if (not friend.markIndex ) then
-              local friendImg =  display.newImage(friend.id .. ".jpg" , system.TemporaryDirectory) 
-              if (friendImg) then
-
-
-                  friendImg.xScale =  (displayActualContentWidth*0.09) / friendImg.width
-                  friendImg.yScale = friendImg.xScale  
-
-                  local friendTxt =  display.newText(friend.name, 0, 0 , "troika" , 12)
-
-                  local friendHighScoreLine = display.newImage("images/HighScoreFriends.png")
-                  friendHighScoreLine:scale(0.5,0.5)
-
-                  friendImg.isImage = true
-                  friendTxt.isText = true
-                  friendHighScoreLine.friendId = friend.id
-                  
-                  friendImg.friendId = friend.id
-                  friendTxt.friendId = friend.id
-
-                  scoreMarks:insert(friendHighScoreLine)                  
-                  scoreMarks:insert(friendImg)
-                  scoreMarks:insert(friendTxt)
-
-                  friend.markIndex = scoreMarks.numChildren -2
-              end
-         end                 
-      end                            
-
-      for a = 1, scoreMarks.numChildren, 1 do
-          scoreMarks[a].isAlive = false 
-          scoreMarks[a].x = -200
-      end
       
      for a = 1, dirt.numChildren, 1 do
         dirt[a].isAlive = false
@@ -2725,34 +3053,39 @@ function scene:show( event )
 
    if ( phase == "will" ) then
       -- Called when the scene is still off screen (but is about to come on screen).
-      if commonData.selectedBall == "Brainz" then
-        if not sounds.badKickBrainzSound then
-          sounds.badKickBrainzSound  = audio.loadSound( "BrainBounceBad.mp3" )
+      
+       if commonData.selectedSkin == "Shakes" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/ShakesJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/ShakesFall01.mp3" )
+          
+        elseif commonData.selectedSkin == "CoolJoe" then
+          
+          sounds.jumpSound  = audio.loadSound( "sounds/players/CoolJoeJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/CoolJoeFall01.mp3" )
+        elseif commonData.selectedSkin == "ElMatador" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/ElMatadorJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/ElMatadorFall01.mp3" )
+        elseif commonData.selectedSkin == "Klaus" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/KlausJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/KlausFall01.mp3" )
+        elseif commonData.selectedSkin == "NorthShaw" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/NorthShawJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/NorthShawFall01.mp3" )
+        elseif commonData.selectedSkin == "TwistingTiger" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/TigetJump01.mp3" )
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/TigetFall01.mp3" )
+        elseif commonData.selectedSkin == "Blok" then
+          
+        elseif commonData.selectedSkin == "BigBo" then
+
+        elseif commonData.selectedSkin == "Rasta" then
+          sounds.jumpSound  = audio.loadSound( "sounds/players/RastaJump01.mp3" )     
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/RastaFall01.mp3" )     
+        elseif commonData.selectedSkin == "ElMatador" then  
+          
+          sounds.jumpSound  = audio.loadSound( "sounds/players/ElMatadorJump01.mp3" ) 
+          sounds.heroFallSound  = audio.loadSound( "sounds/players/ElMatadorFall01.mp3" )         
         end
-        if not sounds.goodKickBrainzSound then
-          sounds.goodKickBrainzSound  = audio.loadSound( "BrainBounceGood.mp3" )
-        end        
-      end
-
-
-      if commonData.selectedBall == "Basketball"  and not sounds.basketballSound  then
-        --print("no basketballSound")
-        sounds.basketballSound  = audio.loadSound( "sounds/BasketBallDribble.mp3" )
-      end
-
-      if commonData.selectedBall == "Watermelon"  and not sounds.watermelonSound  then
-        sounds.watermelonSound  = audio.loadSound( "sounds/Watermelon.mp3" )
-      end
-
-
-
-      if commonData.selectedSkin == "Steph"  and not sounds.stephPerfectSpreeSound  then
-        sounds.stephPerfectSpreeSound  = audio.loadSound( "sounds/HesOnFire.mp3" )
-      end
-
-      if commonData.selectedSkin == "DribbleBot"  and not sounds.botKickSound  then
-        sounds.botKickSound  = audio.loadSound( "sounds/laserMod2.mp3" )
-      end
 
     
    elseif ( phase == "did" ) then
@@ -2829,7 +3162,7 @@ function scene:show( event )
 
 
         if (easyRnd <= P_BANANA) then
-          newIndexes[1]  = ob.TALL_INDEX
+          newIndexes[1]  = ob.CONE_INDEX
         elseif  (easyRnd <= P_BANANA + P_CAN) then
           newIndexes[1]  = ob.CAN_INDEX
         elseif  (easyRnd <= P_BANANA + P_CAN + P_BIRD) then
@@ -2848,9 +3181,10 @@ function scene:show( event )
         elseif  (easyRnd <= P_BANANA + P_CAN + P_BIRD + P_DOG + P_KID + P_TALL_KID + P_DOUBLE_KID + P_BIRD_DOG +  P_BIRD_KID) then  
           newIndexes[1] = ob.KID_INDEX
         --  newIndexes[2] = ob.BIRD_INDEX -- bird idx      
+        
         end  
 
-        print(easyRnd .. "  " .. newIndexes[1])
+        
 
       end
 
@@ -2896,40 +3230,34 @@ function scene:show( event )
     local function activateObstecale( obsIndex , pIsCombo , newX)
       
          obstecales[obsIndex].isAlive = true 
+
          if (obstecales[obsIndex].name=="goal") then
-            ob.goalBarL.x = newX
-            ob.goalBarLEdge.x = newX
-            ob.goalBarR.x = newX + 110
-            ob.goalBarREdge.x = newX + 110
-            ob.goalBarU.x = newX + 55
+            
             ob.goalNet.x = newX + 55
             ob.goalDummy.x = newX + 55
 
             local newY = mRandom(100)
-            ob.goalBarL.y = newY + 22
-            ob.goalBarLEdge.y = newY + 43
-            ob.goalBarR.y = newY + 22
-            ob.goalBarREdge.y= newY + 43
-            ob.goalBarU.y = newY
-            ob.goalNet.y = newY + 22
+            
+            ob.goalNet.y = newY + 30
             ob.goalDummy.y = newY
 
 
 
          else
+             obstecales[obsIndex].isSensor  = gameStatus.isUltraMode
               obstecales[obsIndex].x = newX
               obstecales[obsIndex].isCombo = pIsCombo
 
-             if (obstecales[obsIndex].name=="cone" or obstecales[obsIndex].name=="trash" ) then
+             if (obstecales[obsIndex].name=="cone" or obstecales[obsIndex].name=="trash"  ) then
               --obstecales[obsIndex].y=275
               obstecales[obsIndex].y = ob.groundLevel -  obstecales[obsIndex].contentHeight / 2
 
-             elseif (obstecales[obsIndex].name=="bird") then
-                if (obsIndex == 1 ) then
-                      obstecales[obsIndex].y= 20 + mRandom(100)
-                else
-                    obstecales[obsIndex].y=mRandom(50)
-                end  
+             -- elseif (obstecales[obsIndex].name=="bird") then
+             --    if (obsIndex == 1 ) then
+             --          obstecales[obsIndex].y= 20 + mRandom(100)
+             --    else
+             --        obstecales[obsIndex].y=mRandom(50)
+             --    end  
               
              else -- defenders 
 
@@ -2942,13 +3270,15 @@ function scene:show( event )
 
        if (obstecales[obsIndex].spine) then
         
+
           obstecales[obsIndex].spine.skeleton.group.x = obstecales[obsIndex].x --+ obstecales[obsIndex].spine.width
 
           if (obstecales[obsIndex].name=="bird") then
-            obstecales[obsIndex].spine.skeleton.group.y = obstecales[obsIndex].y + 10 
+            obstecales[obsIndex].spine.skeleton.group.y = obstecales[obsIndex].y + 30 
+            obstecales[obsIndex].spine.skeleton.group.x = obstecales[obsIndex].x - 15 
           elseif (obstecales[obsIndex].name=="goal") then
                 obstecales[obsIndex].spine.skeleton.group.x = ob.goalNet.x                                          
-                obstecales[obsIndex].spine.skeleton.group.y = ob.goalBarL.y + 15
+                obstecales[obsIndex].spine.skeleton.group.y = ob.goalNet.y - 30 
 
                 isGoalScored = false
           else
@@ -3084,8 +3414,10 @@ function scene:show( event )
    
     local function updateBlocks()
 
-          if ballon.x > BALL_X then
+          if ballon.x > BALL_X + 1 then
             ballon.x = ballon.x - 1
+          elseif ballon.x < BALL_X -1 then
+            ballon.x = ballon.x + 1  
           end 
 
           if ballon.y > 250 then
@@ -3164,34 +3496,15 @@ function scene:show( event )
                     
 
                     score = score + 1
-                    gameStatus.newScore = gameStatus.newScore  + gameStatus.speed * (gameStatus.kicksMulti +1)
-                    scoreText.text = string.format("%.00f", gameStatus.newScore) 
-                    if (commonData.friendsScore[score + 7] and commonData.friendsScore[score + 7].markIndex ) then
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex].isAlive = true
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 1].isAlive = true
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 2].isAlive = true
-                      
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex].x = newX
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 1].x = newX + 17
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 2].x = newX + 17
-                      
-
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex].y = 240
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 1].y =210 
-                      scoreMarks[commonData.friendsScore[score + 7].markIndex + 2].y = 225
-                      
+                    if ob.redRect.alpha < 0.03 then
+                      gameStatus.newScore = gameStatus.newScore  + gameStatus.speed * (gameStatus.kicksMulti +1)
+                      scoreText.text = string.format("%.00f", gameStatus.newScore) 
                     end
-
-                    --if (score == localHighScore  - 7 ) then
-                     if (score == commonData.globalHighScore  - 7 ) then
-                       
-                      ob.highScoreLine.isAlive = true
-                      ob.highScoreLine.x = newX
-                      ob.highScoreLine.y = 240 
-                    end
+                    
+                    
                    end
 
-                   if (score % 20 == 0 and score > 150  ) then
+                   if (score % 20 == 0 and score > 50  ) then
                       chaserRect.speed = chaserRect.speed + REFEREE_ACCELERATION
                       if (chaserRect.speed > REFEREE_MAX_SPEED ) then
                         chaserRect.speed = REFEREE_MAX_SPEED
@@ -3330,6 +3643,13 @@ function scene:show( event )
       ob.chaser:init()
       ob.chaser:stand()
 
+       ob.coach:init()
+      ob.coach:stand()
+       ob.bubble:init()
+
+
+
+
       collisionRect.isSensor = false
 
      ballon.angularVelocity = 0
@@ -3367,7 +3687,7 @@ function scene:show( event )
                   (goal[i]):translate(gameStatus.speed * -1, 0)
                 end
 
-                if(ob.goalBarR.x < -120) then
+                if(ob.goalNet.x < -240) then
                   goal.isAlive = false
 
                 end
@@ -3436,7 +3756,8 @@ function scene:show( event )
                         end
                       end
 
-                      if (not gameStatus.isTutorial and (obstecales[a].name == "trash" or obstecales[a].name == "cone"))  then
+                      if (not gameStatus.isTutorial and (obstecales[a].name == "trash" or obstecales[a].name == "cone"
+                          or obstecales[a].name == "bird"))  then
 
                           if (not commonData.gameData.jumpOverShowed and obstecales[a].x > 200 and obstecales[a].x < 220) then
                               
@@ -3517,9 +3838,11 @@ function scene:show( event )
             if (gameStatus.chaserLocation < 0  and prevX >= 0 ) then 
 
               ob.chaser:walk()
+
               reportChallenge("runFromBully")
             elseif (gameStatus.chaserLocation >= 0  and prevX < 0 ) then 
               ob.chaser:chase()
+              commonData.playSound(sounds.lookoutSound)
               
             end  
 
@@ -3528,7 +3851,7 @@ function scene:show( event )
             else
               ob.chaser.skeleton.group.x = gameStatus.chaserLocation
             end
-            chaserRect.x = ob.chaser:getFist().x + ob.chaser.skeleton.group.x
+            chaserRect.x = 80 +  ob.chaser.skeleton.group.x
         end     
     end
 
@@ -3556,59 +3879,62 @@ function scene:show( event )
 
     local function moveElements(backgrounds)
        for a = backgrounds.numChildren,1 , -1 do
-            if (not backgrounds[a].isGroup and backgrounds[a].speedFactor) then  
+
+       
+            if (not backgrounds[a].isGroup and backgrounds[a].speedFactor and 
+              (not backgrounds[a].level  or backgrounds[a].level ==  gameStatus.level) ) then  
 
              
-             if (backgrounds[a].startPos == score + 1 and (backgrounds[a].isShowOnce or backgrounds[a].showAndRotate ) ) then
+                   if (backgrounds[a].startPos == score + 1 and (backgrounds[a].isShowOnce or backgrounds[a].showAndRotate ) ) then
 
-              backgrounds[a].x = displayActualContentWidth +  backgrounds[a].constWidth * (backgrounds[a].internalIdx + 0.5)
-              backgrounds[a].alpha = backgrounds[a].originalAlpha
+                    backgrounds[a].x = displayActualContentWidth +  backgrounds[a].constWidth * (backgrounds[a].internalIdx + 0.5)
+                    backgrounds[a].alpha = backgrounds[a].originalAlpha
 
-              backgrounds[a].finishEntrance = false
-             end 
+                    backgrounds[a].finishEntrance = false
+                   end 
 
-              if backgrounds[a].showAndRotate and not backgrounds[a].finishEntrance  then                
-                 backgrounds[a].x = backgrounds[a].x - (gameStatus.speed) 
+                   if backgrounds[a].showAndRotate and not backgrounds[a].finishEntrance  then                
+                     backgrounds[a].x = backgrounds[a].x - (gameStatus.speed) 
 
-                 if (backgrounds[a].internalIdx == 0) then
+                     if (backgrounds[a].internalIdx == 0) then
 
+                        
+                        if backgrounds[a].x - backgrounds[a].constWidth/2  <  -1 * (displayActualContentWidth - display.contentWidth) /2 then
+                          
+                          backgrounds[a].finishEntrance = true
+
+                          for i=1,backgrounds[a].groupCount -1  do
+                            backgrounds[a+i].finishEntrance = true
+                          end
+                        end  
+                     end 
+                   else
                     
-                    if backgrounds[a].x - backgrounds[a].constWidth/2  <  -1 * (displayActualContentWidth - display.contentWidth) /2 then
+                    backgrounds[a].x = backgrounds[a].x - (gameStatus.speed / backgrounds[a].speedFactor ) 
+                   end
+
+
+                  if(backgrounds[a].x < backgrounds[a].constWidth * (-0.5)  - (displayActualContentWidth - display.contentWidth) /2 ) then
                       
-                      backgrounds[a].finishEntrance = true
 
-                      for i=1,backgrounds[a].groupCount -1  do
-                        backgrounds[a+i].finishEntrance = true
-                      end
-                    end  
-                 end 
-              else
-                
-                backgrounds[a].x = backgrounds[a].x - (gameStatus.speed / backgrounds[a].speedFactor ) 
-              end
+                      if (backgrounds[a].internalIdx == 0) then
+                        backgrounds[a].x = backgrounds[a + backgrounds[a].groupCount - 1].x + backgrounds[a].constWidth -5 - (gameStatus.speed / backgrounds[a].speedFactor ) 
+                      else
+                        backgrounds[a].x = backgrounds[a-1].x + backgrounds[a].constWidth - 5 - (gameStatus.speed / backgrounds[a].speedFactor ) 
+                      end  
+                      -- backgrounds[a].x  = backgrounds[a].constWidth * (mFloor(display.contentWidth/backgrounds[a].constWidth) + 1.5) -
+                      --                        ( backgrounds[a].constWidth * (-0.5) - backgrounds[a].x  - 2)   - (displayActualContentWidth - display.contentWidth) /2
 
-
-              if(backgrounds[a].x < backgrounds[a].constWidth * (-0.5)  - (displayActualContentWidth - display.contentWidth) /2 ) then
-                  
-
-                  if (backgrounds[a].internalIdx == 0) then
-                    backgrounds[a].x = backgrounds[a + backgrounds[a].groupCount - 1].x + backgrounds[a].constWidth -5 - (gameStatus.speed / backgrounds[a].speedFactor ) 
-                  else
-                    backgrounds[a].x = backgrounds[a-1].x + backgrounds[a].constWidth - 5 - (gameStatus.speed / backgrounds[a].speedFactor ) 
-                  end  
-                  -- backgrounds[a].x  = backgrounds[a].constWidth * (mFloor(display.contentWidth/backgrounds[a].constWidth) + 1.5) -
-                  --                        ( backgrounds[a].constWidth * (-0.5) - backgrounds[a].x  - 2)   - (displayActualContentWidth - display.contentWidth) /2
-
-                   
-                    if (backgrounds[a].startPos ) then
-                      if backgrounds[a].startPos <= score and score < backgrounds[a].endPos  then
-                        backgrounds[a].alpha = backgrounds[a].originalAlpha
-                      else    
-                        backgrounds[a].alpha = 0
-                      end
-                    end                               
-                
-              end             
+                       
+                        if (backgrounds[a].startPos ) then
+                          if backgrounds[a].startPos <= score and score < backgrounds[a].endPos  then
+                            backgrounds[a].alpha = backgrounds[a].originalAlpha
+                          else    
+                            backgrounds[a].alpha = 0
+                          end
+                        end                               
+                    
+                  end             
             end
           end
 
@@ -3626,17 +3952,7 @@ function scene:show( event )
               end
           end  
 
-          for a = 1, scoreMarks.numChildren, 1 do
-               if (scoreMarks[a].isAlive) then
-                    scoreMarks[a].x =  scoreMarks[a].x - gameStatus.speed
-
-                    if (scoreMarks[a].x  < -100) then
-                        scoreMarks[a].isAlive = false
-
-                    end
-                end  
-          end
-
+          
            for a = 1, dirt.numChildren, 1 do
                if (dirt[a].isAlive and gameStatus.speed >6) then
                     
@@ -3651,84 +3967,10 @@ function scene:show( event )
                 end  
            end 
 
-
-            
-      
-          
           moveElements(backgrounds)         
-          moveElements(ob.stageGroup)         
+          moveElements(ob.stageGroup)  
+          moveElements(ob.foregrounds)        
 
-          local eraserX = nil
-          for a = ob.foregrounds.numChildren,1 , -1 do
-            if (not ob.foregrounds[a].isGroup and ob.foregrounds[a].speedFactor) then  
-
-             
-             if (ob.foregrounds[a].startPos == score + 1 and ob.foregrounds[a].isShowOnce) then
-              ob.foregrounds[a].x = displayActualContentWidth +  ob.foregrounds[a].constWidth * (0.5)
-              ob.foregrounds[a].alpha = ob.foregrounds[a].originalAlpha
-             end 
-
-              ob.foregrounds[a].x = ob.foregrounds[a].x - (gameStatus.speed / ob.foregrounds[a].speedFactor ) 
-
-              if ob.foregrounds[a].isTransition and  ob.foregrounds[a].alpha > 0 then
-                
-                ob.scoreTextMove.x =  ob.foregrounds[a].x  + 40
-                ob.scoreTextMove.alpha = 1
-                
-                ob.scoreTextMove.text = ob.foregrounds[a].label
-              end  
-
-              if ob.foregrounds[a].isEraser and  ob.foregrounds[a].alpha > 0 then
-                eraserX = ob.foregrounds[a].x  -- - ob.foregrounds[a].contentWidth/2
-                
-                if eraserX < displayActualContentWidth then
-
-                  ob.stageGroup.maskX = 240 - (displayActualContentWidth - eraserX)
-                end
-              end
-                
-              if(ob.foregrounds[a].x < ob.foregrounds[a].constWidth * (-0.5) 
-                   - (displayActualContentWidth - display.contentWidth) /2  ) then
-
-
-                if ob.foregrounds[a].isShowOnce then
-                   ob.foregrounds[a].alpha = 0 
-                else  
-                      --print(ob.foregrounds[a].x)  
-                      ob.foregrounds[a].x  = ob.foregrounds[a].constWidth * (mFloor(displayActualContentWidth/ob.foregrounds[a].constWidth) + 1.5) -
-                                               ( ob.foregrounds[a].constWidth * (-0.5) - ob.foregrounds[a].x  - 2)   -- (displayActualContentWidth - display.contentWidth) /2
-
-                        if (ob.foregrounds[a].startPos) then
-                          if ob.foregrounds[a].startPos < score and score < ob.foregrounds[a].endPos  then
-                            ob.foregrounds[a].alpha = ob.foregrounds[a].originalAlpha
-                          else    
-                            ob.foregrounds[a].alpha = 0
-                          end
-                        end                                         
-                end        
-                      
-              end
-
-            end
-          end
-                    
-
-          -- for a = 1, houses.numChildren, 1 do
-                
-          --        if(houses[a].x < -220) then
-          --           houses[a].x = 2300                    
-          --        else   
-          --         houses[a].x = houses[a].x - (gameStatus.speed/10)
-          --       end
-
-          --       -- if eraserX and eraserX < houses[a].x - houses[a].contentWidth/2 then
-          --       --   houses[a].alpha = 0                
-          --       -- end   
-                
-          --  end
-
-           
-  
     end
   
 
@@ -3896,12 +4138,20 @@ gameStatus.isGameActive = true
         timer.pause(gameStatus.mainTimer)
         hero:pause()
         ob.chaser:pause()
+        ob.coach:pause()
+        
         --comments:pause()
         
         pauseButton.alpha = 0
         physics.pause()
          gameStats.gameScore = tonumber(string.format("%.00f", gameStatus.newScore)  )  
-         audio.pause( ob.backgroundMusicHdl )
+         audio.pause( ob.activeMusicHdl )
+
+         if ob.ultraMusicHdl then
+           audio.pause( ob.ultraMusicHdl )
+           ob.ultraMusicHdl  = nil
+         end 
+
          if (exitUltraModeHandle) then
            timer.cancel( exitUltraModeHandle )
            exitUltraModeHandle = nil
@@ -3918,7 +4168,8 @@ gameStatus.isGameActive = true
 
     local function stopGame()
           
-          -- if 1==1 then 
+          --commonData.playSound( sounds.heroFallSound )
+          -- if 1==1 then   
           --   return
           -- end
          if (gameStatus.prevScore1 >= 50 and gameStatus.prevScore2 >= 50 and score >= 50) then  
@@ -4066,6 +4317,58 @@ gameStatus.isGameActive = true
         fire.y = ballon.y 
         ultraBall.x =  ballon.x 
         ultraBall.y =  ballon.y 
+
+       
+          
+        if monster.kickTimer == 0 then
+          local vx, vy = ballon:getLinearVelocity()
+          if vy < 0  then
+           -- ob.leftCtrl:setFillColor(1,0,0)
+          else
+             -- update ctrl
+            local  ctrl = nil
+            local  tm = nil
+            
+            if gameStatus.isPrevLeft  then
+              ctrl = ob.rightCtrl
+              tm = ob.rightTimer
+              ob.leftTimer.alpha = 0
+              --ob.leftCtrl:setFillColor(0,0,0)
+            else  
+              ctrl = ob.leftCtrl
+              tm = ob.leftTimer
+              ob.rightTimer.alpha = 0
+              --ob.rightCtrl:setFillColor(0,0,0)
+            end
+
+            --ctrl.alpha = 0.5
+            local distanceFromPerfect = 180 - ballon.y --math.abs(180 - ballon.y)
+            local distanceFromPerfectAbs = math.abs(180 - ballon.y)
+            tm:setFillColor(2 * (distanceFromPerfectAbs)/ (75) ,  2 * (1 - (distanceFromPerfectAbs)/ (75))  , 0)
+            tm.xScale = 0.17 + distanceFromPerfect / 300
+            tm.yScale = tm.xScale
+            tm.alpha  = 1 - distanceFromPerfect/100
+
+            
+
+            --print(distanceFromPerfect)
+            if ob.isSimulator and distanceFromPerfect < -1000 then
+              monster.kickTimer = 1
+              gameStatus.lastY = 240
+              gameStatus.startY = 240
+              gameStatus.isLeftLeg = not gameStatus.isPrevLeft
+              hero:startKick(gameStatus.isLeftLeg, false)
+            end  
+            
+          end
+        end  
+
+
+                 
+         --  ballon:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
+         --  if (ballSkin) then
+         --    ballSkin:setFillColor(2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0)
+         -- end
 
 
              --if our monster is jumping then switch to the jumping animation
@@ -4229,6 +4532,7 @@ gameStatus.isGameActive = true
                  
                    local deltaYm = gameStatus.lastY - gameStatus.startY
                   
+                  
                    local ang = -1 * deltaYm/3 -35
 
 
@@ -4256,6 +4560,17 @@ gameStatus.isGameActive = true
                       collisionRect.y = ballon.y
 
                     end
+
+                      if IS_AUTO_KICK then
+                        
+                       if (ob.onGround and not gameStatus.preventKick and deltaYm< -330) then
+
+                             monster.kickTimer = 0    
+                             gameStatus.kickEnded = true
+                             hero:cancelKick(gameStatus.isLeftLeg)                          
+                             
+                       end 
+                     end
                 end
 
 
@@ -4306,10 +4621,9 @@ gameStatus.isGameActive = true
                           assitTime = KICK_ASSIST_DURATION_AUTO
                         else
                           assitTime = KICK_ASSIST_DURATION
+                          endKickHandle = timer.performWithDelay(assitTime,finishTouch, 1)                         
                         end
-
-
-    	                  endKickHandle = timer.performWithDelay(assitTime,finishTouch, 1)                         
+    	                  
     	               end
 
                      if (gameStatus.isTutorial  ) then
@@ -4341,7 +4655,7 @@ gameStatus.isGameActive = true
               
                    if(event.phase == "began" and gameStatus.isGameActive and not gameStatus.isGamePaused and not gameStatus.isConfirmationRequired ) then
                          
-                         --print("touch start") 
+                        
                          table.insert(touchIDs,event.id)
                          if (endKickHandle) then
                              timer.cancel( endKickHandle )   
@@ -4394,13 +4708,11 @@ gameStatus.isGameActive = true
                       
                               gameStatus.kickStart = event.time; 
                               gameStatus.isLeftLeg = (event.x < 241)
-                              --print("is left touch")
-                              --print(gameStatus.isLeftLeg)
+                              
 
+                              gameStatus.ignoreClick = not ob.onGround or (monster.kickTimer == 1)
 
-                              gameStatus.ignoreClick = not ob.onGround
-
-                              if (ob.onGround and not  gameStatus.preventKick) then  
+                              if (ob.onGround and not  gameStatus.preventKick and monster.kickTimer == 0) then  
                                   monster.kickTimer = 1
                                   if gameStatus.isTutorial then
                                     if  (rightHand.skeleton.group.alpha == 1  and gameStatus.isLeftLeg) or
@@ -4411,10 +4723,12 @@ gameStatus.isGameActive = true
                                                                      
                                   if (not gameStatus.isTutorial or ob.tutorialStage > 4) then
                                     
-                                    local isBadKick = (gameStatus.isLeftLeg == gameStatus.isPrevLeft and not gameStatus.isAnyLeg ) 
+                                    local isBadKick = (gameStatus.isLeftLeg == gameStatus.isPrevLeft 
+                                                      and not gameStatus.isAnyLeg and not IS_AUTO_KICK) 
 
                                     if (not gameStatus.isTutorial)  then
                                       hero:startKick(gameStatus.isLeftLeg, isBadKick)
+                                      
                                     elseif  (ob.tutorialStage  ~= 5  ) then
                                       
                                       if ( ob.tutorialStage == 4 ) then
@@ -4433,10 +4747,10 @@ gameStatus.isGameActive = true
                                   end
 
                                 
-                              end
+                                   gameStatus.startY = event.yStart
+                                   gameStatus.lastY = gameStatus.startY
 
-                               gameStatus.startY = event.yStart
-                               gameStatus.lastY = gameStatus.startY
+                              end
                           end  
                          
                    end
@@ -4514,40 +4828,23 @@ gameStatus.isGameActive = true
 
             local addCoins = math.floor( (rawShotPower - WEAK_SHOT_POWER )  * 7)
 
-            if (addCoins < 3) then
-                addCoins = 3
-            end  
-
-            if (addCoins > 13) then
-                addCoins = 13
-            end  
-
-            --if (rawShotPower > )
-            if (rawShotPower > 2) then
-              
-              local trophieRnd
+             local trophieRnd
               if score < 80 then
-                trophieRnd = 8
+                trophieRnd = 25
               else
-                 trophieRnd = 4
+                 trophieRnd = 15
               end  
+
               if (mRandom(trophieRnd) == 1 ) then
                 rewardIndex = 3
                 addCoins = nil
                 achivmentAlert("PackWinner")
               else
 
-                addCoins =  5 + mRandom(4) 
+                addCoins =  3 + mRandom(8) 
                 rewardIndex = 2
               end
 
-            elseif (rawShotPower > 1 + WEAK_SHOT_POWER ) then
-              rewardIndex = 2
-              addCoins =  4 + mRandom(3) 
-            else  
-              rewardIndex = 1
-              addCoins =  2 + mRandom(3) 
-            end  
 
             if (addCoins) then
                 commonData.playSound(sounds.coinsGoalSound)
@@ -4735,6 +5032,8 @@ gameStatus.isGameActive = true
                 hero:walk()
               end
               ob.chaser:walk()
+              ob.coach:walk()
+              
               gameStatus.speed = START_SPEED
               kickToStart.alpha = 0
               pauseButton.alpha = 1
@@ -4780,8 +5079,8 @@ gameStatus.isGameActive = true
               end
 
             else  
-               --ballon.angularVelocity = 200 - mRandom(1000) 
-               ballon.angularVelocity = 300
+               ballon.angularVelocity = 400 - mRandom(800) 
+               --ballon.angularVelocity = 300
               if gameStats.bounces == 5 then
                 
                 reportChallenge("kick5time")
@@ -4807,7 +5106,7 @@ gameStatus.isGameActive = true
 
             -- calc header power
              if (monster.accel + monster.gravity > 0 ) then
-              shotPower = ballon.y / 200             
+              shotPower = ballon.y / 150             
             else
               shotPower = ballon.y / 300 
             end 
@@ -4820,10 +5119,10 @@ gameStatus.isGameActive = true
         
         ballon:setLinearVelocity(0,-500 * shotPower )  
         -- fire:setLinearVelocity(0,-500 * shotPower )  
-        -- fire.angularVelocity = ballon.angularVelocity
+        fire.angularVelocity = ballon.angularVelocity
 
         -- ultraBall:setLinearVelocity(0,-500 * shotPower )  
-        -- ultraBall.angularVelocity = ballon.angularVelocity
+         ultraBall.angularVelocity = ballon.angularVelocity
 
 
         --ballon:setLinearVelocity(0,-550 )  
@@ -4837,7 +5136,7 @@ gameStatus.isGameActive = true
 
          if IS_AUTO_KICK then
 
-            print (ballon.y)
+            
                    kickRange = ballon.y - 180
          else 
                    kickRange = kickRange * gameStatus.heightFactor
@@ -4847,7 +5146,7 @@ gameStatus.isGameActive = true
                       gameStatus.speed = gameStatus.speed - decSpeed
                       isBadKick = true
 
-                  elseif (gameStatus.isLeftLeg == gameStatus.isPrevLeft and not gameStatus.isAnyLeg and ob.onGround and not IS_AUTO_KICK) then
+                  elseif (gameStatus.isLeftLeg == gameStatus.isPrevLeft and not gameStatus.isAnyLeg and ob.onGround) then
                       gameStatus.speed = gameStatus.speed - decSpeed
                       isBadKick = true
 
@@ -4862,6 +5161,10 @@ gameStatus.isGameActive = true
                       
                       gameStats.bouncesPerfect =  gameStats.bouncesPerfect + 1
                       isPerfectKcick = true
+
+                      if (kickRange >= PERFECT_POSITION - PERFECT_MARGIN/2 and kickRange <= PERFECT_POSITION + PERFECT_MARGIN/2 ) then
+                        ob.bubble:good()  
+                      end
                      
                   elseif ((kickRange >= PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE  and kickRange <= PERFECT_POSITION - PERFECT_MARGIN ) or
                          (kickRange >=  PERFECT_POSITION + PERFECT_MARGIN   and kickRange <=  PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE)) then   
@@ -4951,10 +5254,11 @@ gameStatus.isGameActive = true
             
             end
 
-           if ( gameStatus.kicksMulti == ULTRA_MODE_PERFECTS ) then
+           if ( gameStatus.kicksMulti % 12 == ULTRA_MODE_PERFECTS ) then
               ob.enterUltraMode()
            end
-           
+          
+          
         else
 
           if consecutivePerfects == 0 then
@@ -4963,6 +5267,8 @@ gameStatus.isGameActive = true
 
           consecutivePerfects = 0             
           ob.updateScoreboard(gameStatus.kicksMulti)
+
+          ob.bubble:bad()
         end
         
 
@@ -4985,6 +5291,7 @@ gameStatus.isGameActive = true
         if (gameStatus.isTutorial and ob.tutorialStage < 5) then
            gameStatus.speed = 0 
         else
+          hero:cancelKick()
           hero:setWalkSpeed(gameStatus.speed)          
         end  
         --kickPos.text = kickRange
@@ -5089,19 +5396,19 @@ gameStatus.isGameActive = true
       ob.onCollision = function( event )
 
           if (gameStatus.isConfirmationRequired) then
-              --print("need to confirm")
+              
               return
           end  
 
 
           if (event.object1.name ~= "gameOver") then
-            -- print(event.phase .."  " .. event.object1.name .. " and " .. event.object2.name)
+            
           end
 
           if ( event.phase == "began" ) then
                       if ( event.object1.name == "fire" or  event.object2.name == "fire") then 
                      elseif ( event.object1.name == "leg" or  event.object2.name == "leg") then 
-
+                       
 
                        
                             
@@ -5208,7 +5515,7 @@ gameStatus.isGameActive = true
                                         elseif (ob.tutorialStage == 6) then  
                                           neededKicks = 5
                                         end  
-                                        --print("tutorialKicksCount  " ..   ob.tutorialKicksCount)
+                                        
                                         if (ob.tutorialKicksCount > neededKicks) then
                                             gameStatus.prevStage = ob.tutorialStage
 
@@ -5287,14 +5594,18 @@ gameStatus.isGameActive = true
                                      
 
                                      local vx, vy = ballon:getLinearVelocity()
-                                     
+                                     ob.bubble:floor()
                                      commonData.playSound( sounds.ballFallSound , { fadein = 400 - vy}) 
                                   end
                                end
                         elseif ( event.object1.name == "cone" or  event.object2.name == "cone") then
+                              if gameStatus.isUltraMode then
+                                return
+                              end  
                                 gameStatus.isGameActive = false
                                 
                                 commonData.playSound( sounds.crashConeSound )
+                                commonData.playSound( sounds.heroFallSound )
                                 hero:fallObstecale()
                                 
                                 if (gameStatus.isTutorial) then
@@ -5313,10 +5624,39 @@ gameStatus.isGameActive = true
                                
                                 end
                                
-                        elseif ( event.object1.name == "trash" or  event.object2.name == "trash") then
+                         elseif ( event.object1.name == "bird" or  event.object2.name == "bird") then
+                              if gameStatus.isUltraMode then
+                                return
+                              end
+                                gameStatus.isGameActive = false
+                                
+                                commonData.playSound( sounds.crashConeSound )
+                                commonData.playSound( sounds.heroFallSound )
+                                hero:fallObstecale()
+                                
+                                if (gameStatus.isTutorial) then
+                                    
+                                    timer.performWithDelay(2000 , getUp , 1)
+                                    ob.tutorialConeFails = ob.tutorialConeFails - 1
+
+                                    if (ob.tutorialConeFails == 0) then
+                                        ob.tutorialStage = 8
+                                    end  
+                                     
+                                else
+                              
+                                 gameStats.finishReason = "fallByBot"
+                                 timer.performWithDelay(1000, stopGame, 1)  
+                               
+                                end       
+                        elseif ( event.object1.name == "trash" or  event.object2.name == "trash" ) then
+                            if gameStatus.isUltraMode then
+                                return
+                              end
                                 gameStatus.isGameActive = false
                                 
                                 commonData.playSound( sounds.crashTrashSound )
+                                commonData.playSound( sounds.heroFallSound )
                                 hero:fallObstecale()                
 
                                  if (gameStatus.isTutorial) then
@@ -5336,6 +5676,9 @@ gameStatus.isGameActive = true
                                   end
                     
                         elseif ( event.object1.name == "defender" or  event.object2.name == "defender") then
+                            if gameStatus.isUltraMode then
+                                return
+                              end
 
                                 if ( event.object1.isDog  or  event.object2.isDog ) then
                                     if ( event.object1.isCombo  or  event.object2.isCombo ) then
@@ -5353,7 +5696,7 @@ gameStatus.isGameActive = true
                                     else                                      
                                       gameStats.finishReason = "hitBigKid"
                                     end
-                                    commonData.playSound( sounds.arsSound ) 
+                                    --commonData.playSound( sounds.arsSound ) 
                                 end  
                                 
                                 if ( event.object1.isKid  or  event.object2.isKid ) then
@@ -5362,13 +5705,13 @@ gameStatus.isGameActive = true
                                     else                                      
                                       gameStats.finishReason = "hitSmallKid"
                                     end
-                                    commonData.playSound( sounds.kidSound ) 
+                                    --commonData.playSound( sounds.kidSound ) 
                                 end  
 
                               
                                 if ( event.object1.isTwoBoys  or  event.object2.isTwoBoys ) then
                                   gameStats.finishReason = "hitTwoKids"
-                                    commonData.playSound( sounds.twoBoysSound ) 
+                                   -- commonData.playSound( sounds.twoBoysSound ) 
                                 end  
                                   
                                if (END_GAME_WHEN_DEF_TOUCH) then                         
@@ -5389,10 +5732,18 @@ gameStatus.isGameActive = true
                                 gameStatus.isGameActive = false
                                 gameStats.finishReason = "catchedBYShamina"  
                                 timer.performWithDelay(2000, stopGame, 1)
-                                commonData.playSound(sounds.catchSound)        
+                                --commonData.playSound(sounds.catchSound)        
                                 ob.chaser:catch()
-                                hero:caught()
+
+                                timer.performWithDelay(300 , function() 
+                                        hero:caught()
+                                      end, 1)
+
+                                
                         elseif ( event.object1.name == "bird" or  event.object2.name == "bird") then
+                          if gameStatus.isUltraMode then
+                                return
+                              end
                                commonData.playSound( sounds.birdHitSound )      
                                
                                 if ( event.object1.isCombo  or  event.object2.isCombo ) then
@@ -5401,7 +5752,6 @@ gameStatus.isGameActive = true
                                   gameStats.finishReason = "hitBird"
                                 end
 
-                                reportChallenge("hitBird")
                                 
                                if (END_GAME_WHEN_DEF_TOUCH) then                         
                                    gameStatus.isGameActive = false                             
@@ -5478,6 +5828,37 @@ gameStatus.isGameActive = true
               timer.pause(gameStatus.mainTimer)
         end
         
+        local playerSound  = nil
+
+        local soundRnd = math.random(2)
+        
+        if commonData.selectedSkin == "Shakes" then
+          playerSound = audio.loadSound( "sounds/players/ShakesStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "CoolJoe" then
+          
+          playerSound = audio.loadSound( "sounds/players/CoolJoeStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "ElMatador" then
+          playerSound = audio.loadSound( "sounds/players/ElMatadorStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "Klaus" then
+          playerSound = audio.loadSound( "sounds/players/KlausStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "NorthShaw" then
+          playerSound = audio.loadSound( "sounds/players/NorthShawStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "TwistingTiger" then
+          playerSound = audio.loadSound( "sounds/players/TigetStarter0".. soundRnd ..".mp3" )
+        elseif commonData.selectedSkin == "Blok" then
+          
+        elseif commonData.selectedSkin == "BigBo" then
+
+        elseif commonData.selectedSkin == "Rasta" then
+          playerSound = audio.loadSound( "sounds/players/RastaStarter0".. soundRnd ..".mp3" )          
+        elseif commonData.selectedSkin == "ElMatador" then  
+          
+          playerSound = audio.loadSound( "sounds/players/ElMatadorStarter0".. soundRnd ..".mp3" )          
+        end
+
+        if playerSound then          
+          commonData.playSound(playerSound)
+        end
         restartGame()
 
    end

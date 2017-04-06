@@ -88,6 +88,7 @@ function ars.new (kidType)
 		end
 		--local newPart =  display.newImage(kidTypes[kidType].path .. "/" .. attachment.name .. ".png")
 
+print(attachment.name )
 		
 	--	end
 		return newPart
@@ -153,6 +154,41 @@ function ars.new (kidType)
 		Runtime:addEventListener("enterFrame", handleFrame)
 		self.skeleton:setToSetupPose()
 
+		if kidType ~= 5 and 1==2 then
+			local skinIdx = math.random( 5)
+
+			if (skinIdx == 2 ) then
+				skinIdx = 6
+			end		
+
+			for i,slotData in ipairs(self.skeleton.slots) do
+						
+
+							local image = self.skeleton.images[slotData]	
+
+							if image then						
+								display.remove(image)
+								self.skeleton.images[slotData] = nil
+							end
+						
+					
+				end
+
+			self.skeleton:setSkin("BadGuy0" .. skinIdx)
+
+			for i,slotData in ipairs(self.skeleton.slots) do
+						
+
+							local image = self.skeleton.images[slotData]	
+
+							if image then						
+								display.remove(image)
+								self.skeleton.images[slotData] = nil
+							end
+						
+					
+				end
+		end
 
 		self.state:setAnimationByName(0, kidTypes[kidType].anim, true, 0) --  arsYell
 

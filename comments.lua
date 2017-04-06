@@ -23,23 +23,23 @@ function comments.new (skeletonData)
 	self.rewards[2] = {}
 	self.rewards[3] = {}
 	self.rewards[4] = {}
-	self.rewards[5] = {}
-	self.rewards[6] = {}
+	-- self.rewards[5] = {}
+	-- self.rewards[6] = {}
 
 	self.rewards[1].animation = "Amazing"
-	self.rewards[2].animation = "Awesome"
-	self.rewards[3].animation = "Cool"
+	self.rewards[2].animation = "Superb"
+	self.rewards[3].animation = "Wow"
 	self.rewards[4].animation = "Nice"
-	self.rewards[5].animation = "Superb"
-	self.rewards[6].animation = "Wow"
+	-- self.rewards[5].animation = "Superb"
+	-- self.rewards[6].animation = "Wow"
 
 	
-	self.rewards[1].sound = audio.loadSound( "Comments/Amazing 2.mp3" )
-	self.rewards[2].sound = audio.loadSound( "Comments/Awesome 2.mp3" )
-	self.rewards[3].sound = audio.loadSound( "Comments/Cool 2.mp3" )
-	self.rewards[4].sound = audio.loadSound( "Comments/Nice 2.mp3" )
-	self.rewards[5].sound = audio.loadSound( "Comments/Superb 2.mp3" )	
-	self.rewards[6].sound = audio.loadSound( "Comments/Wow 2.mp3" )
+	self.rewards[1].sound = audio.loadSound( "sounds/Amazing.wav" )
+	self.rewards[2].sound = audio.loadSound( "sounds/OutterSpace.wav")
+	self.rewards[3].sound = audio.loadSound( "sounds/Unbelievable.wav" )
+	self.rewards[4].sound = audio.loadSound( "sounds/OhMy.wav" )
+	-- self.rewards[5].sound = audio.loadSound( "Comments/Superb 2.mp3" )	
+	-- self.rewards[6].sound = audio.loadSound( "Comments/Wow 2.mp3" )
 	
 	self.json = spine.SkeletonJson.new()
 	self.json.scale = 0.15
@@ -140,31 +140,35 @@ function comments.new (skeletonData)
 	end
 
 	local lastReward = nil
-	function self:showReward()	
+	function self:showReward(soundOnly)	
 		--Runtime:addEventListener("enterFrame", handleFrame)
-		Runtime:addEventListener("enterFrame", handleFrame)		
-		isFirst = true
-		deltaMulti = 1
-
-		self.skeleton:setToSetupPose()
-		self.skeleton.group.alpha =1
-		local rnd = math.random(6)
+		local rnd = math.random(4)
 
 		if (rnd == lastReward) then
-			rnd = rnd % 6 + 1 
+			rnd = rnd % 4 + 1 
 		end
 
 		lastReward = rnd
-		commonData.playSound(swooshsound)
 		local ts = timer.performWithDelay(500, localPlaySound, 1)
         ts.params = {sound = self.rewards[rnd].sound}
 
-		
-		--playSound(self.rewards[rnd].sound)   
-		local  animationName = self.rewards[rnd].animation		
-		self.state:setAnimationByName(0, animationName, true, 0) --  commentsYell
-		local animation = self.skeletonData:findAnimation(animationName)
-		timer.performWithDelay(animation.duration * 1000, pauseAnimation, 1)
+        if not soundOnly then 
+	        commonData.playSound(swooshsound)
+			
+	        Runtime:addEventListener("enterFrame", handleFrame)		
+			isFirst = true
+			deltaMulti = 1
+
+			self.skeleton:setToSetupPose()
+			self.skeleton.group.alpha =1
+			
+			
+			--playSound(self.rewards[rnd].sound)   
+			local  animationName = self.rewards[rnd].animation		
+			self.state:setAnimationByName(0, animationName, true, 0) --  commentsYell
+			local animation = self.skeletonData:findAnimation(animationName)
+			timer.performWithDelay(animation.duration * 1000, pauseAnimation, 1)
+		end	
 		
 	end
 

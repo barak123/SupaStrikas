@@ -5,26 +5,28 @@ local spine = require "spine-corona.spine"
 
 local chaser = {}
 local json = spine.SkeletonJson.new()
-json.scale = 0.3
-local skeletonData = json:readSkeletonDataFile("BadGuy.json")
+json.scale = 0.35
+local skeletonData = json:readSkeletonDataFile("Hero.json")
 
 chaser.skeleton = {}
 chaser.skeleton = spine.Skeleton.new(skeletonData)
+chaser.skeleton:setSkin("BadGuy01")
 local fistObj = nil
 
 function chaser.skeleton:createImage (attachment)
 	-- Customize where images are loaded.
 	
-	local newPart =  display.newImage("Chaser/" .. attachment.name .. ".png")
-
-	if (attachment.name == "ArmBackOpen" or attachment.name == "ArmBackFist") then
-		--borderCollisionFilter = { categoryBits = 1, maskBits = 2 } -- collides with ball
-		--local defenderOutline = graphics.newOutline( 2, "Skin/" .. attachment.name .. ".png" )
-		--borderBodyElement = { friction=0.4, bounce=0.1, filter=borderCollisionFilter , outline = defenderOutline }
-
-		--newPart.name = "leg"
-		fistObj = newPart
-	end
+	local newPart = nil
+		if (attachment.name == "HeroResized/DribbleGuySkin/Ball001") then
+				
+				
+				 newPart =  display.newImage("balls/emptyBall.png")
+		else		 
+			 newPart =  display.newImage( attachment.name .. ".png")
+		end
+		
+	
+	
 --	end
 	return newPart
 end
@@ -47,7 +49,7 @@ local stateData = spine.AnimationStateData.new(skeletonData)
 local state = spine.AnimationState.new(stateData)
 -- state:setAnimationByName(0, "test")
 state:setAnimationByName(0, "Run", true)
-state:addAnimationByName(0, "Chase", true, 3)
+--state:addAnimationByName(0, "Chase", true, 3)
 --state:addAnimationByName(0, "run", true, 0)
 
 state.onStart = function (trackIndex)
@@ -118,20 +120,20 @@ function chaser:walk()
 end
 
 function chaser:stand()
-	state:setAnimationByName(0, "stand2", true)
+	state:setAnimationByName(0, "EnemyStand", true)
 	state:apply(chaser.skeleton)
 	chaser.skeleton:updateWorldTransform()
 end
 
 function chaser:chase()
-	state:setAnimationByName(0, "Chase", true)
-	state:apply(chaser.skeleton)
-	chaser.skeleton:updateWorldTransform()
+	-- state:setAnimationByName(0, "Chase", true)
+	-- state:apply(chaser.skeleton)
+	-- chaser.skeleton:updateWorldTransform()
 end
 
 function chaser:catch()
 	isFirstFrame = false
-	state:setAnimationByName(0, "Catch", false)
+	state:setAnimationByName(0, "EnemyCatch", false)
 	state:apply(chaser.skeleton)
 	chaser.skeleton:updateWorldTransform()
 end

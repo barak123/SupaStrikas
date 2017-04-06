@@ -28,55 +28,12 @@ settings = {
                 NSLocationWhenInUseUsageDescription = { "" },
 
 			    UIApplicationExitsOnSuspend = false,
-				FacebookAppID = "608674832569283" ,  --replace 608674832569283 with your Facebook App ID 612089632227803
-				CFBundleURLTypes =
-				{
-					{ CFBundleURLSchemes = { "fb608674832569283", } }  --replace 608674832569283 with your Facebook App ID
-				},
-
-				-- Whitelist Facebook Servers for Network Requests
-	            NSAppTransportSecurity = 
-	            {
-	                NSExceptionDomains = 
-	                {
-	                    ["fbcdn.net"] = 
-	                    {
-	                        NSIncludesSubdomains = true,
-	                        NSExceptionRequiresForwardSecrecy = false,
-	                    },
-	                    ["facebook.com"] = 
-	                    {
-	                        NSIncludesSubdomains = true,
-	                        NSExceptionRequiresForwardSecrecy = false,
-	                    },
-	                    ["akamaihd.net"] = 
-	                    {
-	                        NSIncludesSubdomains = true,
-	                        NSExceptionRequiresForwardSecrecy = false,
-	                    },
-	                },
-	                NSAllowsArbitraryLoads=true ,
-	            },
-
-	            -- Whitelist Facebook Apps
-	            LSApplicationQueriesSchemes = 
-	            {
-	                "fb",
-	                "fbapi20130214",
-	                "fbapi20130410",
-	                "fbapi20140410",
-	                "fbapi20140116",
-	                "fbapi20150313",
-	                "fbapi20150629",
-	                "fbauth",
-	                "fbauth2",
-	                "fb-messenger-api20140430",
-	            },
+				
           },
      },
 	 android = 
 	{
-	   facebookAppId = "608674832569283" , 	
+	   
 	   googlePlayGamesAppId = "195502442109"  --long App ID number (use yours!)
 	},
 
@@ -113,36 +70,17 @@ settings = {
 			{
 			publisherId = "com.coronalabs"
 			},
-		["plugin.facebook.v4"] = 
-        {
-            publisherId = "com.coronalabs"
-        },
-        --["plugin.fbAudienceNetwork"] =
-        --{
-        --    publisherId = "com.coronalabs",
-        --    supportedPlatforms = { iphone=true, android=true }
-        --},        
-		 ["plugin.zip"] =
-        {
-            publisherId = "com.coronalabs"
-        },
-        ["plugin.google.iap.v3"] =
-        {
-            publisherId = "com.coronalabs",
-            supportedPlatforms = { android=true }
-        },
+		
+        
+      --  ["plugin.google.iap.v3"] =
+      --  {
+      --      publisherId = "com.coronalabs",
+      --      supportedPlatforms = { android=true }
+      --  },
            ["plugin.flurry.analytics"] =
         {
             publisherId = "com.coronalabs"
         },        
-  --      ["plugin.twitter"] = {
-  --          publisherId = "com.jasonschroeder",
-  --      },        
- --        ["plugin.coronaAds"] =
- --           {
- --               publisherId = "com.coronalabs",
-  --              supportedPlatforms = { iphone=true, android=true }
-   --         },
 		
 	},
 }

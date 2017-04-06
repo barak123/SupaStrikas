@@ -36,7 +36,7 @@ local lefttSlots = {}
   
 
 
-function hero.new (scale, showBall, isFromShop , avatar)
+function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 	local self = {	
 		skeleton = {} ,
@@ -47,6 +47,7 @@ function hero.new (scale, showBall, isFromShop , avatar)
 		state = nil,
 		pScale = scale,
 		isShop = isFromShop,
+		isMenu = isFromMenu,
 		displayGroup = nil,	
 	}
 
@@ -241,6 +242,11 @@ function hero.new (scale, showBall, isFromShop , avatar)
 
 			local newPart =  nil
 
+			if isFromMenu and  ( string.ends(attachment.name , "LegFrontBottom")  or  string.ends(attachment.name , "BodyTop")   ) then
+				
+				attachmentImg = attachmentImg .. "_Menu"
+				
+			end	 
 			
 			if (attachment.name == "HeroResized/DribbleGuySkin/Ball001") then
 				if (showBall or forceShowBall ) then
@@ -275,81 +281,9 @@ function hero.new (scale, showBall, isFromShop , avatar)
 					
 				end	
 
-
-
-			elseif (skinToDisplay == "littleDribbler" or 
-					skinToDisplay == "KSI" or 
-					skinToDisplay == "Zombie" or 					
-					skinToDisplay == "PewDiePie" or 
-					skinToDisplay == "Kodi" or 
-					skinToDisplay == "Asi" or 					
-					skinToDisplay == "W2S" or 	
-					skinToDisplay == "DribbleBot" or 					
-					skinToDisplay == "Dannie" or 					
-					skinToDisplay == "Vik" or 					
-					skinToDisplay == "Rachel" or 					
-					skinToDisplay == "DribbleGirl") and
-					(
-					string.ends(attachment.name , "BodyBottom") or 
-					string.ends(attachment.name , "LegBackBottom")  or
-					string.ends(attachment.name , "LegBackTop") or 
-					string.ends(attachment.name , "LegFrontBottom")  or
-					string.ends(attachment.name , "LegFrontTop") or 
-						
-					string.ends(attachment.name , "ArmBackSleeve") or 
-					string.ends(attachment.name , "ArmFrontSleeve")  or
-					string.ends(attachment.name , "BodyTop") 
-					) then
-				
-				
-
-				local pnatsDir = "pants/"
-				
-				if (skinToDisplay == "KSI" or skinToDisplay == "Dannie" ) then
-				    pnatsDir = "pants/Dark/"
-				elseif (skinToDisplay == "Zombie") then
-					  pnatsDir = "pants/ZombieShorts/"
-				end
-
-				if skinToDisplay == "DribbleBot" and 
-					(string.ends(attachment.name , "BodyBottom") or 
-					string.ends(attachment.name , "LegBackBottom")  or
-					string.ends(attachment.name , "LegBackTop") or 
-					string.ends(attachment.name , "LegFrontBottom")  or
-					string.ends(attachment.name , "LegFrontTop")) then
-					 
-					 newPart = display.newImage( attachmentImg .. ".png")
-					 return newPart
-				end
-					
-				if 	string.ends(attachment.name , "ArmBackSleeve") then
-					newPart =  display.newImage("shirts/" .. shirtToDisplay .. "/ArmBackSleeve.png")
-					
-				elseif 	string.ends(attachment.name , "ArmFrontSleeve") then
-					newPart =  display.newImage("shirts/" .. shirtToDisplay .. "/ArmFrontSleeve.png")
-				elseif 	string.ends(attachment.name , "BodyTop") then
-					newPart =  display.newImage("shirts/" .. shirtToDisplay .. "/BodyTop.png")
-				elseif string.ends(attachment.name , "BodyBottom"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ) then
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/BodyBottom.png")
-				elseif string.ends(attachment.name , "LegBackBottom") then
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegBackBottom.png")
-				elseif string.ends(attachment.name , "LegBackTop") then
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegBackTop.png")
-				elseif string.ends(attachment.name , "LegFrontBottom") then
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontBottom.png")
-					rightBottomObj  = newPart	
-				elseif string.ends(attachment.name , "LegFrontBottom") then
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontBottom.png")
-					rightBottomObj  = newPart		
-
-					
-				else
-					newPart =  display.newImage(pnatsDir .. pantsToDisplay .. "/LegFrontTop.png")		
-					rightTopObj  = newPart	
-				end		
-				
 				 		
 			else
+	
 				 newPart = display.newImage( attachmentImg .. ".png")
 				
 			end
@@ -603,13 +537,9 @@ function hero.new (scale, showBall, isFromShop , avatar)
 			isKicking = false
 			
 			self.skeleton:setToSetupPose()
-			self.state:setAnimationByName(0, "Caught01", false)	
+			self.state:setAnimationByName(0, "FallRollOver", false)	
 
-			if commonData.selectedSkin == "DribbleBot" then				
-				self.state:setAnimationByName(0, "BotCaught", false)	
-			end	
-
-
+	
 			self.state:apply(self.skeleton)
 			self.skeleton:updateWorldTransform()
 			

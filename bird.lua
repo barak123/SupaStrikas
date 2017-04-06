@@ -18,8 +18,8 @@ function bird.new (skeletonData)
 
 
 	self.json = spine.SkeletonJson.new()
-	self.json.scale = 0.25
-	self.skeletonData = self.json:readSkeletonDataFile("bird.json")
+	self.json.scale = 0.22
+	self.skeletonData = self.json:readSkeletonDataFile("WaterBot/WaterBot.json")
 
 	self.skeleton = {}
 	self.skeleton = spine.Skeleton.new(self.skeletonData)
@@ -27,7 +27,7 @@ function bird.new (skeletonData)
 	function self.skeleton:createImage (attachment)
 		-- Customize where images are loaded.
 		
-		local newPart =  display.newImage("Bird/" .. attachment.name .. ".png")
+		local newPart =  display.newImage("WaterBot/" .. attachment.name .. ".png")
 
 		
 	--	end
@@ -35,7 +35,7 @@ function bird.new (skeletonData)
 	end
 	--self.skeleton.group.x = 0
 	---self.skeleton.group.y = display.contentHeight * 0.85
-	self.skeleton.flipX = false
+	self.skeleton.flipX = true
 	self.skeleton.flipY = false
 	--skeleton.debug = true -- Omit or set to false to not draw debug lines on top of the images.
 	--skeleton.debugAabb = true
@@ -92,14 +92,14 @@ function bird.new (skeletonData)
 
 	function self:init()	
 		Runtime:addEventListener("enterFrame", handleFrame)
-		self.state:setAnimationByName(0, "BirdIdel", true, 0) --  BirdYell
+		self.state:setAnimationByName(0, "Idel", false, 0) --  BirdYell
 
 	end
 
 
 	function self:fail()	
 		
-		self.state:setAnimationByName(0, "Fail", true, 0) --  arsYell
+		--self.state:setAnimationByName(0, "Fail", true, 0) --  arsYell
 
 	end
 	function self:getSkeleton()

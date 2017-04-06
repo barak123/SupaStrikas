@@ -26,7 +26,7 @@ challenges["noJump60"] = {}
 challenges["runFromBully"] = {}
 challenges["maxSpeed"] = {}
 
-challenges["hitBird"] = {}
+
 challenges["collectSpreeCoins"] = {}
 challenges["collectSpreeCoins2"] = {}
 challenges["topScore350"] = {}
@@ -66,7 +66,7 @@ challenges["noJump60"].text = "Reach 60 Meters without jumping"
 challenges["runFromBully"].text = "Run away from the bully"
 challenges["maxSpeed"].text = "Reach maximum speed"
 
-challenges["hitBird"].text = "Hit a bird"
+
 challenges["collectSpreeCoins"].text = "Collect 4 coins in perfect spree"
 challenges["collectSpreeCoins2"].text = "Collect 6 coins in perfect spree"
 challenges["topScore350"].text = "Reach 50 meters 3 games in a row"
@@ -105,7 +105,7 @@ challenges["maxSpeed"].coins = 15
 -- challenges["changeShirt"].coins = 25
 -- challenges["changePants"].coins = 25
 -- challenges["changeCharacter"].coins = 25
-challenges["hitBird"].coins = 10
+
 challenges["collectSpreeCoins"].coins = 10
 challenges["collectSpreeCoins2"].coins = 10
 challenges["topScore350"].coins = 10
@@ -144,7 +144,7 @@ challenges["maxSpeed"].isUnlocked = false
 -- challenges["changeShirt"].isUnlocked = false
 -- challenges["changePants"].isUnlocked = false
 -- challenges["changeCharacter"].isUnlocked = false
-challenges["hitBird"].isUnlocked = false
+
 challenges["collectSpreeCoins"].isUnlocked = false
 challenges["collectSpreeCoins2"].isUnlocked = false
 challenges["topScore350"].isUnlocked = false
@@ -181,7 +181,7 @@ challenges["maxSpeed"].isAvailable = false
 -- challenges["changeShirt"].isAvailable = false
 -- challenges["changePants"].isAvailable = false
 -- challenges["changeCharacter"].isAvailable = false
-challenges["hitBird"].isAvailable = false
+
 challenges["collectSpreeCoins"].isAvailable = false
 challenges["collectSpreeCoins2"].isAvailable = false
 challenges["topScore350"].isAvailable = false
@@ -223,8 +223,6 @@ orderIdx = orderIdx + 1
 challenges["perfect6"].order = orderIdx
 orderIdx = orderIdx + 1
 
-challenges["hitBird"].order = orderIdx
-orderIdx = orderIdx + 1
 
 challenges["reacehedMeters100"].order = orderIdx
 orderIdx = orderIdx + 1
@@ -314,7 +312,7 @@ challenges["reacehedMeters300"].category = 1
 -- challenges["changeShirt"].category = nil
 -- challenges["changePants"].category = nil
 -- challenges["changeCharacter"].category = nil
-challenges["hitBird"].category = nil
+
 challenges["collectSpreeCoins"].category = 2
 challenges["collectSpreeCoins2"].category = 2
 challenges["topScore350"].category = 3
@@ -492,7 +490,9 @@ function initChallenges(pUnlockedChalenges)
 	--print("initAchivments")
 	if (pUnlockedChalenges) then
 		for i=1,#pUnlockedChalenges do
-			challenges[pUnlockedChalenges[i]].isUnlocked = true
+			if challenges[pUnlockedChalenges[i]] then
+				challenges[pUnlockedChalenges[i]].isUnlocked = true
+			end
 		end
 	end
 end

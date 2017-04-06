@@ -4,8 +4,8 @@ local composer = require( "composer" )
 local widget = require( "widget" )
 --parse = require( "mod_parse" )
 require( "game_config" )
-local facebook = require( "plugin.facebook.v4" )
-local zip = require( "plugin.zip" )
+
+--local zip = require( "plugin.zip" )
 local json = require("json")
 local mime=require("mime")
 local openssl = require "plugin.openssl"
@@ -132,20 +132,9 @@ commonData.analytics.init( flurryListener, { apiKey=flurryKey , crashReportingEn
 -- combre.init( "77fc86766d02bd370c623dd5ad4801066805e50e" )
 
 local scene = composer.newScene()
-local fbAppID = "608674832569283"  --"612089632227803" -- prod -->"608674832569283"  --replace with your Facebook App ID
-commonData.friendsScore = {}
-commonData.accessTokenFromFacebookLogin = nil
-commonData.facebook_user_id = nil
-local isFirstLogin =true
-local isFullLogin =false
-local isFirstResponse =true
-local isGetMeRequest = true
-local isGetScores = false
-local isGetAvatars = false
+
 
 local isFirstGame = false
-local isShopBackup = false
-local isShopRestore = false
 
 local heroSpine =  nil
 local hero = nil
@@ -165,10 +154,7 @@ end
 local muteButton = nil
 local unMuteButton = nil
 local isAppOpened = false
-local fbConected = nil
-local isLoginFromToken = false
-local extraBackground = nil
-local extrasGroup = nil
+
 
 math.randomseed( os.time() )
 commonData.isABTesting = false
@@ -257,277 +243,6 @@ function fileExists(fileName, base)
   return(exists)
 end
 
-function submitHighScoreToFacebook()
-
-  -- print("====================submit highScore=====================")
-  -- print(facebook_user_id)
-
-
-  -- print(accessTokenFromFacebookLogin)
-  -- print(globalHighScore)
-  if (commonData.accessTokenFromFacebookLogin and commonData.facebook_user_id and commonData.globalHighScore)  then
-
-          local function fbNetworkListener( event )
-              if ( event.isError ) then
-  --                print( "submit error" )
-
-              elseif ( event.phase == "began" ) then
-    --              print( "Progress Phase: began" )
-              elseif ( event.phase == "ended" ) then
-      --            print( "score submitted" )
-                
-              end
-            end
-      --print ("submit hige score of ".. globalHighScore)         
-      local params = {}
-      params.body = "&score=".. commonData.globalHighScore .."&access_token=".. commonData.accessTokenFromFacebookLogin
-      
-
-      --TODO: remove
-      -- network.request( "https://graph.facebook.com/".. commonData.facebook_user_id .. "/scores", "POST", fbNetworkListener, params)
-
-                
-  end
-end 
----------------------------------------------------------------------------------
--- All code outside of the listener functions will only be executed ONCE
--- unless "composer.removeScene()" is called.
----------------------------------------------------------------------------------
-
--- local forward references should go here
-
----------------------------------------------------------------------------------
-
-local function facebookListener( event )
-
-  local maxStr = 20   -- set maximum string length
-  local endStr
-  
-  for k,v in pairs( event ) do
-    local valueString = tostring(v)
-    
-      endStr = ")"
-    --print( "   " .. tostring( k ) .. "(" .. tostring( valueString ) .. endStr )
-  end
-
-    -- print( "event.name:" .. event.name )  --"fbconnect"
-    -- print( "isError: " .. tostring( event.isError ) )
-
-    -- print( "didComplete: " .. tostring( event.didComplete ) )
-    -- print( "event.type:" .. event.type )  --"session", "request", or "dialog"
-    --"session" events cover various login/logout events
-    --"request" events handle calls to various Graph API calls
-    --"dialog" events are standard popup boxes that can be displayed
- 
-    if ( "session" == event.type ) then
-        --options are "login", "loginFailed", "loginCancelled", or "logout"
-        if ( "login" == event.phase ) then
-           commonData.accessTokenFromFacebookLogin = event.token
-           if (isFirstLogin) then
-             isFirstLogin = false
-             isGetMeRequest = true
-             isGetAvatars = false
-             isPostAvatar = false
-             isGetScores = false
-             facebook.login(  facebookListener, {"publish_actions" } )
-      
-           else
-            if (isGetMeRequest ) then
-                facebook.request("me")
-
-            else
-              --local scoreParams = {fields="score,user.fields(id,name,picture)"}
-              --facebook.request(fbAppID .."/scores","GET",scoreParams)
-            end  
-
-           end 
-            --code for tasks following a successful login
-        end
-
-    elseif ( "request" == event.type ) then
-        --print("facebook request")
-
-
-            local response = json.decode( event.response )
-            --printTable( response, "User Info", 3 )
-      
-
-        
-        if ( not event.isError ) then
-        
-            if (isGetMeRequest ) then
-                isFirstLogin = false
-                
-                commonData.facebook_user_id = response.id
-                isGetMeRequest = false
-                isGetAvatars = false
-                isGetScores = true
-                isPostAvatar = false
-                isShopRestore = false
-                isShopBackup = false
-
-
-               
-                local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                facebook.request(fbAppID .."/scores","GET",scoreParams)            
-                
-            elseif  (isShopRestore) then
-               
-                  --print("restoreShop")
-                if #response.data == 0 then
-                  -- create new shop object
-                else
-                  
-                  if response.data[1] and  response.data[1].data and response.data[1].data.shopitems then
-                    --print("have data")
-                    local decodeditems = decodeB64(response.data[1].data.shopitems)
-                    local decryptedData = cipher:decrypt (decodeditems , dataFileEncKey )
-                    local serverShopItems = json.decode(decryptedData);
-
-                    for k,v in pairs(serverShopItems) do
-                      --print(k)
-                      commonData.shopItems[k] = v
-                    end
-                    
-                    commonData.saveTable(commonData.shopItems , SHOP_FILE)
-
-                  end  
-                end
-                isShopRestore = false
-             elseif  (isShopBackup) then 
-              isShopBackup = false
-
-              
-              if response.id  then
-                commonData.gameData.shopObjId = response.id 
-              
-              end 
-             elseif  (isPostAvatar) then 
-              isPostAvatar = false
-
-               if response.id  then
-                commonData.gameData.avatarObjId = response.id               
-              end 
-
-            elseif isGetAvatars then
-              isGetAvatars = false  
-              commonData.avatars = response    
-
-                  
-              -- If the connected to fb from the game over screen
-              local currentSceneName = composer.getSceneName( "current" )
-                if ( currentSceneName== "game" ) then
-                    local gameOverScene = composer.getScene( "gameOver"  )
-
-                    if (gameOverScene) then
-                     gameOverScene:outerDrawFriends(commonData.gameData)
-
-                     if (not commonData.gameData.fbPacks) then
-                       commonData.gameData.packs = commonData.gameData.packs + 1
-                       commonData.gameData.fbPacks = true
-                       commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
-                     end
-                    end 
-                end    
-
-            
-
-            elseif isGetScores  then-- get scores
-
-                       --print ("************ got friends ************* "  )  
-                      isFullLogin = true
-                      isGetScores = false
-                      isLoginFromToken = false
-                      fbConected.alpha = 1
-
-                      if (not commonData.gameData.isConnectedToFB) then
-                       commonData.analytics.logEvent( "fbFullLogin" )
-                        commonData.gameData.isConnectedToFB = true                
-                      end
-
-                      submitHighScoreToFacebook()
-
-                      commonData.friendsScore = {}
-
-                      local avatarIds = ""
-                      local pAvatarId = nil
-
-                      local isAvatarExists = false
-                      if response.data then
-
-                        
-                            for i=1,#response.data do
-                                
-
-                              
-                                if response.data[i].user["littledribble:customize"] and 
-                                     response.data[i].user["littledribble:customize"].data[1] and
-                                     response.data[i].user["littledribble:customize"].data[1].data.avatar then
-
-                                     pAvatarId = response.data[i].user["littledribble:customize"].data[1].data.avatar.id
-                                     avatarIds = avatarIds .. pAvatarId .. ","
-                                     isAvatarExists = true
-                        
-                                else
-                                  pAvatarId = nil     
-                        
-                                end 
-
-                                 if (commonData.facebook_user_id ~= response.data[i].user.id) then
-                        
-
-
-                                    commonData.friendsScore[response.data[i].score] = {name = response.data[i].user.name ,
-                                                                            picUrl = response.data[i].user.picture.data.url,
-                                                                            id = response.data[i].user.id, 
-                                                                            avatarId = pAvatarId,
-                                                                            rank = i
-                                                                          }
-                                      -- print ("get friend : " .. response.data[i].user.name )  
-                                      -- print("friends num : " .. commonData.friendsScore[response.data[i].score].name  )
-
-                                      --printTable(commonData.friendsScore)
-
-                                      if (not fileExists(commonData.friendsScore[response.data[i].score].id .. ".jpg")) then
-
-                                          local function downloadImgListener( event )
-                                          end
-
-                                          network.download(
-                                             commonData.friendsScore[response.data[i].score].picUrl,
-                                             "GET",
-                                             downloadImgListener,
-                                             nil,
-                                             commonData.friendsScore[response.data[i].score].id .. ".jpg",
-                                             system.TemporaryDirectory
-                                          )
-                                      end    
-                                  end
-                            end
-                      end     
-
-
-                      if isAvatarExists then
-                       
-                        isGetAvatars = true                
-                        isPostAvatar = false
-                        local avatarParams = {ids= string.sub(avatarIds, 1, -2)}
-                     
-                        facebook.request("me","GET",avatarParams)
-                      end
-
-
-            else
-                --print ("*************** unknown response *****************")  
-            end  
-        else
-        end
-
-    elseif ( "dialog" == event.type ) then
-        --print( "dialog", event.response )
-        --handle dialog results here
-    end
-end
 
 
 -- "scene:create()"
@@ -549,9 +264,8 @@ commonData.shopShoes = commonData.selectedShoes
 commonData.shopShirt = commonData.selectedShirt
 commonData.shopPants = commonData.selectedPants
 
-local selectMenuSound = nil
+local selectMenuSound =  audio.loadSound( "BtnPress.mp3" )
 
-selectMenuSound = audio.loadSound( "BtnPress.mp3" )
 
 
 --commonData.gameNetwork = require( "gameNetwork" )
@@ -640,183 +354,7 @@ commonData.buttonSound = function ()
 end
 
 
-commonData.shopBackup = function (shopDataToStore , encryptedData )
-
-  --print(tostring(shopDataToStore))
-      local function onCreateObject( event )
-
-       -- printTable(event)
-         
-       end
-       --local dataTable = { ["id"] = 123 }
-       --parse:createObject( "test", dataTable, onCreateObject )
-        
-
-      --   local function onGetObjects( event )
-
-      --     printTable(event)
-      --   if not event.error then
-      --      local dataTable = { ["googleUser"] = googlePlayerId , ["shopData"] = tostring(shopDataToStore) }
-           
-      --     if  #event.results == 0 then
-      --       parse:createObject( "shop", dataTable, onCreateObject )
-      --     else
-      --        parse:updateObject( "shop", event.results[1].objectId, dataTable, onCreateObject )
-      --     end  
-
-          
-         
-      --   end
-      -- end
-      -- local queryTable = { 
-      --   ["where"] = { ["googleUser"] =  googlePlayerId  }
-      -- }
-
-      -- backup to parse if have googleID
-      -- if (googlePlayerId) then
-      --   parse:getObjects( "shop", queryTable, onGetObjects )
-      -- end
-
-      -- backup to facebook graph
-      
-      if (isFullLogin) then
-      --   local attachment = {
-      --   name = "Developing a Facebook Connect app using the Corona SDK!",
-      --   link = "http://www.coronalabs.com/links/forum",
-      --   caption = "Link caption",
-      --   description = "Corona SDK for developing iOS and Android apps with the same code base.",
-      --   picture = "http://www.coronalabs.com/links/demo/Corona90x90.png",
-      --   actions = json.encode( { { name = "Learn More", link = "http://coronalabs.com" } } )
-      -- }
-                 
-            isGetMeRequest = false
-            isGetScores = false
-            isGetAvatars = false
-            isShopBackup = true
-            isShopRestore = false
-
-
---            {"og:url":"http:\/\/samples.ogp.me\/703237053113060","og:title":"Sample Avatar","og:type":"littledribble:avatar","og:image":"https:\/\/fbstatic-a.akamaihd.net\/images\/devsite\/attachment_blank.png","og:description":"","fb:app_id":608674832569283,"littledribble:shoes":"Sample shoes"}
-             -- local params = {
-             --  object='{"og:url":"http://samples.ogp.me/678908255545940","og:title":"Sample Shop",' ..
-             --                      '"og:type":"littledribble:shop","og:shopitems":"","og:image":"https://fbstatic-a.akamaihd.net/images/devsite/attachment_blank.png","og:description":"","fb:app_id":608674832569283}'}
-              
-            -- local encodedShopDataToStore  = string.gsub(shopDataToStore, "\"", "&quot;")
-             local jsonToFb = "{\"og:url\":\"http://www.facebook.com/Little-Dribble-860357334028562\",\"og:title\":\"Little Dribble\"," ..
-                                  "\"og:type\":\"littledribble:shop\",\"littledribble:shopitems\":\"" ..  tostring(encodeB64(encryptedData)) ..
-                      "\",\"og:image\":\"https://fbstatic-a.akamaihd.net/images/devsite/attachment_blank.png\",\"og:description\":\"\",\"fb:app_id\":608674832569283}"
-              --print(jsonToFb)                      
-             local params = {object= jsonToFb}
-             
-
-            -- local params = {
-            --   object  = json.encode( { ogurl = "http://samples.ogp.me/678908255545940",
-            --                            ogtitle = "Dribble Shop" ,
-            --                            ogtype = "littledribble:shop",
-            --                            ogshopitems = shopDataToStore,
-            --                            ogimage = "https://fbstatic-a.akamaihd.net/images/devsite/attachment_blank.png",
-            --                            ogdescription = "",
-            --                            fbapp_id = 608674832569283
-
-            --                         } )  }          
-             if  commonData.gameData.shopObjId  then
-                facebook.request(tostring(commonData.gameData.shopObjId),"POST",params)            
-             else 
-                  facebook.request("me/objects/littledribble:shop","POST",params)            
-              end
-       end
-end
-
-local function restoreShop( )
-    
-            
-
-      -- local function onGetObjects( event )
-
-      --     printTable(event)
-      --   if not event.error then
-           
-      --     if  #event.results > 0 then
-           
-      --       local serverShopItems = json.decode(event.results[1].shopData)
-
-      --       for k,v in pairs(serverShopItems) do
-      --         shopItems[k] = v
-      --       end
-            
-      --       saveTable(shopItems , SHOP_FILE)
-      --     end  
-         
-      --   end
-      -- end
-
-      -- if googlePlayerId then
-      --       local queryTable = { 
-      --         ["where"] = { ["googleUser"] =  googlePlayerId  }
-      --       }
-      --       parse:getObjects( "shop", queryTable, onGetObjects )  
-      -- end 
-
-      if isFullLogin then
-
-        isGetMeRequest = false
-        isShopBackup = false
-        isShopRestore = true
-        isGetScores = false
-        isGetAvatars = false
-       facebook.request("me/objects/littledribble:shop","GET")                    
-     end  
-end
-
 commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
-
-    if filename == GAME_DATA_FILE then
-
-      if not ignoreFbStatus then
-
-        t.isConnectedToFB = isFullLogin 
-      end
-        if isPostAvatar then
-            isGetMeRequest = false
-            isShopBackup = false
-            isShopRestore = false
-            isGetAvatars = false
-            isPostAvatar = true
-            isGetScores = false
-
-
-
---            {"og:url":"http:\/\/samples.ogp.me\/703237053113060","og:title":"Sample Avatar","og:type":"littledribble:avatar","og:image":"https:\/\/fbstatic-a.akamaihd.net\/images\/devsite\/attachment_blank.png","og:description":"","fb:app_id":608674832569283,"littledribble:shoes":"Sample shoes"}
-            
-             local jsonToFb = "{\"og:url\":\"http://www.facebook.com/Little-Dribble-860357334028562\",\"og:title\":\"Little Dribble\"," ..
-                                  "\"og:type\":\"littledribble:avatar\",\"littledribble:shoes\":\"" .. commonData.selectedShoes ..
-                      "\",\"littledribble:skin\":\"" .. commonData.selectedSkin .."\", \"littledribble:ball\":\"" .. commonData.selectedBall ..
-                      "\",\"littledribble:shirt\":\"" .. commonData.selectedShirt .."\", \"littledribble:pants\":\"" .. commonData.selectedPants  ..
-                      "\",\"og:image\":\"https://fbstatic-a.akamaihd.net/images/devsite/attachment_blank.png\",\"og:description\":\"\",\"fb:app_id\":608674832569283}"
-              --print(jsonToFb)                      
-             local params = {avatar= jsonToFb}
-             
-
-            -- local params = {
-            --   object  = json.encode( { ogurl = "http://samples.ogp.me/678908255545940",
-            --                            ogtitle = "Dribble Shop" ,
-            --                            ogtype = "littledribble:shop",
-            --                            ogshopitems = shopDataToStore,
-            --                            ogimage = "https://fbstatic-a.akamaihd.net/images/devsite/attachment_blank.png",
-            --                            ogdescription = "",
-            --                            fbapp_id = 608674832569283
-
-            --                         } )  }          
-            
-             if  commonData.gameData.avatarObjId  then
-                facebook.request(tostring(commonData.gameData.avatarObjId),"POST",params)            
-             else 
-                facebook.request("me/littledribble:customize","POST",params)   
-             end
-             
-        end     
-
-    end  
 
     local path = system.pathForFile( filename, system.DocumentsDirectory)
     local file = io.open(path, "w")
@@ -851,11 +389,7 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
           })
 ---            print(filename)
  --           print(contents)
-        if filename == SHOP_FILE and not isShopRestore then
-
-          commonData.shopBackup(contents,encryptedData )
-         -- print(tostring(encodeB64(encryptedData)))
-        end
+      
           
         return true
     else
@@ -916,8 +450,7 @@ end
 Runtime:addEventListener( "key", onKeyEvent )
 Runtime:addEventListener( "system", systemEvents )
 
-      extrasGroup = display.newGroup()
-  
+      
     --everything from here down to the return line is what makes
      --up the scene so... go crazy
      local background = display.newImage("MainMenu/MainMenu BG.jpg")
@@ -935,6 +468,14 @@ Runtime:addEventListener( "system", systemEvents )
      
      abstract.x = 240 + display.actualContentWidth/2 - abstract.contentWidth/2 
      abstract.y = 160
+     
+     local logo = display.newImage("ExtrasMenu/Logo.png")
+     
+     logo.yScale = 0.15 * display.actualContentHeight  / logo.contentHeight
+     logo.xScale = logo.yScale
+     
+     logo.x = 240 + display.actualContentWidth/2 - logo.contentWidth/2  -10
+     logo.y = 160 + display.actualContentHeight/2 - logo.contentHeight/2 -10
       
      
 
@@ -961,17 +502,7 @@ Runtime:addEventListener( "system", systemEvents )
      splash:addEventListener("touch", nullListener )
            
 
-     local extras = display.newImage("ExtrasMenu/ExtasWindow.png")
-     extras.x = 380
-     extras.y = 160
-
-
-     extras.yScale =  display.actualContentHeight / extras.contentHeight
-     extras.xScale = extras.yScale
-
-
-
-     --extras.x = display.screenOriginX  + display.actualContentWidth - extras.contentWidth /2
+     
 
 
     local widget = require( "widget" )
@@ -995,7 +526,7 @@ Runtime:addEventListener( "system", systemEvents )
              end 
            end
 
-            local options = {params = {gameData = commonData.gameData, isTutorial=isTutorial}}
+            local options = {params = {gameData = commonData.gameData, isTutorial=false}}
             composer.gotoScene( "game" , options )
             isFirstGame = false
 
@@ -1023,12 +554,7 @@ Runtime:addEventListener( "system", systemEvents )
          if ( "ended" == event.phase ) then
             commonData.playSound( selectMenuSound ) 
                      
-            -- facebook.showDialog( "requests", 
-            --     { 
-            --         message = "You should download this game!",
-            --         filter = "APP_NON_USERS"
-            --     })
-
+            
             commonData.gpgs.achievements.show()
            --commonData.gameNetwork.show("achievements")
            commonData.analytics.logEvent( "achievementsScreen" )
@@ -1066,150 +592,23 @@ Runtime:addEventListener( "system", systemEvents )
            return true
      end
 
-    local function moreListener( event )
-         if ( "ended" == event.phase ) then
-          commonData.playSound( selectMenuSound ) 
-          
-          extrasGroup.alpha= 1 - extrasGroup.alpha
-
-          extraBackground.alpha= 0.01 - extraBackground.alpha
-         end 
-           return true
-     end
-
-    local function settingsListener( event )
-         if ( "ended" == event.phase ) then
-
-         end 
-           return true
-     end
+    
      
       local function fbLikeListener( event )
          if ( "ended" == event.phase ) then
             --isGetMeRequest = true
          --   gameData.packs = 5
              commonData.analytics.logEvent( "fbLikePressed" )
-             system.openURL( "https://m.facebook.com/Little-Dribble-860357334028562" )
+             system.openURL( "https://m.facebook.com/SupaStrikasFC" )
  
          
           end
            return true
      end
 
-     commonData.doFbLogin = function () 
-
-        if facebook.isActive then
-
-                   facebook.setFBConnectListener( facebookListener )
-                    
-                    commonData.analytics.logEvent( "fbLoginPressed" )
-                    local accessToken = facebook.getCurrentAccessToken()
-                    if ( accessToken ) then
-
-
-                        -- print ("have fb token - get friends")
-                        -- printTable( accessToken, "User Info", 3 )
-                        
-                        commonData.accessTokenFromFacebookLogin =  accessToken.token 
-                        commonData.facebook_user_id = accessToken.userId  
-                        isFullLogin = true
-                        fbConected.alpha = 1
-                        isGetMeRequest = false
-                        isGetAvatars = false
-                        isPostAvatar = false
-                        isGetScores = true
-                        isLoginFromToken = true
-                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                       facebook.request(fbAppID .."/scores","GET",scoreParams)
-
-                    else
-                       isFirstLogin = true
-                       isGetMeRequest = true
-                       isGetScores = false
-                       facebook.login(  facebookListener, { "user_friends" } )
-            
-                      --  facebook.login( facebookListener )
-                    end
-             end       
-             
-     end 
-
-     local fbLoginCounter = 3
-
-     commonData.doFbLogin2 = function() 
-
-        --print(" ********* Try to login **************** : " .. fbLoginCounter)
-        if facebook.isActive then
-
-                   facebook.setFBConnectListener( facebookListener )
-                    
-                    commonData.analytics.logEvent( "fbLoginPressed" )
-                    local accessToken = facebook.getCurrentAccessToken()
-                    if ( accessToken ) then
-
-
-                        -- print ("have fb token - get friends")
-                        -- printTable( accessToken, "User Info", 3 )
-                        
-                        commonData.accessTokenFromFacebookLogin =  accessToken.token 
-                        commonData.facebook_user_id = accessToken.userId  
-                        isFullLogin = true
-                        isLoginFromToken = true
-                        fbConected.alpha = 1
-                        isGetMeRequest = false
-                        isGetAvatars = false
-                        isPostAvatar = false
-                        isGetScores = true
-                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                       facebook.request(fbAppID .."/scores","GET",scoreParams)
-
-                    else
-                       if (fbLoginCounter > 0) then
-
-                         timer.performWithDelay(5000, commonData.doFbLogin2 , 1)
-                         fbLoginCounter = fbLoginCounter - 1
-                       else  
-                        timer.performWithDelay(1, commonData.doFbLogin , 1)
-                       end
-                      --  facebook.login( facebookListener )
-                    end
-             end       
-             
-     end 
-
-     commonData.fbLoginListener = function ( event )
-         if ( "ended" == event.phase ) then
-            --print("fbLogin")
-            commonData.doFbLogin() 
-
-             
-          end
-           return true
-     end
-
-    local function tweetListener( event )
-         if ( "ended" == event.phase ) then
-             commonData.analytics.logEvent( "tweetFollowPressed" )
-             --isABTesting = not isABTesting
-
-              -- twitter.login(function()  twitter.follow("LittleDribbleRV", 
-              --   function()
-              --      commonData.analytics.logEvent( "tweetFollowSucceed" )
-              --   end  ) end)         
-          
-          end
-           return true
-     end
-
-    local function restoreListener( event )
-         if ( "ended" == event.phase ) then
-             commonData.analytics.logEvent( "restoreShopPressed" )
-         
-            restoreShop()       
-          end
-           return true
-     end
- 
+     
+    
+   
    
      local function muteListener( event )
          if ( "ended" == event.phase ) then
@@ -1232,39 +631,8 @@ Runtime:addEventListener( "system", systemEvents )
           end
            return true
      end
-
-
-     --fbAudienceNetwork = require( "plugin.fbAudienceNetwork" )
-     --print( "require audiance network")
-
-           -- Pre-declare a placement ID
-      commonData.placementID = "608674832569283_710307765739322"
-
-      local function adListener( event )
-       --     print( "barak" )
-            printTable(event)
-
-          if ( event.phase == "init" ) then  -- Successful initialization
-         --     print( event.isError )
-              -- Load a banner ad
-              --fbAudienceNetwork.load( "interstitial", placementID )
-
-          elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
-              -- print( event.type )
-              -- print( event.placementId )
-
-          elseif ( event.phase == "failed" ) then  -- The ad failed to load
-              -- print( event.type )
-              -- print( event.placementId )
-              -- print( event.isError )
-              -- print( event.response )
-          end
-      end
-
-
+ 
       
-      -- Initialize the Facebook Audience Network
-      --fbAudienceNetwork.init( adListener , "2d23566016dda2b6f917aaf19aa0b645,893596c6d3c57ee55057c65d76889931a868ccea")
      local  buttonsSet = "BlueSet"
       
       -- Create the widget
@@ -1370,53 +738,12 @@ Runtime:addEventListener( "system", systemEvents )
       statsButton.x = leaderButton.x - leaderButton.contentWidth/2 - statsButton.contentWidth/2 - 2
      
      
-      local settingsButton = widget.newButton
-      {
-          x = 35,
-          y = 280,
-          id = "settingsButton",
-          defaultFile = buttonsSet .. "/Main/OptionsUp.png",
-          overFile = buttonsSet .. "/Main/OptionsDown.png",
-          onEvent = settingsListener
-      }
-
-      settingsButton.xScale =  (display.actualContentWidth*0.08) / settingsButton.width
-      settingsButton.yScale = settingsButton.xScale  
+   
      
-      local moreButton = widget.newButton
-      {
-          x = 440,
-          y = 280,
-          id = "moreButton",
-          defaultFile = buttonsSet .. "/Main/OptionsUp.png", -- MoreUp.png
-          overFile = buttonsSet .. "/Main/OptionsDown.png", -- MoreDown.png
-          onEvent = moreListener
-      }
 
       --backButton.x = display.screenOriginX  + backButton.contentWidth /2
 
       
-      moreButton.yScale =  achivButton.contentHeight / moreButton.contentHeight
-      moreButton.xScale = moreButton.yScale  
-
-      --moreButton.x = moreButton.x + (display.actualContentWidth - display.contentWidth) /2
-     
-
-      local lessButton = widget.newButton
-      {
-          x = 440,
-          y = 273,
-          id = "lessButton",
-          defaultFile = "ExtrasMenu/Back.png",
-          overFile = "ExtrasMenu/BackDown.png",
-          onEvent = moreListener
-      }
-
-      lessButton.xScale =  (display.actualContentWidth*0.03) / lessButton.width
-      lessButton.yScale = lessButton.xScale  
-
-     -- lessButton.x = lessButton.x + (display.actualContentWidth - display.contentWidth) /2
-
 
 
      local fbLikeButton = widget.newButton
@@ -1432,24 +759,12 @@ Runtime:addEventListener( "system", systemEvents )
       fbLikeButton.xScale =  (display.actualContentWidth*0.07) / fbLikeButton.width
       fbLikeButton.yScale = fbLikeButton.xScale  
 
-     local tweetFollowButton = widget.newButton
-      {
-          left = 380,
-          top = 180,
-          id = "tweetFollowButton",
-          defaultFile = "ExtrasMenu/TweetFollow.png",
-          overFile = "ExtrasMenu/TweetFollowDown.png",
-          onEvent = tweetListener
-      }
-
-       tweetFollowButton.xScale =  (display.actualContentWidth*0.07) / tweetFollowButton.width
-      tweetFollowButton.yScale = tweetFollowButton.xScale 
-
+     
       muteButton = widget.newButton
       {
           left = 280,
           top = 180,
-          id = "tweetFollowButton",
+          id = "muteButton",
           defaultFile = "ExtrasMenu/Mute.png",
           overFile = "ExtrasMenu/UnMuteDown.png",
           onEvent = muteListener
@@ -1462,7 +777,7 @@ Runtime:addEventListener( "system", systemEvents )
       {
           left = 280,
           top = 180,
-          id = "tweetFollowButton",
+          id = "unMuteButton",
           defaultFile = "ExtrasMenu/UnMute.png",
           overFile = "ExtrasMenu/MuteDown.png",
           onEvent = unMuteListener
@@ -1474,66 +789,9 @@ Runtime:addEventListener( "system", systemEvents )
 
 
 
-      local fbLoginButton = widget.newButton
-      {
-          left = 225,
-          top = 100,
-          id = "fbLoginButton",
-          defaultFile = "ExtrasMenu/FBLogin.png",
-          overFile = "ExtrasMenu/FBLoginDown.png",
-          onEvent = commonData.fbLoginListener
-      }
-
-      fbLoginButton.xScale =  (display.actualContentWidth*0.25) / fbLoginButton.width
-      fbLoginButton.yScale = fbLoginButton.xScale 
-
-      fbConected = display.newImage("ExtrasMenu/Connected.png")
-      local function nullListener( event )      
-          return true
-       end
-
-       fbConected.width = fbLoginButton.contentWidth
-       fbConected.height = fbLoginButton.contentHeight
-       fbConected.x = fbLoginButton.x
-       fbConected.y = fbLoginButton.y
-
-       fbConected:addEventListener("touch", nullListener )
-
-       if isFullLogin then
-        fbConected.alpha = 1
-       else 
-         fbConected.alpha = 0
-       end
-
-
-      local restoreButton = widget.newButton
-      {
-          left = 225,
-          top = 142,
-          id = "restoreButton",
-          defaultFile = "ExtrasMenu/RestoreUp.png",
-          overFile = "ExtrasMenu/RestoreDown.png",
-          onEvent = restoreListener
-      }
-
-      restoreButton.xScale =  (display.actualContentWidth*0.25) / restoreButton.width
-      restoreButton.yScale = restoreButton.xScale 
-
-      local tutorialButton = widget.newButton
-      {
-          left = 225,
-          top = 70,
-          id = "tutorialButton",
-         defaultFile = "ExtrasMenu/ReplayTutorial.png",
-          overFile = "ExtrasMenu/ReplayTutorialDown.png",
-          onEvent = buttonListener
-      }
-
-      tutorialButton.xScale =  (display.actualContentWidth*0.25) / tutorialButton.width
-      tutorialButton.yScale = tutorialButton.xScale 
-
-      settingsButton.x =  settingsButton.x - (display.actualContentWidth - display.contentWidth)/2
-      statsButton.x =  settingsButton.x + settingsButton.contentWidth /2 +   statsButton.contentWidth / 2 + 10
+    
+      
+      statsButton.x =  35 +   statsButton.contentWidth / 2 + 10
       leaderButton.x =  statsButton.x + statsButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       achivButton.x =  leaderButton.x + achivButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       playButton.x = leaderButton.x 
@@ -1553,9 +811,7 @@ Runtime:addEventListener( "system", systemEvents )
       statsButton.xScale = shopButton.yScale
       leaderButton.xScale = statsButton.yScale
       achivButton.xScale = statsButton.yScale
-      moreButton.xScale = statsButton.xScale
-      moreButton.yScale = statsButton.yScale
-
+      
 
       playButton.y = display.actualContentHeight * 0.25 - (display.actualContentHeight - display.contentHeight)/2 
       shopButton.y =  playButton.y + (playButton.contentHeight + shopButton.contentHeight)/2 + 10
@@ -1568,55 +824,17 @@ Runtime:addEventListener( "system", systemEvents )
        leaderButton.x = statsButton.x + (leaderButton.contentWidth*0.75)/2 
        achivButton.x = leaderButton.x + (leaderButton.contentWidth )/2  + 10
 
-        moreButton.x = display.screenOriginX  + display.actualContentWidth - moreButton.contentWidth /2
-
-
-       local function boosterRectListener( event )   
-         extrasGroup.alpha = 0 
-         extraBackground.alpha = 0  
-            return true
-       end
-
-      extraBackground = display.newRect(240, 160, 700,400)
-      extraBackground:setFillColor(0, 0, 0)
-      extraBackground.alpha = 0
-      extraBackground:addEventListener("touch", boosterRectListener )
-
-      extrasGroup:insert(extras)
-      extrasGroup:insert(tutorialButton)
-      extrasGroup:insert(fbLoginButton)
-      extrasGroup:insert(restoreButton)
-      extrasGroup:insert(fbConected)
+        muteButton.y = achivButton.y
+        unMuteButton.y = achivButton.y
+        fbLikeButton.y = achivButton.y
+        
+        muteButton.x = achivButton.x + (achivButton.contentWidth )/2  + (muteButton.contentWidth )/2   + 10
+        unMuteButton.x = muteButton.x
+        fbLikeButton.x = muteButton.x + (muteButton.contentWidth )/2  + fbLikeButton.contentWidth/2 + 10
       
-      extrasGroup:insert(fbLikeButton)
-      extrasGroup:insert(tweetFollowButton)      
-      extrasGroup:insert(muteButton)
-      extrasGroup:insert(unMuteButton)
-      extrasGroup:insert(lessButton)
-      
-      
-      
-      extrasGroup.alpha = 0
-      extrasGroup.x =  extrasGroup.x + (display.actualContentWidth - display.contentWidth)/2 + 13
-      extrasGroup.y =  extrasGroup.y + 10
-      
-      -- parse:init({ 
-      -- appId = "eUQ1wmy1Mio3KVYrXl2ZlaKNh7UmjYt4AGqZ3Lwy", 
-      -- apiKey = "qRa4UQVUUTnVfbjTUYFONj32G9bihakGoRr172TC"
-      -- })
-
-      -- parse.showStatus = true
-      
-      -- parse:appOpened()
-      -- -- log events
-      
-
-    
-      --twitter.init("BSwidOskNjdyNfvQd9QpPbnSe", "BrFDGYkWIHywcvrpedjkfg8pWI0YrJzYEXEnr0RlL3uM72tS8r")
-
-
+ 
       heroSpine =  require ("hero")
-      hero = heroSpine.new(0.6, true)
+      hero = heroSpine.new(0.6, true,false,nil,true)
       
       hero.skeleton.group.x = 390
       hero.skeleton.group.xScale = -1
@@ -1659,10 +877,12 @@ Runtime:addEventListener( "system", systemEvents )
 
 
       
-      settingsButton.alpha = 0 
+      
       
      sceneGroup:insert(background)   
      sceneGroup:insert(abstract)   
+     
+     
      
 
      
@@ -1670,7 +890,7 @@ Runtime:addEventListener( "system", systemEvents )
      --sceneGroup:insert(clouds.skeleton.group)
    
      sceneGroup:insert(hero.skeleton.group)
-     sceneGroup:insert(extraBackground)
+     
    
      sceneGroup:insert(playButton)
      
@@ -1680,11 +900,17 @@ Runtime:addEventListener( "system", systemEvents )
      sceneGroup:insert(shopButton)
      sceneGroup:insert(packsButton)
      sceneGroup:insert(packsIndicator)
+     sceneGroup:insert(logo)   
      
      
-     sceneGroup:insert(settingsButton)
-     sceneGroup:insert(moreButton)
-     sceneGroup:insert(extrasGroup)
+     
+           
+      sceneGroup:insert(fbLikeButton)
+      
+      sceneGroup:insert(muteButton)
+      sceneGroup:insert(unMuteButton)
+
+     
      sceneGroup:insert(splash)
      if splash2 then
     
@@ -1765,12 +991,9 @@ function scene:show( event )
 
           commonData.shopItems["Shakes"] =true
           --commonData.shopItems["Neymar"] =true
-          commonData.shopItems["DribbleGirl"] =true
           
-          
-          commonData.shopItems["defaultPants"] =true
           commonData.shopItems["Default"] =true
-          commonData.shopItems["defaultShirt"] =true
+          
           commonData.shopItems["NormalBall"] =true
           commonData.shopItems["White"] =true
           
@@ -1844,7 +1067,7 @@ function scene:show( event )
             commonData.gameData.selectedShirt = "defaultShirt"
 
             
-            commonData.gameData.isConnectedToFB  = false
+            
             commonData.gameData.appOpened = 0
           end  
 
@@ -1892,18 +1115,6 @@ function scene:show( event )
 
           loadRemoteTable(SHOP_FILE , loadShopData)        
           
-
-         -- timer.performWithDelay(5000,function()
-
-                 --print ("fb timer reached")
-         if commonData.gameData.isConnectedToFB  then
-             --print ("was logged in")
-            commonData.doFbLogin2()
-          end 
- 
-         --end,1)
-
-
          
         if not isAppOpened then
           commonData.gameData.appOpened = commonData.gameData.appOpened + 1
@@ -1927,19 +1138,6 @@ function scene:show( event )
         else  
           packsIndicator.alpha = 0
         end
-
-
-         if (isFullLogin and not isLoginFromToken) then
-
-                            --print ("get friends after game")
-                      isGetMeRequest = false
-                      isGetAvatars = false
-                      isGetScores = true
-                      isPostAvatar = false
-                      isLoginFromToken = false
-                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                       facebook.request(fbAppID .."/scores","GET",scoreParams)            
-          end
         
    end
 
@@ -1965,13 +1163,17 @@ function scene:show( event )
      
           
      timer.performWithDelay(2000 + removeTimer, removeSplash, 1)
-     extrasGroup.alpha = 0 
-     extraBackground.alpha = 0  
+     
      
    elseif ( phase == "did" ) then
     --print("shoooowowiwiw   selectedSkin")
     hero:init()
       hero:menuIdle()
+
+       if splash then
+        local splashSound =  audio.loadSound( "sounds/123 Supa Strikas.wav" )
+        commonData.playSound(splashSound)
+      end
   
     --clouds:init()
        if (commonData.gameData) then 
@@ -1982,18 +1184,6 @@ function scene:show( event )
             packsIndicator.alpha = 0
           else  
             packsIndicator.alpha = 0
-          end
-
-         if (isFullLogin and not isLoginFromToken) then
-
-                            --print ("get friends after game")
-                      isGetMeRequest = false
-                      isGetAvatars = false
-                      isGetScores = true
-                      isPostAvatar = false
-                      isLoginFromToken = false
-                       local scoreParams = {fields="score,user.fields(id,name,picture,littledribble:customize.limit(1))"}
-                       facebook.request(fbAppID .."/scores","GET",scoreParams)            
           end
         
        else 
