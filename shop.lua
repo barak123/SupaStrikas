@@ -78,10 +78,12 @@ local function  selectedItemChanged( itemIdx )
       useButton.alpha = 0
       buyButton.alpha = 1
     end
+
+    if (items[seletedCategory][itemIdx].level > commonData.getLevel()) then
+      useButton.alpha = 0
+      buyButton.alpha = 0
+    end
      
-
-   
-
      if (seletedCategory == "skins") then
        commonData.shopSkin = items[seletedCategory][itemIdx].id
 
@@ -124,7 +126,11 @@ local function openCategory()
             else
               card =  display.newImage("images/shop/ItemsCashOnly.png")
             end  
-    
+            
+            if (items[seletedCategory][i].level > commonData:getLevel()) then
+                card:setFillColor(0.5,0.5,1)              
+            end
+
             icons[i] = display.newGroup()
             icons[i].width = 70
 
@@ -141,7 +147,8 @@ local function openCategory()
 
 
              if items[seletedCategory][i].id == commonData.selectedSkin or                          
-              items[seletedCategory][i].id == commonData.selectedBall 
+              items[seletedCategory][i].id == commonData.selectedBall or                          
+              items[seletedCategory][i].id == commonData.selectedField 
               
               then
               itemEquipped.alpha = 1 
@@ -244,6 +251,8 @@ local function openCategory()
            
             icons[i].id = i
             icons[i].category  = seletedCategory
+
+
         end
 
           local objShop = icons 
@@ -619,9 +628,16 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
                 unlockChallenge("changeBall")
             end  
 
+            if (seletedCategory == "fields") then
+               commonData.selectedField = items[seletedCategory][selectedItemIdx].id
+                unlockChallenge("changeField")
+            end  
+
+
 
           commonData.gameData.selectedBall = commonData.selectedBall                  
           commonData.gameData.selectedSkin = commonData.selectedSkin 
+          commonData.gameData.selectedField = commonData.selectedField
           
           for i=1,#icons do
              icons[i].equipped.alpha = 0
@@ -691,16 +707,19 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
                 itemToBuyImg:removeSelf()
             end  
 
-            itemToBuyImg = display.newImage(items[seletedCategory][selectedItemIdx].image)
+            
 
-            if (items[seletedCategory][selectedItemIdx].imgScale) then
-                itemToBuyImg:scale(items[seletedCategory][selectedItemIdx].imgScale * 0.5,
-                 items[seletedCategory][selectedItemIdx].imgScale * 0.5)
-            end
-            itemToBuyImg.x = 185
-            itemToBuyImg.y = 145
-            areYouSurePopup:insert(itemToBuyImg)
+              itemToBuyImg = display.newImage(items[seletedCategory][selectedItemIdx].image)
 
+              if itemToBuyImg then
+                if (items[seletedCategory][selectedItemIdx].imgScale) then
+                    itemToBuyImg:scale(items[seletedCategory][selectedItemIdx].imgScale * 0.5,
+                     items[seletedCategory][selectedItemIdx].imgScale * 0.5)
+                end
+                itemToBuyImg.x = 185
+                itemToBuyImg.y = 145
+                areYouSurePopup:insert(itemToBuyImg)
+              end
 
              commonData.analytics.logEvent( "buyPressed", {  item = tostring(  items[seletedCategory][selectedItemIdx].id ) } ) 
           

@@ -6,9 +6,11 @@ display.setStatusBar(display.HiddenStatusBar)
 --"classes" that you created in outside files.
 local composer = require( "composer" )
 local mainGroup = display.newGroup()
-
-local licensing = require( "licensing" )
-licensing.init( "google" )
+	
+if ( system.getInfo("platformName") == "Android" ) then
+	local licensing = require( "licensing" )
+	licensing.init( "google" )
+end
 
 local main = function()
      --this creates a view that we will use to load

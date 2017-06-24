@@ -491,6 +491,7 @@ local kickOverData =
 
 
 
+
 local kickToData = 
 {
 { name = "start", start = 1, count = 13, time = 600, loopCount = 0}
@@ -509,6 +510,30 @@ kickToStart.y = 235
 kickToStart:scale(0.45,0.45)
 
 
+local obstacleArrowData = 
+{
+{ name = "start", start = 1, count = 34, time = 600, loopCount = 0}
+}
+
+local obstacleArrowSetup = 
+{
+width = 95,
+height = 155,
+numFrames = 34,
+-- sheetContentWidth = 1573,
+-- sheetContentHeight = 187
+}
+local obstacleArrowDataSheet = graphics.newImageSheet("images/ObstacleArrow.png", obstacleArrowSetup);
+
+
+ob.obstacleArrow = display.newSprite(obstacleArrowDataSheet, obstacleArrowData);
+ob.obstacleArrow:setSequence("start")
+ob.obstacleArrow:play()  
+
+ob.obstacleArrow.x = BALL_X
+ob.obstacleArrow.y = 235
+
+ob.obstacleArrow:scale(0.45,0.45)
 
 --these 2 variables will be the checks that control our event system.
 gameStatus.inEvent = 0
@@ -617,6 +642,9 @@ fire:insert( emitter2 )
 fire:insert( emitter )
 
 
+-- local emitter = particleDesigner.newEmitter( "trippy.json" )
+-- emitter:scale(0.05,0.005)
+
 
 fire.isFixedRotation = true
 
@@ -705,10 +733,10 @@ local foregroundData = {
           scale = 0.6 , scaleY = -0.6 , alpha = 1 },
 {path="images/Glacier/IceFront.png" , speedFactor = 1 , y  = 300 , level = 2, top  = 240,
           scale = 1  , alpha = 1  },   
+  {path="images/Castle/Floor.png" , speedFactor = 1 , y  = 280 , level = 3 ,top  = 240,
+          scale = 1  , alpha = 1  },                
   {path="images/Desert/DesertFront.png" , speedFactor = 1 , y  = 280 , level = 4 ,top  = 240,
           scale = 0.7  , alpha = 1  },               
-   {path="images/Castle/Floor.png" , speedFactor = 1 , y  = 280 , level = 3 ,top  = 240,
-          scale = 1  , alpha = 1  },                
   {path="images/EagleField/GrassBigFront.png" , speedFactor = 1 , y  = 280 , level = 5,  top  = 240,
           scale = 0.6 , scaleY = -0.6 , alpha = 1 },               
 --{displayGroup = ultraFloor} ,           
@@ -941,15 +969,17 @@ ob.scoreFull.x = 238
 ob.scoreFull.y = ob.scoreBg.y + 18
 ob.scoreFull.alpha = 0 
 
-local prevStreeX = 165 
+local prevStreeX = 166 
 for a = 1, 8, 1 do
   local sreeUnit = display.newImage("images/Scoreboard/SreeUnit" .. a .. ".png")
-  sreeUnit:scale(0.48,0.5)
+  sreeUnit:scale(0.5,0.5)
   sreeUnit.y = ob.scoreBg.y + 18
   sreeUnit.x = prevStreeX +  sreeUnit.contentWidth / 2
   sreeUnit.alpha = 0
   ob.scoreboard:insert(sreeUnit )
-  prevStreeX = prevStreeX + sreeUnit.contentWidth / 2  + 8
+  prevStreeX = prevStreeX + sreeUnit.contentWidth - (math.abs(4-a)) 
+
+  print(sreeUnit.x)
 end
 
 
@@ -2224,10 +2254,13 @@ sceneGroup:insert(tutorialText)
 sceneGroup:insert(tutorialCountShadowText)
 sceneGroup:insert(tutorialCountText)
 
+sceneGroup:insert(ob.obstacleArrow)
 
 sceneGroup:insert(monster)
 sceneGroup:insert(chaserRect)
 sceneGroup:insert(coinsSpine)
+
+
 sceneGroup:insert(obstecales)
 sceneGroup:insert(ob.obstecaleSpines)
 
@@ -2275,6 +2308,8 @@ sceneGroup:insert(ballSkinGroup)
 sceneGroup:insert(ultraBall)
 
 sceneGroup:insert(kickToStart)
+
+
 
 
 ob.multiGroup:insert(multiText)
@@ -2553,11 +2588,28 @@ end
 local isGoalExists = false
 local  isGoalScored = false
 
+local function getSelectedFieldIndex()
+  if commonData.selectedField == "Glacier" then
+    return 2
+  elseif  commonData.selectedField == "Castle" then  
+    return 3
+  elseif  commonData.selectedField == "Desert" then
+    return 4
+  elseif  commonData.selectedField == "EagleField" then
+    return 5
+  else
+    return 1
+  end  
+  
+
+end 
+
 function restartGame()
 
       -- TODO: save in file
       -- gameStatus.jumpOverShowed  = false
       -- gameStatus.kickOverShowed = false
+       ob.obstacleArrow.alpha = 0
        collisionRect.isSensor = false
        ballon.isSleepingAllowed = false
        ob.muteButton.alpha = 0              
@@ -2606,7 +2658,7 @@ function restartGame()
        --reset the score
      score = 0
      gameStatus.newScore = 0
-     gameStatus.level = 1
+     gameStatus.level = getSelectedFieldIndex()
 
      --reset the game speed
      gameStatus.speed = 6
@@ -2830,6 +2882,7 @@ function restartGame()
       gameStats = {}
       gameStats.coins = 0
       gameStats.gameScore =0 
+      gameStats.meters =0 
       gameStats.bounces = 0
       gameStats.swapBounces = 0 
       gameStats.bouncesPerfect = 0
@@ -3120,8 +3173,13 @@ function scene:show( event )
 
           end
 
-          trophieShadowText.text = commonData.gameData.packs
-          trophieCountText.text =  commonData.gameData.packs
+          local playerLevel = string.format("%.00f", commonData.getLevel()) 
+          trophieShadowText.text = playerLevel
+          trophieCountText.text =  playerLevel
+
+--          trophieShadowText.text = commonData.gameData.packs
+  --        trophieCountText.text =  commonData.gameData.packs
+
 
         end 
 
@@ -3548,7 +3606,8 @@ function scene:show( event )
 
                            for index, obsIndex in pairs( obsIndexs ) do
                           
-                                 for i=1,4 do                                  
+                                 for i=1,4 do                                 
+                                  -- todo: 70 
                                    if (obstecales[obsIndex].isAlive or (score < 70 and obstecales[obsIndex].isHard)) then
                                       obsIndex = obsIndex - 1
                                       if ( obsIndex == 0) then
@@ -3783,10 +3842,15 @@ function scene:show( event )
                               end , 1)
                         end        
 
+                         if (obstecales[a].x < 380) then
+                            ob.obstacleArrow.x = obstecales[a].x
+                            ob.obstacleArrow.alpha = 1
+                         end
 
                          if (obstecales[a].x <= -50) and (obstecales[a].x >= -50 - gameStatus.speed ) and gameStatus.isGameActive then
 
                             reportChallenge("jumpObstecale")
+                             ob.obstacleArrow.alpha = 0
                         end
                       end
                     end
@@ -4142,9 +4206,11 @@ gameStatus.isGameActive = true
         
         --comments:pause()
         
+        ob.obstacleArrow.alpha = 0
         pauseButton.alpha = 0
         physics.pause()
          gameStats.gameScore = tonumber(string.format("%.00f", gameStatus.newScore)  )  
+         gameStats.meters = tonumber(string.format("%.00f", score)  )  
          audio.pause( ob.activeMusicHdl )
 
          if ob.ultraMusicHdl then
@@ -4182,6 +4248,7 @@ gameStatus.isGameActive = true
            --print("LittlePerformer")
          end
 
+         ob.obstacleArrow.alpha = 0 
          gameStatus.prevScore2 = gameStatus.prevScore1 
          gameStatus.prevScore1 = score  
 
@@ -5603,7 +5670,7 @@ gameStatus.isGameActive = true
                                 return
                               end  
                                 gameStatus.isGameActive = false
-                                
+                                ob.obstacleArrow.alpha = 0
                                 commonData.playSound( sounds.crashConeSound )
                                 commonData.playSound( sounds.heroFallSound )
                                 hero:fallObstecale()
@@ -5629,7 +5696,7 @@ gameStatus.isGameActive = true
                                 return
                               end
                                 gameStatus.isGameActive = false
-                                
+                                ob.obstacleArrow.alpha = 0
                                 commonData.playSound( sounds.crashConeSound )
                                 commonData.playSound( sounds.heroFallSound )
                                 hero:fallObstecale()
@@ -5654,6 +5721,7 @@ gameStatus.isGameActive = true
                                 return
                               end
                                 gameStatus.isGameActive = false
+                                ob.obstacleArrow.alpha = 0
                                 
                                 commonData.playSound( sounds.crashTrashSound )
                                 commonData.playSound( sounds.heroFallSound )

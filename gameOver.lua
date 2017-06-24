@@ -64,6 +64,11 @@ local packReminder = nil
 local dailyReward = nil
 local activeScreen = 1
 
+local xpBarMiddle = nil
+local xpBarEnd = nil
+local xpBarBG = nil
+local xpBarStart = nil
+
 
 ---------------------------------------------------------------------------------
 -- All code outside of the listener functions will only be executed ONCE
@@ -102,9 +107,9 @@ local function rateUsListener( event )
       
       commonData.buttonSound()
       local options =
-        {
-           iOSAppId = "986567641",          
-           androidAppPackageName = "com.ld.dribble",
+        {  -- TODO: update app id
+           iOSAppId = "1251367023",          
+           androidAppPackageName = "com.sprbl.supaStrikas",
            supportedAndroidStores = { "google" },
         }
         native.showPopup( "appStore", options )
@@ -343,6 +348,8 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.packs = 0            
             commonData.gameData.gamesCount = 0
             commonData.gameData.totalScore = 0
+            commonData.gameData.totalMeters = 0
+
             commonData.gameData.bounces = 0
             commonData.gameData.bouncesPerfect = 0
             commonData.gameData.bouncesGood = 0
@@ -497,10 +504,31 @@ local function showGameOver( gameResult , isFirstLoad)
                     --for GameCenter, default to the leaderboard name from iTunes Connect
             local myCategory = "Little Dribble High Score"
 
-            --if ( system.getInfo( "platformName" ) == "Android" ) then
+            if ( system.getInfo( "platformName" ) == "Android" ) then
                --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
                myCategory = "CgkI_YzqptgFEAIQAA"
-            --end
+               commonData.gpgs.leaderboards.submit( {leaderboardId=myCategory, score=tonumber(gameResult.gameScore) } )
+
+              -- submit highest combo
+              local highestComboId = "CgkI_YzqptgFEAIQBw"
+              commonData.gpgs.leaderboards.submit( {leaderboardId=highestComboId, score=tonumber(gameResult.combo) } )
+              
+            else
+                commonData.gameNetwork.request( "setHighScore",
+              {
+                 localPlayerScore = { category=myCategory, value=tonumber(gameResult.gameScore) },
+                 listener = postScoreSubmit
+              } )
+
+
+                 local highestComboId = "CgkI_YzqptgFEAIQBw"
+                 commonData.gameNetwork.request( "setHighScore",
+              {
+                 localPlayerScore = { category=highestComboId, value=tonumber(gameResult.combo) },
+                 listener = postScoreSubmit
+              } ) 
+                  
+            end
 
             -- TODO: remove
             -- commonData.gameNetwork.request( "setHighScore",
@@ -508,11 +536,6 @@ local function showGameOver( gameResult , isFirstLoad)
             --    localPlayerScore = { category=myCategory, value=tonumber(gameResult.gameScore) },
             --    listener = postScoreSubmit
             -- } )
-            commonData.gpgs.leaderboards.submit( {leaderboardId=myCategory, score=tonumber(gameResult.gameScore) } )
-
-            -- submit highest combo
-            local highestComboId = "CgkI_YzqptgFEAIQBw"
-            commonData.gpgs.leaderboards.submit( {leaderboardId=highestComboId, score=tonumber(gameResult.combo) } )
             
 
             local isHighScore = gameResult.gameScore > commonData.gameData.highScore
@@ -567,6 +590,7 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.coins = commonData.gameData.coins + gameResult.coins
             commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
             commonData.gameData.totalScore = commonData.gameData.totalScore + gameResult.gameScore
+            commonData.gameData.totalMeters = commonData.gameData.totalMeters + gameResult.meters
             commonData.gameData.bounces = commonData.gameData.bounces + gameResult.bounces
             commonData.gameData.bouncesPerfect = commonData.gameData.bouncesPerfect + gameResult.bouncesPerfect
             commonData.gameData.bouncesGood = commonData.gameData.bouncesGood + gameResult.bouncesGood
@@ -576,6 +600,20 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.unlockedAchivments = getUnlockedAchivments()
             commonData.gameData.unlockedChallenges = getUnlockedChallenges()
 
+            print(commonData.gameData.totalMeters )
+            local currentLevel = commonData.getLevel() 
+            local levelStart = 50 * currentLevel * (currentLevel +1)
+            local completeRatio = (commonData.gameData.totalMeters - levelStart) / ((currentLevel+1)  * 100)
+            print(levelStart)
+            print(((currentLevel+1)  * 100))
+            print(completeRatio)
+
+
+
+            xpBarMiddle:scale(completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.contentWidth, 1)
+            xpBarMiddle.x = xpBarStart.x + xpBarMiddle.contentWidth / 2 + xpBarStart.contentWidth/2 
+            xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
+    
             if not commonData.gameData.highestCombo or commonData.gameData.highestCombo < gameResult.combo then
               commonData.gameData.highestCombo = gameResult.combo
             end  
@@ -729,145 +767,45 @@ local function showGameOver( gameResult , isFirstLoad)
                 logCoins(commonData.gameData , coinsDailyReward)                
               end
              
-             local function validateDailyReward(event)
+            --  local function validateDailyReward(event)
                       
-                  -- no internet - no glory
-                  if ( event.isError ) then
+            --       -- no internet - no glory
+            --       if ( event.isError ) then
             
                       
             
-                  else
+            --       else
             
                       
-                      local server_time = json.decode(event.response)
+            --           local server_time = json.decode(event.response)
                          
-                      if server_time then
+            --           if server_time then
               
-                        player_time = os.time(os.date( '*t' ))
+            --             player_time = os.time(os.date( '*t' ))
 
-                        if math.abs(server_time - player_time) > 12 * 60 * 60 then
-                            -- cheater
-                        else
-                           giveDailyReward()
-                        end
-                      end
+            --             if math.abs(server_time - player_time) > 12 * 60 * 60 then
+            --                 -- cheater
+            --             else
+            --                giveDailyReward()
+            --             end
+            --           end
             
-                  end
-                  dailyRewardBlocker.alpha = 0
-                  --playButton.alpha = 1
-                  return true
+            --       end
+            --       dailyRewardBlocker.alpha = 0
+            --       --playButton.alpha = 1
+            --       return true
             
-              end
+            --   end
      
-            -- get Server time  
-            --print("call time api")
-            local URL = "http://www.timeapi.org/utc/now?%5Cs"
-            dailyRewardBlocker.alpha = 0.01
-            network.request( URL, "GET", validateDailyReward ) 
+            -- -- get Server time  
+            -- --print("call time api")
+            -- local URL = "http://www.timeapi.org/utc/now?%5Cs"
+            -- dailyRewardBlocker.alpha = 0.01
+            -- network.request( URL, "GET", validateDailyReward ) 
+
+            giveDailyReward()
           
-              -- not fisrt game today  
-           --  elseif ((commonData.gameData.gamesCount == 5 and commonData.gameData.highScore < 20)   or 
-           --        (commonData.gameData.gamesCount == 20 and commonData.gameData.highScore < 40) )  then
-                
-           --      showPrizeNotification("Dribbler Tip:" , "Hold your leg up until you hit the ball",nil,true)
-
-
-
-           --      if not tip then  
-           --          local ultraSheetSetup = 
-           --          {
-           --          width = 456,
-           --          height = 355,
-           --          numFrames = 5,
-           --          sheetContentWidth = 2280,
-           --          sheetContentHeight = 355
-           --          }
-
-           --          local ultraData = 
-           --          {
-           --          { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
-           --          }
-           --          local spriteSheet = graphics.newImageSheet("images/TipSheet.jpg", ultraSheetSetup);
-           --          tip = display.newSprite(spriteSheet, ultraData);
-
-
-           --          tip.x = 180
-           --          tip.y = 140
-           --          tip:scale(0.35,0.35)
-
-           --          local currentSceneName = composer.getSceneName( "current" )
-                    
-           --          if ( currentSceneName== "game" ) then
-           --            notificationData:insert(tip)
-           --          else
-           --            tip:removeSelf()
-           --          end
-                   
-
-           --      end    
-           -- elseif  (gameResult.finishReason=="catchedBYShamina"  and gameResult.gameScore < 45)  then
-
-           --      showPrizeNotification("Dribbler Tip:" , "Kick in perfect timing and swap legs \n to gain speed",nil,true)
-
-
-
-           --      if not tip3 then  
-                    
-           --          tip3 = display.newImage("images/Tip3.jpg")
-
-
-           --          tip3.x = 180
-           --          tip3.y = 140
-           --          tip3:scale(0.35,0.35)
-
-           --          local currentSceneName = composer.getSceneName( "current" )
-                    
-           --          if ( currentSceneName== "game" ) then
-           --            notificationData:insert(tip3)
-           --          else
-           --            tip3:removeSelf()
-           --          end           
-           --      end    
-
-           -- elseif  ((commonData.gameData.gamesCount == 30 and commonData.gameData.highScore < 50)   or 
-           --        (commonData.gameData.gamesCount == 50 and commonData.gameData.highScore < 70)) then
-
-           --      showPrizeNotification("Dribbler Tip:" , "Try to kick the ball low",nil,true)
-
-
-
-           --      if not tip2 then  
-           --          local ultraSheetSetup = 
-           --          {
-           --          width = 365,
-           --          height = 355,
-           --          numFrames = 7,
-           --          sheetContentWidth = 2555,
-           --          sheetContentHeight = 355
-           --          }
-
-           --          local ultraData = 
-           --          {
-           --          { name = "start", start = 1, count = 5, time = 3000, loopCount = 0}
-           --          }
-           --          local spriteSheet = graphics.newImageSheet("images/Tip2.jpg", ultraSheetSetup);
-           --          tip2 = display.newSprite(spriteSheet, ultraData);
-
-
-           --          tip2.x = 180
-           --          tip2.y = 140
-           --          tip2:scale(0.35,0.35)
-
-           --          local currentSceneName = composer.getSceneName( "current" )
-                    
-           --          if ( currentSceneName== "game" ) then
-           --            notificationData:insert(tip2)
-           --          else
-           --            tip2:removeSelf()
-           --          end
-                   
-
-           --      end    
+          
 
                
            elseif (commonData.gameData.gamesCount > 100 and isHighScore and not commonData.gameData.rateUsShown  ) then   
@@ -938,15 +876,19 @@ local function showGameOver( gameResult , isFirstLoad)
 
             
             for k,v in pairs(newAchiv) do
-              
-                commonData.gpgs.achievements.unlock({
-                                              achievementId=v.code
-                                            })
-              -- commonData.gameNetwork.request( "unlockAchievement", {
-              --                               achievement = {
-              --                                 identifier=v.code
-              --                               }
-              --                             }); 
+                
+                if ( system.getInfo( "platformName" ) == "Android" ) then
+                  commonData.gpgs.achievements.unlock({
+                                                achievementId=v.code
+                                              })
+                 else 
+
+                  commonData.gameNetwork.request( "unlockAchievement", {
+                                                achievement = {
+                                                  identifier=v.code
+                                                }
+                                              });   
+                end
 
             end
             
@@ -1159,7 +1101,7 @@ function scene:create( event )
                       native.showAlert( "Build for device", "This plugin is not supported on the Corona Simulator, please build for an iOS/Android device or the Xcode simulator", { "OK" } )
                     else
                       -- Popup isn't available.. Show error message
-                      native.showAlert( "Error", "Can't display the view controller. Are you running iOS 7 or later?", { "OK" } )
+                      --native.showAlert( "Error", "Can't display the view controller. Are you running iOS 7 or later?", { "OK" } )
                     end
                   end
 
@@ -1370,24 +1312,24 @@ function scene:create( event )
       boosterClose.yScale = boosterClose.xScale  
     
 
-    scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 90)
+    scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 70)
     scoreText.x = 230
-    scoreText.y = 180
+    scoreText.y = 160
     scoreText:setFillColor(255/255,241/255,208/255)
 
-    scoreTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 90)
+    scoreTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 70)
     scoreTextS.x = 230
-    scoreTextS.y = 184
+    scoreTextS.y = 164
     scoreTextS:setFillColor(0,0,0)
     
 
-    scoreTitleText = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    scoreTitleText = display.newText("", 0, 0 , "UnitedSansRgHv" , 20)
     scoreTitleText.x = 240
     scoreTitleText.y = 120
     scoreTitleText.text = "YOU REACHED:"
     scoreTitleText:setFillColor(255/255,241/255,208/255)
     
-    scoreTitleTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    scoreTitleTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 20)
     scoreTitleTextS.x = 240
     
 
@@ -1398,13 +1340,13 @@ function scene:create( event )
     scoreTitleText.alpha = 0
     scoreTitleTextS.alpha = 0
 
-    comboText = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    comboText = display.newText("", 0, 0 , "UnitedSansRgHv" , 20)
     comboText.x = 240
-    comboText.y = 235
+    comboText.y = 215
     comboText.text = ""
     comboText:setFillColor(255/255,241/255,208/255)
     
-    comboTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 24)
+    comboTextS = display.newText("", 0, 0 , "UnitedSansRgHv" , 20)
     comboTextS.x = 240
     
 
@@ -1601,6 +1543,27 @@ function scene:create( event )
     scoreScreenText.y = 160 - background.contentHeight/2 + scoreScreenText.contentHeight/2 + 3
     scoreScreenText.text = "SCORE" 
 
+    xpBarBG  = display.newImage("BlueSet/End/XPBarBG.png")
+    xpBarBG:scale(0.5,0.5)
+    xpBarBG.x = 240
+    xpBarBG.y = 240
+
+    xpBarStart  = display.newImage("BlueSet/End/XPBarStart.png")
+    xpBarStart:scale(0.5,0.5)
+    xpBarStart.x = xpBarBG.x - xpBarBG.contentWidth / 2 + xpBarStart.contentWidth/2 + 2
+    xpBarStart.y = 240
+
+    xpBarMiddle  = display.newImage("BlueSet/End/XPBarMiddle.png")
+    xpBarMiddle:scale(0.5,0.5)
+    xpBarMiddle.x = xpBarStart.x + xpBarMiddle.contentWidth / 2 + xpBarStart.contentWidth/2 
+    xpBarMiddle.y = 240
+
+    xpBarEnd  = display.newImage("BlueSet/End/XPBarFinish.png")
+    xpBarEnd:scale(0.5,0.5)
+    xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
+    xpBarEnd.y = 240
+    --boosterHandImg:scale(0.4,0.4)
+
     
     rightArrowButton.y = scoreScreenText.y 
     leftArrowButton.y = rightArrowButton.y 
@@ -1621,7 +1584,10 @@ function scene:create( event )
      scoreBox:insert(scoreText)    
      scoreBox:insert(comboTextS) 
      scoreBox:insert(comboText)    
-      
+     scoreBox:insert(xpBarBG)    
+     scoreBox:insert(xpBarStart)    
+     scoreBox:insert(xpBarMiddle)  
+     scoreBox:insert(xpBarEnd)      
      
      
      sceneGroup:insert(highScoreTitleShadow)     

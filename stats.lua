@@ -173,7 +173,7 @@ function scene:show( event )
              highScoreText.text  = "HIGH SCORE" 
              scoreText.text =  commonData.comma_value(event.params.gameData.highScore)
              gamesCountText.text = "GAMES PLAYED: ".. commonData.comma_value(event.params.gameData.gamesCount)
-             distanceText.text = "TOTAL METERS: ".. commonData.comma_value(event.params.gameData.totalScore)
+             distanceText.text = "TOTAL METERS: ".. commonData.comma_value(event.params.gameData.totalMeters)
              comboText.text = "HIGHEST COMBO: ".. event.params.gameData.highestCombo
              averageScoreText.text = "AVARAGE SCORE: ".. 
                                 string.format("%.00f" , event.params.gameData.totalScore / math.max(event.params.gameData.gamesCount, 1))    

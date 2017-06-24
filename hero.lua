@@ -619,38 +619,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				end
 			end
 
-			if pIsBadKick then
-				if pIsLeftLeg then
-
-					leftBottomObj.fill.effect = "filter.brightness"
-					leftBottomObj.fill.effect.intensity = 0.8
-
-					leftTopObj.fill.effect = "filter.brightness"
-					leftTopObj.fill.effect.intensity = 0.8
-
-					leftLeg1:setColor (1, 0, 0, 1)
-					leftLeg2:setColor (1, 0, 0, 1)
-				else	
-					rightBottomObj.fill.effect = "filter.brightness"
-					rightBottomObj.fill.effect.intensity = 0.8
-
-					rightTopObj.fill.effect = "filter.brightness"
-					rightTopObj.fill.effect.intensity = 0.8
-
-					rightLeg1:setColor (1, 0, 0, 1)
-					rightLeg2:setColor (1, 0, 0, 1)
-				end	
-
-				-- headObj.fill.effect = "filter.brightness"
-
-				-- headObj.fill.effect.intensity = 1
-				-- headObj:setFillColor(1, 0, 0, 1)
-
--- 				headObj.fill.effect = "filter.duotone"
-
--- headObj.fill.effect.darkColor = { 0.7, 0.3, 0.3, 1 }
--- headObj.fill.effect.lightColor = { 1, 0.6, 0.4, 1 }
-			end	
 			
 
 			if (walkTime > 0 ) then 			
@@ -662,29 +630,11 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				
 		end	
 
-		local function resetFill(  )
-			if rightBottomObj then
-				rightBottomObj.fill.effect = nil
-			end
-
-			if rightTopObj then
-				rightTopObj.fill.effect = nil
-			end
-
-			if rightBottomObj then
-				leftBottomObj.fill.effect = nil
-			end
-
-			if leftTopObj then
-				leftTopObj.fill.effect = nil
-			end
-		end  
-
-
+		
 		function self:walk( )
 			--self.skeleton.group.x = display.contentWidth * 0.25 
 
-			resetFill()
+			
 
 			self.skeleton:setToSetupPose()
 			if (not isFalling) then
@@ -739,7 +689,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 		function self:jump( )
 			
 		--	self.skeleton.group.x = display.contentWidth * 0.25 + 20
-			resetFill()
+			
 			self.skeleton:setToSetupPose()
 			legAngle = -82
 			
@@ -773,7 +723,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		function self:saltaJump( )
 			
-			resetFill()
+			
 			self.skeleton:setToSetupPose()
 			legAngle = -82
 			
@@ -1072,7 +1022,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		function self:cancelKick(pIsLeftLeg)
 
-			resetFill()
+			
 			
 			isKicking = false
 			isWalking = true
@@ -1088,7 +1038,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		function self:markBadKick(pIsLeftLeg)
 
-			print(pIsLeftLeg)
+			
 			if pIsLeftLeg then
 				leftLeg1:setColor (1, 0, 0, 1)
 				leftLeg2:setColor (1, 0, 0, 1)

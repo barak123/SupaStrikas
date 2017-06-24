@@ -416,14 +416,17 @@ function unlockAchivment(name, autoPost)
 		isNew = true
 
 		if autoPost then
-			commonData.gpgs.achievements.unlock({
+			if ( system.getInfo( "platformName" ) == "Android" ) then
+				commonData.gpgs.achievements.unlock({
                                               achievementId=achivments[name].code
                                             })
-			-- gameNetwork.request( "unlockAchievement", {
-   --                                          achievement = {
-   --                                            identifier=achivments[name].code
-   --                                          }
-   --                                        }); 
+			else
+				commonData.gameNetwork.request( "unlockAchievement", {
+	                                            achievement = {
+	                                              identifier=achivments[name].code
+	                                            }
+	                                          }); 
+			end	
 		end	
 	end
 

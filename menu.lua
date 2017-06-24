@@ -12,7 +12,9 @@ local openssl = require "plugin.openssl"
 local isFlurryReady = false
 local shouldLogOpens = false
 
-commonData.gpgs = require( "plugin.gpgs" )
+if ( system.getInfo("platformName") == "Android" ) then
+  commonData.gpgs = require( "plugin.gpgs" )
+end
  
 local function gpgsLoginListener( event )
     print( "Login event:", json.prettify(event) )
@@ -29,7 +31,9 @@ local function gpgsInitListener( event )
     end
 end
  
-commonData.gpgs.init( gpgsInitListener )
+ if ( system.getInfo("platformName") == "Android" ) then
+   commonData.gpgs.init( gpgsInitListener )
+ end
 
 local function logAppOpens()
   local opensToAlert = {}
@@ -253,22 +257,16 @@ function scene:create( event )
 
 commonData.selectedSkin = "Shakes"
 commonData.selectedBall = "NormalBall"
-commonData.selectedShoes = "Default"
-commonData.selectedPants = "defaultPants"
-commonData.selectedShirt = "defaultShirt"
-
+commonData.selectedField = "Stadium"
 
 commonData.shopSkin = commonData.selectedSkin 
 commonData.shopBall = commonData.selectedBall 
-commonData.shopShoes = commonData.selectedShoes
-commonData.shopShirt = commonData.selectedShirt
-commonData.shopPants = commonData.selectedPants
 
 local selectMenuSound =  audio.loadSound( "BtnPress.mp3" )
 
 
 
---commonData.gameNetwork = require( "gameNetwork" )
+commonData.gameNetwork = require( "gameNetwork" )
 local playerName
 local googlePlayerId = nil
 
@@ -294,12 +292,12 @@ local function loadLocalPlayerCallback( event )
    
 end
 
--- local function gameNetworkLoginCallback( event )
---   --native.showAlert("debug","gameNetworkLoginCallback" )
---    -- print("gameNetworkLoginCallback")
---    commonData.gameNetwork.request( "loadLocalPlayer", { listener=loadLocalPlayerCallback } )
---    return true
--- end
+local function gameNetworkLoginCallback( event )
+  --native.showAlert("debug","gameNetworkLoginCallback" )
+   -- print("gameNetworkLoginCallback")
+   commonData.gameNetwork.request( "loadLocalPlayer", { listener=loadLocalPlayerCallback } )
+   return true
+end
 
 -- local function gpgsInitCallback( event )
 --    commonData.gameNetwork.request( "login", { userInitiated=true, listener=gameNetworkLoginCallback } )
@@ -307,15 +305,15 @@ end
 
 -- end
 
--- local function gameNetworkSetup()
+local function gameNetworkSetup()
    
---    if ( system.getInfo("platformName") == "Android" ) then
---       commonData.gameNetwork.init( "google", gpgsInitCallback )
---    else
---       -- print("call gamecenter init")
---       commonData.gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
---    end
--- end
+   if ( system.getInfo("platformName") ~= "Android" ) then
+   --    commonData.gameNetwork.init( "google", gpgsInitCallback )
+   -- else
+      -- print("call gamecenter init")
+      commonData.gameNetwork.init( "gamecenter", gameNetworkLoginCallback )
+   end
+end
 
 ------HANDLE SYSTEM EVENTS------
 local function systemEvents( event )
@@ -327,7 +325,7 @@ local function systemEvents( event )
    elseif ( event.type == "applicationExit" ) then
       --print( "exiting.............................." )
    elseif ( event.type == "applicationStart" ) then
-      --gameNetworkSetup()  --login to the network here
+      gameNetworkSetup()  --login to the network here
    end
    return true
 end
@@ -339,6 +337,15 @@ commonData.comma_value = function (n)
   return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
 end
 
+commonData.getLevel = function ()
+  
+  -- 50(n+n^2) - score =0
+  local d = 2500 + 200 *  commonData.gameData.totalMeters
+  local root1  = -0.5 + math.sqrt(d) / 100
+  --local root1  = -0.5 - math.sqrt(d) / 100
+  
+  return math.floor(root1)
+end
 
 commonData.playSound = function ( soundToPlay , params)
 
@@ -382,6 +389,7 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
             end
         end
          
+         if ( system.getInfo("platformName") == "Android" ) then
           commonData.gpgs.snapshots.open({  -- Open the save slot
               filename = filename,
               create = true,  -- Create the snapshot if it's not found
@@ -389,7 +397,7 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
           })
 ---            print(filename)
  --           print(contents)
-      
+        end
           
         return true
     else
@@ -539,23 +547,31 @@ Runtime:addEventListener( "system", systemEvents )
          if ( "ended" == event.phase ) then
           commonData.playSound( selectMenuSound ) 
            commonData.analytics.logEvent( "leaderboardScreen" )
-           commonData.gpgs.leaderboards.show()
+           
                     
-           -- if ( system.getInfo("platformName") == "Android" ) then
-           --    commonData.gameNetwork.show( "leaderboards" )
-           -- else
-           --    commonData.gameNetwork.show( "leaderboards", { leaderboard = {timeScope="AllTime"} } )
-           -- end
+           if ( system.getInfo("platformName") == "Android" ) then
+              --commonData.gameNetwork.show( "leaderboards" )
+              commonData.gpgs.leaderboards.show()
+           else
+              commonData.gameNetwork.show( "leaderboards", { leaderboard = {timeScope="AllTime"} } )
+           end
           end
            return true
      end
 
     local function achivListener( event )
          if ( "ended" == event.phase ) then
-            commonData.playSound( selectMenuSound ) 
-                     
+              commonData.playSound( selectMenuSound ) 
+             
+             if ( system.getInfo("platformName") == "Android" ) then
+              --commonData.gameNetwork.show( "leaderboards" )
+              commonData.gpgs.achievements.show()
+           else
+              commonData.gameNetwork.show("achievements")
+           end
+        
             
-            commonData.gpgs.achievements.show()
+            
            --commonData.gameNetwork.show("achievements")
            commonData.analytics.logEvent( "achievementsScreen" )
           end
@@ -969,7 +985,7 @@ function scene:show( event )
             end
         end
  
-       if isSimulator or not commonData.gpgs.isConnected() then
+       if isSimulator or  system.getInfo("platformName") ~= "Android" or not commonData.gpgs.isConnected() then
         print( "Load From Local")
         callback(commonData.loadTable(filename))
        else
@@ -990,6 +1006,7 @@ function scene:show( event )
           end  
 
           commonData.shopItems["Shakes"] =true
+          commonData.shopItems["Stadium"] =true
           --commonData.shopItems["Neymar"] =true
           
           commonData.shopItems["Default"] =true
@@ -1006,26 +1023,14 @@ function scene:show( event )
             commonData.gameData.selectedBall = "NormalBall"
           end
 
-           if (not commonData.gameData.selectedShoes or not commonData.shopItems[commonData.gameData.selectedShoes]) then
-            commonData.gameData.selectedShoes = "Default"
-           end
-
-           if (not commonData.gameData.selectedPants or not commonData.shopItems[commonData.gameData.selectedPants]) then
-            commonData.gameData.selectedPants = "defaultPants"
-           end
-
-           if (not commonData.gameData.selectedShirt or not commonData.shopItems[commonData.gameData.selectedShirt]) then
-              commonData.gameData.selectedShirt = "defaultShirt"
-           end
-
-          
+          if (not commonData.gameData.selectedField or not commonData.shopItems[commonData.gameData.selectedField]) then
+            commonData.gameData.selectedField = "Stadium"
+          end
 
          commonData.selectedSkin =   commonData.gameData.selectedSkin 
          
          commonData.selectedBall = commonData.gameData.selectedBall
-         commonData.selectedShoes = commonData.gameData.selectedShoes
-         commonData.selectedShirt = commonData.gameData.selectedShirt
-         commonData.selectedPants = commonData.gameData.selectedPants
+         commonData.selectedField = commonData.gameData.selectedField
 
 
          hero:pause()
@@ -1036,6 +1041,7 @@ function scene:show( event )
 
     local function loadGameData(data )
      commonData.gameData = data
+
 
           if ( not commonData.gameData) then 
             commonData.gameData = {}
@@ -1048,6 +1054,7 @@ function scene:show( event )
             commonData.gameData.packsBought = 0             
             commonData.gameData.gamesCount = 0
             commonData.gameData.totalScore = 0
+            commonData.gameData.totalMeters = 0
             commonData.gameData.bounces = 0
             commonData.gameData.bouncesPerfect = 0
             commonData.gameData.bouncesGood = 0
@@ -1062,11 +1069,7 @@ function scene:show( event )
             commonData.gameData.unlockedChallenges = {}
             commonData.gameData.selectedSkin = "Shakes"
             commonData.gameData.selectedBall = "NormalBall"
-            commonData.gameData.selectedShoes = "Default"
-            commonData.gameData.selectedPants = "default"
-            commonData.gameData.selectedShirt = "defaultShirt"
-
-            
+            commonData.gameData.selectedField = "Stadium"
             
             commonData.gameData.appOpened = 0
           end  
@@ -1112,6 +1115,11 @@ function scene:show( event )
             commonData.gameData.highestCombo = 0
           end
 
+          if (not commonData.gameData.totalMeters ) then
+            commonData.gameData.totalMeters = 0
+          end
+
+          commonData.getLevel() 
 
           loadRemoteTable(SHOP_FILE , loadShopData)        
           

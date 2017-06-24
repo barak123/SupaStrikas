@@ -6,6 +6,8 @@ local spine = require "spine-corona.spine"
 local ars = {}
 local kidTypes = {}
 
+local  skinIdx = 1
+
 kidTypes[1] = {}
 kidTypes[1].json = "Hero.json"
 kidTypes[1].skin = "BadGuy01"
@@ -63,6 +65,7 @@ function ars.new (kidType)
 		lastTime = 0, 
 		bounds = nil ,
 		stateData = nil ,
+		skinIdx = nil ,
 		state = nil
 	}
 	
@@ -83,12 +86,16 @@ function ars.new (kidType)
 				
 				
 				 newPart =  display.newImage("balls/emptyBall.png")
+		elseif (string.ends(attachment.name , "Face") and  skinIdx >2 ) then
+			newPart = display.newImage("balls/emptyBall.png")
 		else		 
 			 newPart =  display.newImage( attachment.name .. ".png")
 		end
+
+
 		--local newPart =  display.newImage(kidTypes[kidType].path .. "/" .. attachment.name .. ".png")
 
-print(attachment.name )
+--print(attachment.name )
 		
 	--	end
 		return newPart
@@ -154,8 +161,8 @@ print(attachment.name )
 		Runtime:addEventListener("enterFrame", handleFrame)
 		self.skeleton:setToSetupPose()
 
-		if kidType ~= 5 and 1==2 then
-			local skinIdx = math.random( 5)
+		if kidType ~= 5  then
+			skinIdx = math.random( 5)
 
 			if (skinIdx == 2 ) then
 				skinIdx = 6
@@ -188,6 +195,8 @@ print(attachment.name )
 						
 					
 				end
+		else	
+			skinIdx = 2
 		end
 
 		self.state:setAnimationByName(0, kidTypes[kidType].anim, true, 0) --  arsYell
