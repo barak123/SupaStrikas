@@ -11,7 +11,7 @@ GOOD_RANGE = 20
 -- Shot power properties
 MINIMAL_SHOT_POWER = 0.2
 WEAK_SHOT_POWER = 0.35
-
+-- 0542842466
 KICK_TIMEUOT_DURATION_AUTO = 3750 --375
 KICK_ASSIST_DURATION_AUTO = 1
 
@@ -50,6 +50,6 @@ LAST_TUTORIAL_STAGE = 6
 BALL_X = 180
 
 END_GAME_WHEN_DEF_TOUCH = true
-SHOP_FILE = "strika2.dat"--"l1.dat" -- 32		
+SHOP_FILE = "strika.dat"--"l1.dat" -- 32		
 GAME_DATA_FILE = "supas.dat" -- "ldr.dat" --22
 

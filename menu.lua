@@ -5,12 +5,17 @@ local widget = require( "widget" )
 --parse = require( "mod_parse" )
 require( "game_config" )
 
+require "translation"
+
 --local zip = require( "plugin.zip" )
 local json = require("json")
 local mime=require("mime")
 local openssl = require "plugin.openssl"
 local isFlurryReady = false
 local shouldLogOpens = false
+
+
+commonData.catalog = require("catalog")
 
 if ( system.getInfo("platformName") == "Android" ) then
   commonData.gpgs = require( "plugin.gpgs" )
@@ -35,6 +40,25 @@ end
    commonData.gpgs.init( gpgsInitListener )
  end
 
+commonData.kidoz = require( "plugin.kidoz" )
+ 
+local function adListener( event )
+ 
+    if ( event.phase == "init" ) then  -- Successful initialization
+        print( event.provider )
+        -- Load a KIDOZ panel view ad
+        commonData.kidoz.load( "panelView", { adPosition="top" } )
+ 
+    elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
+        print( event.type )
+        -- Show the ad
+        
+    end
+end
+ 
+-- Initialize the KIDOZ plugin
+commonData.kidoz.init( adListener, { publisherID="13196", securityToken="RS408BBtfq9irLxdzygpjsxHomwskU1W" } )
+
 local function logAppOpens()
   local opensToAlert = {}
   opensToAlert[1] = 1  
@@ -57,7 +81,12 @@ local function logAppOpens()
       -- print(commonData.gameData.appOpened  )
 
          if system.getInfo("environment") ~= "simulator" then
-          commonData.analytics.logEvent( "App opened " ..  tostring(commonData.gameData.appOpened) .. " times", 
+           local version = ""
+             if  commonData.gameData.abVersion then
+                 version = " in version " .. tostring( commonData.gameData.abVersion)
+             end
+             
+          commonData.analytics.logEvent( "App opened " ..  tostring(commonData.gameData.appOpened) .. " times" .. version, 
             { gamesCount = tostring( commonData.gameData.gamesCount)  ,
               highScore = tostring(  commonData.gameData.highScore) ,
               totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
@@ -147,6 +176,9 @@ local splash = nil
 local splash2 = nil
 local blackRect = nil 
 local isSimulator = false
+local levelCostText = nil
+local levelNameText = nil
+
 
 commonData.isMute = false
 
@@ -255,9 +287,11 @@ function scene:create( event )
    local sceneGroup = self.view
 
 
-commonData.selectedSkin = "Shakes"
+commonData.selectedSkin = "Klaus"
 commonData.selectedBall = "NormalBall"
 commonData.selectedField = "Stadium"
+commonData.selectedBooster = "fireBall"
+
 
 commonData.shopSkin = commonData.selectedSkin 
 commonData.shopBall = commonData.selectedBall 
@@ -323,7 +357,19 @@ local function systemEvents( event )
    elseif ( event.type == "applicationResume" ) then
       --print( "resuming............................." )
    elseif ( event.type == "applicationExit" ) then
-      --print( "exiting.............................." )
+      commonData.analytics.logEvent( "SessionEnd", { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                reason= tostring(commonData.gameData.appOpened)  } )
+
+      if commonData.gameData.appOpened == 1 then
+        commonData.analytics.logEvent( "FirstSessionEnd", { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                reason= tostring(commonData.gameData.appOpened) ,
+             perfectRatio = string.format("%.00f" , 100 * commonData.gameData.bouncesPerfect / math.max(commonData.gameData.bounces, 1)) .. "%"  
+                                                 } )
+
+      end  
+
    elseif ( event.type == "applicationStart" ) then
       gameNetworkSetup()  --login to the network here
    end
@@ -345,6 +391,26 @@ commonData.getLevel = function ()
   --local root1  = -0.5 - math.sqrt(d) / 100
   
   return math.floor(root1)
+end
+
+commonData.getLevelName = function (lvl)
+  if lvl < 5 then
+    return "ROOKIE"
+  elseif lvl < 10 then
+    return "BEGINNER"  
+  elseif lvl < 15 then
+    return "TALENTED"  
+  elseif lvl < 20 then  
+    return "ADVANCED"  
+  elseif lvl < 25 then  
+    return "PROFESSIONAL"  
+  elseif lvl < 30 then  
+    return "EXPERT"  
+  elseif lvl < 35 then  
+    return "MASTER"      
+  else
+    return "SUPA STRIKA" 
+  end  
 end
 
 commonData.playSound = function ( soundToPlay , params)
@@ -484,9 +550,8 @@ Runtime:addEventListener( "system", systemEvents )
      
      logo.x = 240 + display.actualContentWidth/2 - logo.contentWidth/2  -10
      logo.y = 160 + display.actualContentHeight/2 - logo.contentHeight/2 -10
-      
-     
 
+     
 
      splash = display.newImage("images/Splash.jpg")
      splash.x = 240
@@ -648,7 +713,11 @@ Runtime:addEventListener( "system", systemEvents )
            return true
      end
  
-      
+      local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
      local  buttonsSet = "BlueSet"
       
       -- Create the widget
@@ -657,10 +726,51 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160, 
           y = 110,
           id = "playButton",
-          defaultFile = "MainMenu/PlayBtnUp.png",
-          overFile = "MainMenu/PlayBtnDown.png",
-          onEvent = buttonListener
+          -- defaultFile = "MainMenu/PlayBtnUp.png",
+          -- overFile = "MainMenu/PlayBtnDown.png",
+          onEvent = buttonListener,
+          defaultFile = "MainMenu/EmptyBtnUp.png",          
+         overFile = "MainMenu/EmptyBtnDown.png",
+          
+          label = getTransaltedText("Play"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 80 , 
+          labelXOffset = 70,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+
       }
+
+      -- local coinTextOptions = 
+      -- {
+         
+      --     text = "",              
+      --     font = "UnitedSansRgHv",   
+      --     fontSize = 40,
+      --     align = "left"  --new alignment parameter
+      -- }
+
+
+                
+      
+      -- local playText = display.newText(coinTextOptions) 
+      -- playText.text = "PLAY"
+      
+      -- playText:setFillColor(255/255,241/255,208/255)
+
+      -- local snapshot = display.newSnapshot( 400, 200 )
+      -- snapshot.x = display.contentCenterX
+      -- snapshot.y = display.contentCenterY-200
+
+       
+      -- snapshot.group:insert( playText )
+
+       
+      -- snapshot.fill.effect = "filter.bulge"
+      -- snapshot.fill.effect.intensity = 1.8
+
+      -- playButton:setLabel("PLAY")
+
 
        playButton.xScale =  (display.actualContentWidth*0.45) / playButton.width
        playButton.yScale = playButton.xScale  
@@ -674,11 +784,22 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160,
           y = 195,
           id = "shopButton",
-          defaultFile = "MainMenu/CustomizeUp.png",
-          overFile = "MainMenu/CustomizeDown.png",
-          onEvent = shopListener
+          -- defaultFile = "MainMenu/CustomizeUp.png",
+          -- overFile = "MainMenu/CustomizeDown.png",
+          onEvent = shopListener,
+          defaultFile = "MainMenu/EmptyBtnUp.png",          
+           overFile = "MainMenu/EmptyBtnDown.png",
+          
+          
+          label = getTransaltedText("Shop"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 64 , 
+          labelXOffset = 90,
+          labelColor = { default={ gradient}, over={ 255/255,241/255,208/255 } }
       }
-        shopButton.xScale =  (display.actualContentWidth*0.45) / shopButton.width
+
+        shopButton.xScale =  (display.actualContentWidth*0.32) / shopButton.width
        shopButton.yScale = shopButton.xScale  
        shopButton.x = shopButton.x - (display.actualContentWidth - display.contentWidth)/2
 
@@ -690,17 +811,27 @@ Runtime:addEventListener( "system", systemEvents )
           x = 160,
           y = 195,
           id = "packsButton",
-          defaultFile = "MainMenu/PacksUp.png",
-          overFile = "MainMenu/PacksDown.png",
-          onEvent = packsListener
+          -- defaultFile = "MainMenu/PacksUp.png",
+          -- overFile = "MainMenu/PacksDown.png",
+          onEvent = packsListener,
+          defaultFile = "MainMenu/EmptyBtnUp.png",          
+          overFile = "MainMenu/EmptyBtnDown.png",
+          
+          
+          label = getTransaltedText("Packs"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 64 , 
+          labelXOffset = 110,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
-        packsButton.xScale =  (display.actualContentWidth*0.45) / packsButton.width
+        packsButton.xScale =  (display.actualContentWidth*0.25) / packsButton.width
        packsButton.yScale = packsButton.xScale  
        packsButton.x = packsButton.x - (display.actualContentWidth - display.contentWidth)/2
        packsButton.y =  shopButton.y + packsButton.contentHeight /2  + shopButton.contentHeight /2 + 5
 
       packsIndicator = display.newImage("images/PacksIndicator.png")
-     
+      
       packsIndicator:scale(0.5,0.5)
 
      -- packsIndicator:setFillColor(1,0,0)
@@ -719,8 +850,9 @@ Runtime:addEventListener( "system", systemEvents )
           overFile = "MainMenu/LeaderBoardDown.png",
           onEvent = leadersListener
       }
-       leaderButton.xScale =  (display.actualContentWidth*0.08) / leaderButton.width
-      leaderButton.yScale = leaderButton.xScale  
+      leaderButton.yScale =(display.actualContentHeight *0.1) / leaderButton.height
+       leaderButton.xScale =  leaderButton.yScale 
+      
 
       local achivButton = widget.newButton
       {
@@ -732,8 +864,11 @@ Runtime:addEventListener( "system", systemEvents )
           onEvent = achivListener
       }
 
-      achivButton.xScale =  (display.actualContentWidth*0.08) / achivButton.width
-      achivButton.yScale = achivButton.xScale  
+    
+
+       achivButton.yScale = (display.actualContentHeight *0.1) / achivButton.height 
+      achivButton.xScale =  achivButton.yScale 
+     
 
       achivButton.x = leaderButton.x + leaderButton.contentWidth/2 + achivButton.contentWidth/2 + 2
 
@@ -747,9 +882,11 @@ Runtime:addEventListener( "system", systemEvents )
           overFile = "MainMenu/StatsDown.png",
           onEvent = statsListener
       }
+
       
-      statsButton.xScale =  (display.actualContentWidth*0.08) / statsButton.width
-      statsButton.yScale = statsButton.xScale  
+      statsButton.yScale = (display.actualContentHeight *0.1) / statsButton.height
+      statsButton.xScale =   statsButton.yScale
+      
 
       statsButton.x = leaderButton.x - leaderButton.contentWidth/2 - statsButton.contentWidth/2 - 2
      
@@ -772,9 +909,9 @@ Runtime:addEventListener( "system", systemEvents )
           onEvent = fbLikeListener
       }
 
-      fbLikeButton.xScale =  (display.actualContentWidth*0.07) / fbLikeButton.width
-      fbLikeButton.yScale = fbLikeButton.xScale  
-
+      fbLikeButton.yScale = (display.actualContentHeight *0.1) / fbLikeButton.height
+      fbLikeButton.xScale =  fbLikeButton.yScale
+    
      
       muteButton = widget.newButton
       {
@@ -786,8 +923,9 @@ Runtime:addEventListener( "system", systemEvents )
           onEvent = muteListener
       }
 
-       muteButton.xScale =  (display.actualContentWidth*0.07) / muteButton.width
-      muteButton.yScale = muteButton.xScale 
+       
+      muteButton.yScale = (display.actualContentHeight *0.1) / muteButton.height
+      muteButton.xScale =  muteButton.yScale 
 
        unMuteButton = widget.newButton
       {
@@ -799,8 +937,10 @@ Runtime:addEventListener( "system", systemEvents )
           onEvent = unMuteListener
       }
 
-       unMuteButton.xScale =  (display.actualContentWidth*0.07) / unMuteButton.width
-      unMuteButton.yScale = unMuteButton.xScale 
+       
+      unMuteButton.yScale = (display.actualContentHeight *0.1) / unMuteButton.height
+      unMuteButton.xScale =   unMuteButton.yScale 
+
       unMuteButton.alpha = 0
 
 
@@ -816,17 +956,17 @@ Runtime:addEventListener( "system", systemEvents )
       packsIndicator.x =  packsButton.x + 60
       packsIndicator.y =  packsButton.y
       
-      shopButton.xScale = playButton.xScale
-      packsButton.xScale = shopButton.xScale
-      shopButton.yScale = playButton.yScale
-      packsButton.yScale = shopButton.yScale
+      -- shopButton.xScale = playButton.xScale
+      -- packsButton.xScale = shopButton.xScale
+      -- shopButton.yScale = playButton.yScale
+      -- packsButton.yScale = shopButton.yScale
 
-      statsButton.yScale = shopButton.yScale
-      leaderButton.yScale = statsButton.yScale
-      achivButton.yScale = statsButton.yScale
-      statsButton.xScale = shopButton.yScale
-      leaderButton.xScale = statsButton.yScale
-      achivButton.xScale = statsButton.yScale
+      -- statsButton.yScale = shopButton.yScale
+      -- leaderButton.yScale = statsButton.yScale
+      -- achivButton.yScale = statsButton.yScale
+      -- statsButton.xScale = shopButton.yScale
+      -- leaderButton.xScale = statsButton.yScale
+      -- achivButton.xScale = statsButton.yScale
       
 
       playButton.y = display.actualContentHeight * 0.25 - (display.actualContentHeight - display.contentHeight)/2 
@@ -848,7 +988,76 @@ Runtime:addEventListener( "system", systemEvents )
         unMuteButton.x = muteButton.x
         fbLikeButton.x = muteButton.x + (muteButton.contentWidth )/2  + fbLikeButton.contentWidth/2 + 10
       
- 
+
+      local  playIcon = display.newImage("MainMenu/IcoPlay.png")
+      local  shopIcon = display.newImage("MainMenu/IcoShop.png")
+      local  packsIcon = display.newImage("MainMenu/IcoPacks.png")
+
+
+      playIcon.yScale = (playButton.contentHeight * 0.5) / playIcon.contentHeight 
+      playIcon.xScale = playIcon.yScale
+      playIcon.y = playButton.y 
+      playIcon.x = playButton.x - playButton.contentWidth/2 + playIcon.contentWidth/2 
+
+      shopIcon.yScale = (shopButton.contentHeight * 0.5) / shopIcon.contentHeight 
+      shopIcon.xScale = shopIcon.yScale
+      shopIcon.y = shopButton.y
+      shopIcon.x = shopButton.x - shopButton.contentWidth/2 + shopIcon.contentWidth/2 
+      
+       packsIcon.yScale = (packsButton.contentHeight * 0.5) / packsIcon.contentHeight 
+      packsIcon.xScale = packsIcon.yScale
+      packsIcon.y = packsButton.y
+      packsIcon.x = packsButton.x - packsButton.contentWidth/2 + packsIcon.contentWidth/2  + 3
+
+      
+      -- playText.x = playButton.x
+      -- playText.y = playButton.y
+
+      -- snapshot.x = playButton.x
+      -- snapshot.y = playButton.y
+
+     local levelBar = display.newImage("MainMenu/MainMenuLelBar.png")
+     
+     levelBar.yScale = (display.actualContentWidth*0.35) / levelBar.width
+     levelBar.xScale = levelBar.yScale
+     
+     levelBar.x = 240 - display.actualContentWidth/2  + levelBar.contentWidth/2
+     levelBar.y = playButton.y - levelBar.contentHeight/2 - playButton.contentHeight/2  + 2
+      
+      local levelTextOptions = 
+        {         
+
+            text = "",     
+            width = levelBar.contentWidth - 15,            
+            font = "UnitedSansRgHv",   
+            fontSize = 10,
+            align = "left"  --new alignment parameter
+        }
+
+      levelCostText = display.newText(levelTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+      levelCostText.text = "LVL 0"
+
+      levelCostText.x =  levelBar.x
+      levelCostText.y = levelBar.y 
+      levelCostText:setFillColor(1,0,0)
+      
+
+      local levelTextOptions2 = 
+        {         
+
+            text = "",     
+            width = levelBar.contentWidth -30,
+            align="right",
+            font = "UnitedSansRgHv",   
+            fontSize = 10            
+        }
+
+      levelNameText = display.newText(levelTextOptions2) -- "",0,0, "UnitedSansRgHv" , 24)
+      levelNameText.text = "SUPA STRIKA!"
+
+      levelNameText.x =  levelBar.x
+      levelNameText.y = levelBar.y 
+      levelNameText:setFillColor(1,0,0)
       heroSpine =  require ("hero")
       hero = heroSpine.new(0.6, true,false,nil,true)
       
@@ -907,7 +1116,12 @@ Runtime:addEventListener( "system", systemEvents )
    
      sceneGroup:insert(hero.skeleton.group)
      
-   
+      
+     sceneGroup:insert(levelBar)
+     sceneGroup:insert(levelCostText)
+     sceneGroup:insert(levelNameText)
+     
+     
      sceneGroup:insert(playButton)
      
      sceneGroup:insert(achivButton)
@@ -917,16 +1131,18 @@ Runtime:addEventListener( "system", systemEvents )
      sceneGroup:insert(packsButton)
      sceneGroup:insert(packsIndicator)
      sceneGroup:insert(logo)   
-     
-     
-     
+
+     sceneGroup:insert(playIcon)   
+     sceneGroup:insert(shopIcon)   
+     sceneGroup:insert(packsIcon)   
+     --sceneGroup:insert(snapshot)   
            
       sceneGroup:insert(fbLikeButton)
       
       sceneGroup:insert(muteButton)
       sceneGroup:insert(unMuteButton)
 
-     
+ 
      sceneGroup:insert(splash)
      if splash2 then
     
@@ -1005,7 +1221,7 @@ function scene:show( event )
 
           end  
 
-          commonData.shopItems["Shakes"] =true
+          commonData.shopItems["Klaus"] =true
           commonData.shopItems["Stadium"] =true
           --commonData.shopItems["Neymar"] =true
           
@@ -1016,11 +1232,15 @@ function scene:show( event )
           
        
           if (not commonData.gameData.selectedSkin or not commonData.shopItems[commonData.gameData.selectedSkin]) then
-            commonData.gameData.selectedSkin = "Shakes"
+            commonData.gameData.selectedSkin = "Klaus"
           end
 
           if (not commonData.gameData.selectedBall or not commonData.shopItems[commonData.gameData.selectedBall]) then
             commonData.gameData.selectedBall = "NormalBall"
+          end
+
+          if (not commonData.gameData.selectedBooster or not commonData.shopItems[commonData.gameData.selectedBooster]) then
+            commonData.gameData.selectedBooster = "fireBall"
           end
 
           if (not commonData.gameData.selectedField or not commonData.shopItems[commonData.gameData.selectedField]) then
@@ -1030,6 +1250,9 @@ function scene:show( event )
          commonData.selectedSkin =   commonData.gameData.selectedSkin 
          
          commonData.selectedBall = commonData.gameData.selectedBall
+
+         commonData.selectedBooster = commonData.gameData.selectedBooster
+
          commonData.selectedField = commonData.gameData.selectedField
 
 
@@ -1048,6 +1271,8 @@ function scene:show( event )
             commonData.gameData.highScore = 0
             commonData.gameData.coins = 0
             commonData.gameData.usedcoins = 0
+            commonData.gameData.gems = 0
+            commonData.gameData.usedgems = 0
             commonData.gameData.usedpacks = 0 
             commonData.gameData.packs = 0
             commonData.gameData.fbPacks = false
@@ -1067,18 +1292,18 @@ function scene:show( event )
             
             commonData.gameData.unlockedAchivments = {}
             commonData.gameData.unlockedChallenges = {}
-            commonData.gameData.selectedSkin = "Shakes"
+            commonData.gameData.selectedSkin = "Klaus"
             commonData.gameData.selectedBall = "NormalBall"
             commonData.gameData.selectedField = "Stadium"
+            commonData.gameData.selectedBooster = "fireBall"
             
-            commonData.gameData.appOpened = 0
+            commonData.gameData.appOpened = 0  
+            commonData.gameData.abVersion = math.random(2)
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)
          
         
-          
-
           if (not commonData.gameData.packs ) then
             commonData.gameData.packs = 1
           end
@@ -1089,6 +1314,14 @@ function scene:show( event )
          
           if (not commonData.gameData.usedcoins ) then
             commonData.gameData.usedcoins = 0
+          end
+
+          if (not commonData.gameData.usedgems ) then
+            commonData.gameData.usedgems = 0
+          end
+
+          if (not commonData.gameData.gems ) then
+            commonData.gameData.gems = 0
           end
 
           if (not commonData.gameData.usedpacks ) then
@@ -1119,7 +1352,10 @@ function scene:show( event )
             commonData.gameData.totalMeters = 0
           end
 
-          commonData.getLevel() 
+          local lvl = commonData.getLevel() 
+          levelCostText.text = "LVL " .. lvl
+          levelNameText.text =  commonData.getLevelName(lvl)
+         
 
           loadRemoteTable(SHOP_FILE , loadShopData)        
           
@@ -1210,6 +1446,12 @@ function scene:show( event )
       -- Insert code here to make the scene come alive.
       -- Example: start timers, begin animation, play audio, etc.
 
+      if commonData.gameData and commonData.gameData.totalMeters then
+        local lvl = commonData.getLevel() 
+            levelCostText.text = "LVL " .. lvl
+            levelNameText.text =  commonData.getLevelName(lvl)
+      end      
+         
       
    end
 

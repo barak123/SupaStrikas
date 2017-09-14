@@ -3,8 +3,6 @@ local commonData = require( "commonData" )
 local composer = require( "composer" )
 local widget = require( "widget" )
 
-require "catalog"
-
 --store.purchase({ id }) to:
 
 
@@ -14,6 +12,7 @@ local levelSelectGroup
 local coinsReward = nil
 local buyButton = nil
 local useButton = nil
+local useText = nil
 local rewardBox = nil
 local coinsCountText = nil
 local coinsShadowText = nil
@@ -228,9 +227,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
                 
                 commonData.playSound( backMenuSound ) 
            
-                if (itemRewardCategory == "shirts") then
-                    commonData.selectedShirt = itemReward.id                    
-                end  
+                 
 
                  if (itemRewardCategory == "skins") then
                    commonData.selectedSkin = itemReward.id
@@ -240,13 +237,12 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
                    commonData.selectedBall = itemReward.id
                 end  
 
-                if (itemRewardCategory == "shoes") then
-                   commonData.selectedShoes = itemReward.id
+                if (itemRewardCategory == "fields") then
+                   commonData.selectedField = itemReward.id
                 end  
 
-
-                if (itemRewardCategory == "pants") then
-                   commonData.selectedPants = itemReward.id
+                if (itemRewardCategory == "boosts") then
+                   commonData.selectedBooster  = itemReward.id
                 end  
 
 
@@ -254,11 +250,12 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
               commonData.gameData.selectedBall = commonData.selectedBall                  
               commonData.gameData.selectedShirt = commonData.selectedShirt 
               commonData.gameData.selectedSkin = commonData.selectedSkin 
-              commonData.gameData.selectedShoes = commonData.selectedShoes 
+              commonData.gameData.selectedBooster = commonData.selectedBooster 
 
               commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
               
               useButton.alpha = 0 
+              useText.alpha = 0 
               rewardBoxBackgroundGreen.alpha = 1
           end
           return true
@@ -382,10 +379,10 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       useButton = widget.newButton
       {
           x = 240,
-          y = 240,
+          y = 250,
           id = "useButton",
-          defaultFile = "PacksScreen/UseNow.png",
-          overFile = "PacksScreen/UseNowDown.png",
+          defaultFile = "images/shop/BuyWithCoins.png",          
+          overFile = "images/shop/BuyWithCoinsDown.png",
           onEvent = useButtonListener
       }
       useButton:scale(0.4,0.4)
@@ -393,18 +390,44 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
      local continueButton = widget.newButton
       {
           x = 240,
-          y = 200,
+          y = 280,
           id = "continueButton",
-          defaultFile = "PacksScreen/Continue.png",
-          overFile = "PacksScreen/ContinueDown.png",
+          defaultFile = "images/shop/BuyWithCoins.png",          
+          overFile = "images/shop/BuyWithCoinsDown.png",
           onEvent = continueListener
       }
       continueButton:scale(0.4,0.4)
 
+       local coinTextOptions = 
+      {
+         
+          text = "",     
+          x = 0,
+          y = 155,
+          width = 120,     --required for multi-line and alignment
+          font = "UnitedSansRgHv",   
+          fontSize = 13,
+          align = "center"  --new alignment parameter
+      }
+
+
+                
+      
+      local continueText = display.newText(coinTextOptions) 
+      continueText.text = "Continue"
+      continueText.x = 240
+      continueText.y = 280
+
+      useText = display.newText(coinTextOptions) 
+      useText.text = "Use"
+      useText.x = 240
+      useText.y = 250
+      --continueText:setFillColor(255/255,241/255,208/255)
+
       rewardBox = display.newGroup()
 
-      local rewardBoxBackground  = display.newImage("PacksScreen/RewardBox.png")
-      rewardBoxBackgroundGreen  = display.newImage("PacksScreen/RewardBox.png")
+      local rewardBoxBackground  = display.newImage("images/shop/BuyDialog.png")
+      rewardBoxBackgroundGreen  = display.newImage("images/shop/BuyDialog.png")
      coinsReward  = display.newImage("PacksScreen/Coins.png")
 
       youWonText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
@@ -413,8 +436,8 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       youWonText:setFillColor(1,206/255,0)
       youWonSText:setFillColor(128/255,97/255,40/255)
 
-      youWonText.y = 45
-      youWonText.x = 240
+      youWonText.y = 115
+      youWonText.x = 300
       youWonSText.y = youWonText.y + 2
       youWonSText.x =  youWonText.x 
 
@@ -427,8 +450,8 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       priceText:setFillColor(1,206/255,0)
       priceSText:setFillColor(128/255,97/255,40/255)
 
-      priceText.y = 160
-      priceText.x = 240
+      priceText.y = 190
+      priceText.x = 300
       priceSText.y = priceText.y + 2
       priceSText.x =  priceText.x 
 
@@ -436,11 +459,11 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       priceSText.text = ""
 
       rewardBoxBackground.x = 240
-      rewardBoxBackground.y = 100
+      rewardBoxBackground.y = 150
       rewardBoxBackground:scale(0.4,0.4)
 
-      rewardBoxBackgroundGreen.x = 240
-      rewardBoxBackgroundGreen.y = 100
+      rewardBoxBackgroundGreen.x =  rewardBoxBackground.x 
+      rewardBoxBackgroundGreen.y = rewardBoxBackground.y
       rewardBoxBackgroundGreen:scale(0.42,0.42)
       rewardBoxBackgroundGreen:setFillColor(0,1,0)
 
@@ -463,6 +486,9 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       
       rewardBox:insert(useButton)
       rewardBox:insert(continueButton)      
+      rewardBox:insert(useText)
+      rewardBox:insert(continueText)      
+      
 
       sceneGroup:insert(background)
       sceneGroup:insert(ballGlowImg)
@@ -505,6 +531,7 @@ end
 local function handleCoinsPrize(coinsPrice)
     coinsReward.alpha = 1
     useButton.alpha = 0
+    useText.alpha = 0 
 
     priceText.text = coinsPrice .. " COINS"
     priceSText.text = coinsPrice .. " COINS"
@@ -554,9 +581,9 @@ local function handleItemPrize()
            end  
            
            
-         itemIdx = math.random(#packCategories[categoryIdx])  
+         itemIdx = math.random(#commonData.catalog.packCategories[categoryIdx])  
 
-        itemToBuy = packCategories[categoryIdx][itemIdx]
+        itemToBuy = commonData.catalog.packCategories[categoryIdx][itemIdx]
         
          
        end
@@ -565,8 +592,8 @@ local function handleItemPrize()
            
           while (shopItemsCount <= 10 and  commonData.shopItems[itemToBuy.id]) do
             categoryIdx = 4
-            itemIdx = math.random(#packCategories[categoryIdx])  
-            itemToBuy = packCategories[categoryIdx][itemIdx]    
+            itemIdx = math.random(#commonData.catalog.packCategories[categoryIdx])  
+            itemToBuy = commonData.catalog.packCategories[categoryIdx][itemIdx]    
           end  
    --       if (cat[i].packChance) then
     --        if (prizeItemRnd <= accuSum + cat[i].packChance ) then
@@ -589,6 +616,7 @@ local function handleItemPrize()
             
          coinsReward.alpha = 0
          useButton.alpha = 1
+         useText.alpha = 1 
 
          commonData.shopItems[itemToBuy.id] = true
          priceText.text = itemToBuy.name
@@ -598,35 +626,53 @@ local function handleItemPrize()
          itemReward = itemToBuy
 
 
-         if (itemToBuy.image2) then
-            itemRewardImg2 = display.newImage(itemToBuy.image2) -- "",0,0, "troika" , 24)
-             if (itemRewardImg2) then
-                 itemRewardImg2.y = 85
-                 itemRewardImg2.x = 238
-                 if (itemToBuy.imgScale) then
-                  itemRewardImg2:scale(itemToBuy.imgScale * 0.6, itemToBuy.imgScale * 0.6)
-                 end
-                 rewardBox:insert(itemRewardImg2)
-            end
-        end
-
         if (itemToBuy.image) then
             itemRewardImg = display.newImage(itemToBuy.image) -- "",0,0, "troika" , 24)
              if (itemRewardImg) then
-                 itemRewardImg.y = 95 
-                 itemRewardImg.x = 240
+                 itemRewardImg.y = 145 
+                 itemRewardImg.x = 180
                  if (itemToBuy.imgScale) then
                   itemRewardImg:scale(itemToBuy.imgScale * 0.5, itemToBuy.imgScale * 0.5)
                  end
 
-                 if (itemToBuy.color) then
-                  itemRewardImg:setFillColor(itemToBuy.color.r , 
-                                   itemToBuy.color.g ,
-                                   itemToBuy.color.b)
+                 if (itemToBuy.level and itemToBuy.level > commonData:getLevel()) then
+                          itemRewardImg.fill.effect = "filter.desaturate"           
+                          itemRewardImg.fill.effect.intensity = 1
+                          useButton.alpha = 0
+                          useText.alpha = 0 
                  end
                  rewardBox:insert(itemRewardImg)
             end
+
+             local levelFlag =  display.newImage("images/shop/LevelFlag.png")
+                 
+                levelFlag.x = 120
+                levelFlag.y = 125 
+               
+                levelFlag:scale(0.3,0.3)
+               
+               rewardBox:insert(levelFlag)
+
+               local levelTextOptions = 
+                  {                      
+                      text = "",     
+                      x = 0,
+                      y = 155,
+                      font = "UnitedSansRgHv",   
+                      fontSize = 10,
+                      align = "left"  --new alignment parameter
+                  }
+
+                local  levelCostText = display.newText(levelTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+                levelCostText.text = "LVL \n" .. itemToBuy.level.. "+"
+
+                levelCostText.x = 123
+                levelCostText.y = 113
+                levelCostText:setFillColor(1,206/255,0)
+
+                 rewardBox:insert(levelCostText)
         end
+
 
        commonData.saveTable(commonData.shopItems , SHOP_FILE)
        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)

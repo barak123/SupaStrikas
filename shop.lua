@@ -4,6 +4,12 @@ local composer = require( "composer" )
 local widget = require( "widget" )
 
 require ("achivmentsManager")
+local store = nil
+if ( system.getInfo("platformName") == "Android" ) then
+  store = require("plugin.google.iap.v3")
+else
+  store = require("store")   
+end
 
 
 local BUTTON_1_Y = 130
@@ -17,10 +23,14 @@ local isVelocity = false
 local scrollTo = false
 local outerScrollTo = false
 local coinsCount = 1
+local gemsCount = 1
+      
 
 local seletedCategory = nil
 local buyButton = nil
 local useButton = nil
+-- local useDisabled = nil
+-- local buyDisabled = nil
 local areYouSurePopup = nil
 local coinsCountText = nil
 local coinsShadowText = nil
@@ -31,19 +41,41 @@ local hero = nil
 local currentProductList = nil
 
 local  buyWithCoinsText = nil
+
 local  itemToBuyImg = nil
 local  itemToBuyImg2 = nil
 local  itemDesc = nil
 
-local byWithCoinsButton = nil
+local buyWithCoinsButton = nil
+local buyWithCoinsButtonIcon = nil
 
-local byWithCoinsButtonIcon = nil
+local  buyWithGemsText = nil
+local buyWithGemsButton = nil
+local buyWithGemsButtonIcon = nil
+
+local  buyWithCashText = nil
+local buyWithCashButton = nil
+local buyWithCashButtonIcon = nil
 
 local resolutionFactor = 0
 local  buyNotificationText = nil
 local  buyNotificationRect = nil
 
 local categories = nil
+
+local productList =
+{
+  -- These Product IDs must already be set up in your store
+  -- We'll use this list to retrieve prices etc. for each item
+  -- Note, this simple test only has room for about 4 items, please adjust accordingly
+  -- The iTunes store will not validate bad Product IDs 
+  "com.ld.3supagems",
+  "com.ld.10supagems",
+  --"android.test.purchased" ,
+  "com.ld.20supagems",
+  "com.ld.40supagems",
+  "com.ld.80supagems",
+}
             
 
 ---------------------------------------------------------------------------------
@@ -59,6 +91,9 @@ local categories = nil
     coinsShadowText.text = coinsCount
     coinsCountText.text =  coinsCount
 
+    gemsShadowText.text = gemsCount
+    gemsCountText.text =  gemsCount
+
   end  
 
  
@@ -67,11 +102,12 @@ local icons = {}
 
 local function  selectedItemChanged( itemIdx )
 
-  if (itemIdx and items[seletedCategory][itemIdx]) then
+  if (itemIdx and commonData.catalog.items[seletedCategory][itemIdx]) then
     
+
     selectedItemIdx = itemIdx
-    itemDesc.text = items[seletedCategory][itemIdx].name
-    if (items[seletedCategory][itemIdx] and commonData.shopItems[items[seletedCategory][itemIdx].id]) then
+    itemDesc.text = commonData.catalog.items[seletedCategory][itemIdx].name
+    if (commonData.catalog.items[seletedCategory][itemIdx] and commonData.shopItems[commonData.catalog.items[seletedCategory][itemIdx].id]) then
       useButton.alpha = 1
       buyButton.alpha = 0
     else
@@ -79,18 +115,26 @@ local function  selectedItemChanged( itemIdx )
       buyButton.alpha = 1
     end
 
-    if (items[seletedCategory][itemIdx].level > commonData.getLevel()) then
-      useButton.alpha = 0
-      buyButton.alpha = 0
-    end
+    -- if (commonData.catalog.items[seletedCategory][itemIdx].level and 
+    --     commonData.catalog.items[seletedCategory][itemIdx].level > commonData.getLevel()) then      
+
+    --   buyDisabled.alpha = buyButton.alpha
+    --   useDisabled.alpha = useButton.alpha 
+
+    --   useButton.alpha = 0
+    --   buyButton.alpha = 0
+    -- else
+    --    buyDisabled.alpha = 0
+    --   useDisabled.alpha = 0
+    -- end
      
      if (seletedCategory == "skins") then
-       commonData.shopSkin = items[seletedCategory][itemIdx].id
+       commonData.shopSkin = commonData.catalog.items[seletedCategory][itemIdx].id
 
     end  
 
      if (seletedCategory == "balls") then
-       commonData.shopBall = items[seletedCategory][itemIdx].id
+       commonData.shopBall = commonData.catalog.items[seletedCategory][itemIdx].id
      end  
 
 
@@ -116,20 +160,16 @@ local function openCategory()
           end
         end 
 
-        for i = 1, #items[seletedCategory] do
+        for i = 1, #commonData.catalog.items[seletedCategory] do
             local card = nil
 
-            if items[seletedCategory][i].coinsCost and items[seletedCategory][i].cashCost then
-              card =  display.newImage("images/shop/Items.png")
-            elseif items[seletedCategory][i].coinsCost then
-              card =  display.newImage("images/shop/ItemsNoCash.png")
+            if commonData.catalog.items[seletedCategory][i].cashCost then
+              card =  display.newImage("images/shop/ShopItemExlusive.png")             
             else
-              card =  display.newImage("images/shop/ItemsCashOnly.png")
+              card =  display.newImage("images/shop/ItemsNoCash.png")            
             end  
             
-            if (items[seletedCategory][i].level > commonData:getLevel()) then
-                card:setFillColor(0.5,0.5,1)              
-            end
+          
 
             icons[i] = display.newGroup()
             icons[i].width = 70
@@ -138,6 +178,68 @@ local function openCategory()
 
             icons[i]:insert(card)
 
+            if (commonData.catalog.items[seletedCategory][i].image) then
+                 local  img = display.newImage(commonData.catalog.items[seletedCategory][i].image) -- "",0,0, "UnitedSansRgHv" , 24)
+                 if (img) then
+                     img.y = 45 
+                     img.x = 2
+                     if (commonData.catalog.items[seletedCategory][i].imgScale) then
+                      img:scale(commonData.catalog.items[seletedCategory][i].imgScale, commonData.catalog.items[seletedCategory][i].imgScale)
+                     end
+
+                      --  if (commonData.catalog.items[seletedCategory][i].level and 
+                      --      commonData.catalog.items[seletedCategory][i].level > commonData:getLevel()) then
+                      --     img.fill.effect = "filter.desaturate"           
+                      --     img.fill.effect.intensity = 1
+                      -- end
+
+                     
+                     --     leftBottomObj.fill.effect = "filter.brightness"
+      --    leftBottomObj.fill.effect.intensity = 0.8
+
+      --    leftTopObj.fill.effect = "filter.brightness"
+      --    leftTopObj.fill.effect.intensity = 0.8
+
+                     if (commonData.catalog.items[seletedCategory][i].color) then
+                      img:setFillColor(commonData.catalog.items[seletedCategory][i].color.r , 
+                                       commonData.catalog.items[seletedCategory][i].color.g ,
+                                       commonData.catalog.items[seletedCategory][i].color.b)
+                     end
+                     icons[i]:insert(img)
+                end
+            end
+
+            if (commonData.catalog.items[seletedCategory][i].level) then
+               local levelFlag =  display.newImage("images/shop/LevelFlag.png")
+                 
+                levelFlag.x = -75
+                levelFlag.y = -18 
+               
+                levelFlag:scale(0.5,0.5)
+               
+               icons[i]:insert(levelFlag)
+
+               local levelTextOptions = 
+                  {
+                      parent = icons[i],
+                      text = "",     
+                      x = 0,
+                      y = 155,
+                      font = "UnitedSansRgHv",   
+                      fontSize = 20,
+                      align = "left"  --new alignment parameter
+                  }
+
+                local  levelCostText = display.newText(levelTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+                levelCostText.text = "LVL \n" .. commonData.catalog.items[seletedCategory][i].level .. "+"
+
+                levelCostText.x = -72
+                levelCostText.y = -30
+                levelCostText:setFillColor(1,206/255,0)
+              --coinsShadowText:setFillColor(128/255,97/255,40/255)
+                 icons[i]:insert(levelCostText)
+          
+            end
 
               local itemEquipped =  display.newImage("images/shop/ItemsEquipped.png")
 
@@ -146,9 +248,10 @@ local function openCategory()
             icons[i].equipped = itemEquipped
 
 
-             if items[seletedCategory][i].id == commonData.selectedSkin or                          
-              items[seletedCategory][i].id == commonData.selectedBall or                          
-              items[seletedCategory][i].id == commonData.selectedField 
+             if commonData.catalog.items[seletedCategory][i].id == commonData.selectedSkin or                          
+              commonData.catalog.items[seletedCategory][i].id == commonData.selectedBall or                          
+              commonData.catalog.items[seletedCategory][i].id == commonData.selectedBooster or                              
+              commonData.catalog.items[seletedCategory][i].id == commonData.selectedField 
               
               then
               itemEquipped.alpha = 1 
@@ -162,7 +265,7 @@ local function openCategory()
             ownedIcon.x = 95
             ownedIcon.y = -55
             icons[i].owned = ownedIcon
-            if commonData.shopItems[items[seletedCategory][i].id] then
+            if commonData.shopItems[commonData.catalog.items[seletedCategory][i].id] then
               ownedIcon.alpha = 1
             else  
               ownedIcon.alpha = 0
@@ -172,36 +275,10 @@ local function openCategory()
            
 
 
-            if (items[seletedCategory][i].image2) then
-                 local  img = display.newImage(items[seletedCategory][i].image2) -- "",0,0, "UnitedSansRgHv" , 24)
-                 if (img) then
-                     img.y = 30 
-                     img.x = 0
-                     if (items[seletedCategory][i].imgScale) then
-                      img:scale(items[seletedCategory][i].imgScale, items[seletedCategory][i].imgScale)
-                     end
-                     icons[i]:insert(img)
-                end
-            end
+            
 
-            if (items[seletedCategory][i].image) then
-                 local  img = display.newImage(items[seletedCategory][i].image) -- "",0,0, "UnitedSansRgHv" , 24)
-                 if (img) then
-                     img.y = 45 
-                     img.x = 2
-                     if (items[seletedCategory][i].imgScale) then
-                      img:scale(items[seletedCategory][i].imgScale, items[seletedCategory][i].imgScale)
-                     end
-
-                     if (items[seletedCategory][i].color) then
-                      img:setFillColor(items[seletedCategory][i].color.r , 
-                                       items[seletedCategory][i].color.g ,
-                                       items[seletedCategory][i].color.b)
-                     end
-                     icons[i]:insert(img)
-                end
-            end
-            if (items[seletedCategory][i].coinsCost) then
+        
+            if (commonData.catalog.items[seletedCategory][i].coinsCost) then
                 local coinTextOptions = 
                   {
                       parent = icons[i],
@@ -216,7 +293,7 @@ local function openCategory()
 
 
                 local  coinsCostText = display.newText(coinTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
-                coinsCostText.text = items[seletedCategory][i].coinsCost
+                coinsCostText.text = commonData.catalog.items[seletedCategory][i].coinsCost
 
 
                  local  coinsImg =  display.newImage("Coin/Coin.png")
@@ -227,21 +304,91 @@ local function openCategory()
                  coinsImg:scale(0.3,0.3)
 
 
-                 if (items[seletedCategory][i].cashCost) then
-                    coinsCostText.y = 155
-                    coinsImg.y = 157
-                 else
-                    coinsCostText.y = 185
-                    coinsImg.y = 187
+                
+                 coinsCostText.y = 175
+                 coinsImg.y = 177
                      
-                 end 
                  icons[i]:insert(coinsImg)
                  icons[i]:insert(coinsCostText)
                -- icons[i]:insert(itemDescText)
             end
 
+             if (commonData.catalog.items[seletedCategory][i].gemsCost) then
+                local coinTextOptions = 
+                  {
+                      parent = icons[i],
+                      text = "",     
+                      x = 0,
+                      y = 155,
+                     -- width = 120,     --required for multi-line and alignment
+                      font = "UnitedSansRgHv",   
+                      fontSize = 30,
+                      align = "left"  --new alignment parameter
+                  }
+
+
+                local  coinsCostText = display.newText(coinTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+                coinsCostText.text = commonData.catalog.items[seletedCategory][i].gemsCost
+
+
+                 local  coinsImg =  display.newImage("images/SupaGem.png")
+ 
+                 
+                 
+                 coinsImg.x = 50
+                 coinsImg:scale(0.25,0.25)
+
+
+                
+                 coinsCostText.y = 210
+                 coinsImg.y = 212
+                 coinsCostText:setFillColor(0,1,0)    
+                
+                 icons[i]:insert(coinsImg)
+                 icons[i]:insert(coinsCostText)
+               -- icons[i]:insert(itemDescText)
+            end
            
-            
+             if (commonData.catalog.items[seletedCategory][i].cashCost) then
+                local coinTextOptions = 
+                  {
+                      parent = icons[i],
+                      text = "",     
+                      x = 0,
+                      y = 205,
+                     -- width = 120,     --required for multi-line and alignment
+                      font = "UnitedSansRgHv",   
+                      fontSize = 30,
+                      align = "left"  --new alignment parameter
+                  }
+
+
+                local  cashCostText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+                cashCostText.text = commonData.catalog.items[seletedCategory][i].cashCost
+
+
+                 local  cashImg = display.newImage("images/shop/CashIcon.png")
+                 
+                 cashImg.y = 205
+                 cashImg.x = 50
+                 cashImg:scale(0.8,0.8)
+                 cashImg.alpha = 0
+
+
+                 if (commonData.catalog.items[seletedCategory][i].coinsCost) then
+                    cashCostText.y = 205
+                    cashImg.y = 205
+                 else
+                    cashCostText.y = 185
+                    cashImg.y = 187
+                     
+                 end 
+
+                 icons[i]:insert(cashImg)
+                 icons[i]:insert(cashCostText)
+               -- icons[i]:insert(itemDescText)
+            end
+              
            
            -- scrollView:insert( icons[i] )
           icons[i].width = 70
@@ -344,7 +491,7 @@ local function openCategory()
                 end
 
               --  print ("dooo")
-                local lastIdx = #items[seletedCategory]
+                local lastIdx = #commonData.catalog.items[seletedCategory]
                 if objShop and objShop[lastIdx] then
                     local x, y = objShop[lastIdx]:localToContent( 0, 0 )
                 --    print (x)
@@ -383,7 +530,7 @@ local function openCategory()
 
           
 
-         for i = #items[seletedCategory] , 1 , -1 do
+         for i = #commonData.catalog.items[seletedCategory] , 1 , -1 do
             if (icons[i]) then
                     levelSelectGroup:insert(icons[i])   
                     icons[i].alpha = 0.6
@@ -425,8 +572,6 @@ function scene:create( event )
 
    local sceneGroup = self.view
 
-
-      require "catalog"
       initAchivments(commonData.gameData.unlockedAchivments ) 
 
     --everything from here down to the return line is what makes
@@ -492,6 +637,34 @@ coinImg.x = coinImg.x + (display.actualContentWidth - display.contentWidth) /2
 coinsCountText.x = coinsCountText.x + (display.actualContentWidth - display.contentWidth) /2
 coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.contentWidth) /2
 
+
+local gemImg  = display.newImage("images/SupaGem.png")
+gemImg.x = 350
+gemImg.y = 23
+gemImg:scale(0.25,0.25)
+
+local gemTextOptions = 
+{
+    --parent = textGroup,
+    text = "",     
+    x = 315,
+    y = 23,
+   -- width = 120,     --required for multi-line and alignment
+    font = "UnitedSansRgHv",   
+    fontSize = 20,
+    align = "left"  --new alignment parameter
+}
+
+gemsCountText = display.newText(gemTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+gemsShadowText = display.newText(gemTextOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+--gemsCount = 0
+gemsCountText:setFillColor(1,206/255,0)
+gemsShadowText:setFillColor(128/255,97/255,40/255)
+gemsShadowText.y = gemsCountText.y + 2
+
+gemImg.x = gemImg.x + (display.actualContentWidth - display.contentWidth) /2
+gemsCountText.x = gemsCountText.x + (display.actualContentWidth - display.contentWidth) /2
+gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.contentWidth) /2
 
 
 
@@ -581,13 +754,13 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
      end
 
         local counter = 1
-       for index, category in pairs( items ) do
+       for index, category in pairs( commonData.catalog.items ) do
 
           -- Create the widget
           local button1 = widget.newButton
           {
               x = 35,
-              y = 100 + 40 * category.index,           
+              y = 40 + 40 * category.index,           
               id = category.category,
            --   label = category.category,
              defaultFile = "images/shop/" .. category.category.. ".png",
@@ -619,25 +792,32 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
 
              if (seletedCategory == "skins") then
-               commonData.selectedSkin = items[seletedCategory][selectedItemIdx].id
+               commonData.selectedSkin = commonData.catalog.items[seletedCategory][selectedItemIdx].id
                 unlockChallenge("changeCharacter")
             end  
 
              if (seletedCategory == "balls") then
-               commonData.selectedBall = items[seletedCategory][selectedItemIdx].id
+               commonData.selectedBall = commonData.catalog.items[seletedCategory][selectedItemIdx].id
                 unlockChallenge("changeBall")
             end  
 
             if (seletedCategory == "fields") then
-               commonData.selectedField = items[seletedCategory][selectedItemIdx].id
+               commonData.selectedField = commonData.catalog.items[seletedCategory][selectedItemIdx].id
                 unlockChallenge("changeField")
             end  
+
+            if (seletedCategory == "boosts") then
+               commonData.selectedBooster = commonData.catalog.items[seletedCategory][selectedItemIdx].id                
+            end
+            
 
 
 
           commonData.gameData.selectedBall = commonData.selectedBall                  
           commonData.gameData.selectedSkin = commonData.selectedSkin 
           commonData.gameData.selectedField = commonData.selectedField
+          commonData.gameData.selectedBooster = commonData.selectedBooster
+          
           
           for i=1,#icons do
              icons[i].equipped.alpha = 0
@@ -663,65 +843,92 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
             areYouSurePopup.alpha = 1
             setSlidesLocked(true)
 
-            if (items[seletedCategory][selectedItemIdx].coinsCost) then
-              buyWithCoinsText.text = "USE " .. items[seletedCategory][selectedItemIdx].coinsCost
-              byWithCoinsButton.alpha = 1
-              byWithCoinsButtonIcon.alpha = 1
+            
+            if (commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost and
+              (not commonData.catalog.items[seletedCategory][selectedItemIdx].level or
+               commonData.catalog.items[seletedCategory][selectedItemIdx].level <= commonData.getLevel()  )) then
+
+              buyWithCoinsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
+              buyWithCoinsButton.alpha = 1
+              buyWithCoinsButtonIcon.alpha = 1
               buyWithCoinsText.alpha = 1
 
-              if (items[seletedCategory][selectedItemIdx].cashCost) then
+              if (commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost) then
                 buyWithCoinsText.y = BUTTON_1_Y
-                byWithCoinsButton.y = BUTTON_1_Y
-                byWithCoinsButtonIcon.y = BUTTON_1_Y
+                buyWithCoinsButton.y = BUTTON_1_Y
+                buyWithCoinsButtonIcon.y = BUTTON_1_Y
               else
                 buyWithCoinsText.y = BUTTON_2_Y
-                byWithCoinsButton.y = BUTTON_2_Y
-                byWithCoinsButtonIcon.y = BUTTON_2_Y
+                buyWithCoinsButton.y = BUTTON_2_Y
+                buyWithCoinsButtonIcon.y = BUTTON_2_Y
               end  
 
+              print("have coins")
             else
-              byWithCoinsButton.alpha = 0
-              byWithCoinsButtonIcon.alpha = 0
+              print("no coins")
+              buyWithCoinsButton.alpha = 0
+              buyWithCoinsButtonIcon.alpha = 0
               buyWithCoinsText.alpha = 0
             end
 
-        
 
-            if itemToBuyImg2 then
-                itemToBuyImg2:removeSelf()
-            end  
+            if (commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost) then
+              buyWithGemsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
+              buyWithGemsButton.alpha = 1
+              buyWithGemsButtonIcon.alpha = 1
+              buyWithGemsText.alpha = 1
 
-            if items[seletedCategory][selectedItemIdx].image2 then
-                itemToBuyImg2 = display.newImage(items[seletedCategory][selectedItemIdx].image2)
-
-                if (items[seletedCategory][selectedItemIdx].imgScale) then
-                    itemToBuyImg2:scale(items[seletedCategory][selectedItemIdx].imgScale * 0.6,
-                     items[seletedCategory][selectedItemIdx].imgScale * 0.6)
-                end
-                itemToBuyImg2.x = 160
-                itemToBuyImg2.y = 150
-                areYouSurePopup:insert(itemToBuyImg2)
+              
+              buyWithGemsText.y = BUTTON_2_Y
+              buyWithGemsButton.y = BUTTON_2_Y
+              buyWithGemsButtonIcon.y = BUTTON_2_Y
+              print("have gems")
+            else
+              print("no gems")
+              buyWithGemsButton.alpha = 0
+              buyWithGemsButtonIcon.alpha = 0
+              buyWithGemsText.alpha = 0
             end
+        
+            if (commonData.catalog.items[seletedCategory][selectedItemIdx].cashCost) then
+              buyWithCashText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].cashCost
+              buyWithCashButton.alpha = 1
+              buyWithCashButtonIcon.alpha = 1
+              buyWithCashText.alpha = 1
+
+              
+              buyWithCashText.y = BUTTON_2_Y
+              buyWithCashButton.y = BUTTON_2_Y
+              buyWithCashButtonIcon.y = BUTTON_2_Y
+              print("have cash")
+            else
+              print("no cash")
+              buyWithCashButton.alpha = 0
+              buyWithCashButtonIcon.alpha = 0
+              buyWithCashText.alpha = 0
+            end
+        
 
             if itemToBuyImg then
                 itemToBuyImg:removeSelf()
             end  
 
             
-
-              itemToBuyImg = display.newImage(items[seletedCategory][selectedItemIdx].image)
+              if commonData.catalog.items[seletedCategory][selectedItemIdx].image then
+                itemToBuyImg = display.newImage(commonData.catalog.items[seletedCategory][selectedItemIdx].image)
+              end
 
               if itemToBuyImg then
-                if (items[seletedCategory][selectedItemIdx].imgScale) then
-                    itemToBuyImg:scale(items[seletedCategory][selectedItemIdx].imgScale * 0.5,
-                     items[seletedCategory][selectedItemIdx].imgScale * 0.5)
+                if (commonData.catalog.items[seletedCategory][selectedItemIdx].imgScale) then
+                    itemToBuyImg:scale(commonData.catalog.items[seletedCategory][selectedItemIdx].imgScale * 0.5,
+                     commonData.catalog.items[seletedCategory][selectedItemIdx].imgScale * 0.5)
                 end
-                itemToBuyImg.x = 185
-                itemToBuyImg.y = 145
+                 itemToBuyImg.x = 185
+                itemToBuyImg.y = 161
                 areYouSurePopup:insert(itemToBuyImg)
               end
 
-             commonData.analytics.logEvent( "buyPressed", {  item = tostring(  items[seletedCategory][selectedItemIdx].id ) } ) 
+             commonData.analytics.logEvent( "buyPressed", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
           
           end
 
@@ -762,7 +969,33 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
        useButton:scale(0.5,0.5)
 
 
-      
+      buyButton.x = buyButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      useButton.x = useButton.x  - (display.actualContentWidth - display.contentWidth) /2
+
+
+     --  buyDisabled  = display.newImage("images/shop/BuyDisabled.png")      
+     --  buyDisabled.width = buyButton.contentWidth
+     --  buyDisabled.height = buyButton.contentHeight
+     --  buyDisabled.x = buyButton.x 
+     --  buyDisabled.y = buyButton.y 
+
+
+     --  useDisabled  = display.newImage("images/shop/UseDisabled.png")      
+     --  useDisabled.width = useButton.contentWidth
+     --  useDisabled.height = useButton.contentHeight
+     --  useDisabled.x = useButton.x 
+     --  useDisabled.y = useButton.y 
+
+     --  local function nullListener( event )
+          
+     --     return true
+     --   end
+
+     -- buyDisabled:addEventListener("touch", nullListener )
+     -- useDisabled:addEventListener("touch", nullListener )
+
+     -- buyDisabled.alpha = 0
+     -- useDisabled.alpha = 0
 
         
 
@@ -770,10 +1003,10 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
 
            if ( "began" == event.phase ) then
-               if (items[seletedCategory][selectedItemIdx] and                  
-                  not commonData.shopItems[items[seletedCategory][selectedItemIdx].id] and
-                  items[seletedCategory][selectedItemIdx].coinsCost and
-                  coinsCount < items[seletedCategory][selectedItemIdx].coinsCost ) then
+               if (commonData.catalog.items[seletedCategory][selectedItemIdx] and                  
+                  not commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] and
+                  commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost and
+                  coinsCount < commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost ) then
 
                   local alphaNum = 1.1
                   buyNotificationText.alpha = 1.5
@@ -786,24 +1019,24 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
                    end, 110)
               
-                    commonData.analytics.logEvent( "notEnoughCoins", {  item = tostring(  items[seletedCategory][selectedItemIdx].id ) } ) 
+                    commonData.analytics.logEvent( "notEnoughCoins", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
                 end
            elseif ( "ended" == event.phase ) then
                  commonData.buttonSound()
 
             
-             if (items[seletedCategory][selectedItemIdx] and                  
-                  not commonData.shopItems[items[seletedCategory][selectedItemIdx].id] and
-                  items[seletedCategory][selectedItemIdx].coinsCost and
-                  coinsCount >= items[seletedCategory][selectedItemIdx].coinsCost ) then
+             if (commonData.catalog.items[seletedCategory][selectedItemIdx] and                  
+                  not commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] and
+                  commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost and
+                  coinsCount >= commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost ) then
 
-                  commonData.analytics.logEvent( "buyWithCoins", {  item = tostring(  items[seletedCategory][selectedItemIdx].id ) } ) 
+                  commonData.analytics.logEvent( "buyWithCoins", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
 
             
-                  coinsCount = coinsCount - items[seletedCategory][selectedItemIdx].coinsCost
-                  commonData.shopItems[items[seletedCategory][selectedItemIdx].id] = true
+                  coinsCount = coinsCount - commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
+                  commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] = true
                   commonData.gameData.coins  = coinsCount
-                  commonData.gameData.usedcoins =  commonData.gameData.usedcoins + items[seletedCategory][selectedItemIdx].coinsCost
+                  commonData.gameData.usedcoins =  commonData.gameData.usedcoins + commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
                   setCoinsCount()
                   icons[selectedItemIdx].owned.alpha = 1
 
@@ -814,6 +1047,69 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
                   setSlidesLocked(false)
 
 
+             end
+
+                 
+          end
+          return true
+        
+       end
+
+       
+        local function buyWithGemsListener( event )
+
+
+           if ( "began" == event.phase ) then
+               -- if (commonData.catalog.items[seletedCategory][selectedItemIdx] and                  
+               --    not commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] and
+               --    commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost and
+               --    gemsCount < commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost ) then
+
+               --    local alphaNum = 1.1
+               --    buyNotificationText.alpha = 1.5
+               --    buyNotificationRect.alpha = 1.5
+
+               --     timer.performWithDelay(1, function( )
+               --       alphaNum = alphaNum - 0.01
+               --       buyNotificationText.alpha = alphaNum
+               --       buyNotificationRect.alpha = alphaNum
+
+               --     end, 110)
+              
+               --      commonData.analytics.logEvent( "notEnoughGems", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
+               --  end
+           elseif ( "ended" == event.phase ) then
+                 commonData.buttonSound()
+
+            
+             if (commonData.catalog.items[seletedCategory][selectedItemIdx] and                  
+                  not commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] and
+                  commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost and
+                  gemsCount >= commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost ) then
+
+                  commonData.analytics.logEvent( "buyWithGems", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
+
+            
+                  gemsCount = gemsCount - commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
+                  commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] = true
+                  commonData.gameData.gems  = gemsCount
+                  commonData.gameData.usedgems =  commonData.gameData.usedgems + commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
+                  setCoinsCount()
+                  icons[selectedItemIdx].owned.alpha = 1
+
+                  setSelectedItems()
+                  areYouSurePopup.alpha = 0
+                  useButton.alpha = 1
+                  buyButton.alpha = 0
+                  setSlidesLocked(false)
+             else
+               areYouSurePopup.alpha = 0
+               setSlidesLocked(false)
+
+               seletedCategory = "gems"
+               openCategory()
+
+     
              end
 
                  
@@ -834,22 +1130,94 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
         
        end
 
+       local function makeStorePurchase(productId)
+
+            if ( system.getInfo("platformName") == "Android" ) then
+              store.purchase( productId)
+            else
+              store.purchase( {productId})
+            end  
+        end 
+
+       local function buyWithCashListener( event )
+          
+          if ( "ended" == event.phase ) then
+             commonData.buttonSound()
+           
+             if (commonData.catalog.items[seletedCategory][selectedItemIdx] and                  
+                  commonData.catalog.items[seletedCategory][selectedItemIdx].storeId) then
+
+                   commonData.analytics.logEvent( "buyWithCashPressed", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
+
+
+                  if store.isActive == false then
+                    -- native.showAlert("Store is not available, please try again later", {"OK"})
+                    -- print("Store is not available, please try again later")
+                  elseif store.canMakePurchases == false then
+                    -- native.showAlert("Store purchases are not available, please try again later", {"OK"})
+                    --  print("Store purchases are not available, please try again later")
+                  else
+            --        print("Ka-ching! Purchasing " .. tostring(productId))
+
+                    -- if (seletedCategory=="balls") then
+                    --   makeStorePurchase( "android.test.purchased")
+                    -- else  
+                    --   makeStorePurchase( "com.ld.dribble.test.ball" )
+                    -- end
+
+                    makeStorePurchase( commonData.catalog.items[seletedCategory][selectedItemIdx].storeId )
+                  end                  
+             end
+
+          end
+          return true
+        
+       end
+
+
       
-      byWithCoinsButtonIcon =  display.newImage("Coin/Coin.png")
-      byWithCoinsButtonIcon:scale(0.15,0.15)
+      buyWithCoinsButtonIcon =  display.newImage("Coin/Coin.png")
+      buyWithCoinsButtonIcon:scale(0.15,0.15)
       
 
 
-      byWithCoinsButton = widget.newButton
+      buyWithCoinsButton = widget.newButton
       {
           x = 295,
           y = BUTTON_1_Y,
-          id = "byWithCoins",
+          id = "buyWithCoins",
           defaultFile = "images/shop/BuyWithCoins.png",          
           overFile = "images/shop/BuyWithCoinsDown.png",
           onEvent = buyWithCoinsListener
       }
 
+      buyWithGemsButtonIcon =  display.newImage("images/SupaGem.png")
+      buyWithGemsButtonIcon:scale(0.15,0.15)
+      
+
+
+      buyWithGemsButton = widget.newButton
+      {
+          x = 295,
+          y = BUTTON_1_Y,
+          id = "buyWithGems",
+          defaultFile = "images/shop/BuyWithCoins.png",          
+          overFile = "images/shop/BuyWithCoinsDown.png",
+          onEvent = buyWithGemsListener
+      }
+
+      buyWithCashButtonIcon =  display.newImage("images/shop/CashIcon.png")
+      buyWithCashButtonIcon:scale(0.6,0.6)
+      
+      buyWithCashButton = widget.newButton
+      {
+          x = 295,
+          y = BUTTON_1_Y,
+          id = "buyWithCash",
+          defaultFile = "images/shop/BuyWithCoins.png",          
+          overFile = "images/shop/BuyWithCoinsDown.png",
+          onEvent = buyWithCashListener
+      }
      local cancelBuyButton = widget.newButton
       {
           x = 295,
@@ -883,18 +1251,15 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       
       backButton.x = display.screenOriginX  + backButton.contentWidth /2
 
-      buyButton.x = buyButton.x  - (display.actualContentWidth - display.contentWidth) /2
-      useButton.x = useButton.x  - (display.actualContentWidth - display.contentWidth) /2
-
       local coinTextOptions = 
       {
          
           text = "",     
           x = 0,
           y = 155,
-         -- width = 120,     --required for multi-line and alignment
+          width = 120,     --required for multi-line and alignment
           font = "UnitedSansRgHv",   
-          fontSize = 15,
+          fontSize = 13,
           align = "left"  --new alignment parameter
       }
 
@@ -903,10 +1268,22 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       
       buyWithCoinsText = display.newText(coinTextOptions) 
       buyWithCoinsText.text = "Buy with coins"
-      buyWithCoinsText.x = 295
+      buyWithCoinsText.x = 315
       buyWithCoinsText.y = BUTTON_1_Y
       buyWithCoinsText:setFillColor(255/255,241/255,208/255)
 
+      buyWithGemsText = display.newText(coinTextOptions) 
+      buyWithGemsText.text = "Buy with gems"
+      buyWithGemsText.x = 315
+      buyWithGemsText.y = BUTTON_2_Y
+      buyWithGemsText:setFillColor(255/255,241/255,208/255)
+
+
+      buyWithCashText = display.newText(coinTextOptions) 
+      buyWithCashText.text = "Buy with gems"
+      buyWithCashText.x = 315
+      buyWithCashText.y = BUTTON_2_Y
+      buyWithCashText:setFillColor(255/255,241/255,208/255)
 
       buyNotificationText= display.newText(coinTextOptions) 
       buyNotificationText.text = "Not enough coins"
@@ -929,15 +1306,15 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       local itemDescOptions = 
       {          
           text = "",     
-          width = 120,     --required for multi-line and alignment
+          width = 200,     --required for multi-line and alignment
           font = "UnitedSansRgHv",   
-          fontSize = 15,
+          fontSize = 15,    
           align = "left"  --new alignment parameter
       }
 
 
       itemDesc = display.newText(itemDescOptions) 
-      itemDesc.x = 157
+      itemDesc.x = 200
       itemDesc.y = 220
       itemDesc:setFillColor(255/255,241/255,208/255)
       itemDesc.x = itemDesc.x  - (display.actualContentWidth - display.contentWidth) /2
@@ -954,14 +1331,121 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       blackRect.alpha = 0.4
 
 
-     local function blackRectListener( event )        
+     local function blackRectListener( event )  
+          print(event.x, event.y)      
           return true
      end
 
       blackRect:addEventListener("touch", blackRectListener )
             -------------------------------------------------------------------------------
 
-        seletedCategory = "skins"
+             -------------------------------------------------------------------------------
+      local function transactionCallback( event )
+        local infoString
+
+        -- Log transaction info.
+        -- print("transactionCallback: Received event " .. tostring(event.name))
+        -- print("state: " .. tostring(event.transaction.state))
+        -- print("errorType: " .. tostring(event.transaction.errorType))
+        -- print("errorString: " .. tostring(event.transaction.errorString))
+
+        if event.transaction.state == "purchased" then
+          infoString = "Transaction successful!"
+          -- print(infoString)
+          
+          -- print("receipt: " .. tostring(event.transaction.receipt))
+          -- print("signature: " .. tostring(event.transaction.signature))
+      
+          
+          commonData.gameData.gems = commonData.gameData.gems + commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCount
+          commonData.gameData.madePurchase = true
+          commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
+
+          setCoinsCount()
+          
+          areYouSurePopup.alpha = 0          
+          setSlidesLocked(false)  
+
+
+          if ( system.getInfo("platformName") == "Android" ) then
+            store.consumePurchase( commonData.catalog.items[seletedCategory][selectedItemIdx].storeId )
+          end
+          
+          commonData.analytics.logEvent( "itemPurchased", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
+
+
+        elseif  event.transaction.state == "restored" then
+          -- Reminder: your app must store this information somewhereƒ
+          -- Here we just display some of it
+          -- infoString = "Restoring transaction:" ..
+          --           "\n   Original ID: " .. tostring(event.transaction.originalTransactionIdentifier) ..
+          --           "\n   Original date: " .. tostring(event.transaction.originalDate)
+          -- print(infoString)
+          -- print("productIdentifier: " .. tostring(event.transaction.productIdentifier))
+          -- print("receipt: " .. tostring(event.transaction.receipt))
+          -- print("transactionIdentifier: " .. tostring(event.transaction.transactionIdentifier))
+          -- print("date: " .. tostring(event.transaction.date))
+          -- print("originalReceipt: " .. tostring(event.transaction.originalReceipt))
+
+        elseif  event.transaction.state == "refunded" then
+          -- Refunds notifications is only supported by the Google Android Marketplace.
+          -- Apple's app store does not support this.
+          -- This is your opportunity to remove the refunded feature/product if you want.
+          -- infoString = "A previously purchased product was refunded by the store."
+          -- print(infoString .. "\nFor product ID = " .. tostring(event.transaction.productIdentifier))
+         
+        elseif event.transaction.state == "cancelled" then
+          -- infoString = "Transaction cancelled by user."
+          -- print(infoString)
+         
+        elseif event.transaction.state == "failed" then        
+          -- infoString = "Transaction failed, type: " .. 
+          --   tostring(event.transaction.errorType) .. " " .. tostring(event.transaction.errorString)
+          -- print(infoString)
+          
+        else
+          infoString = "Unknown event"
+          -- print(infoString)
+         end
+
+        -- Tell the store we are done with the transaction.
+        -- If you are providing downloadable content, do not call this until
+        -- the download has completed.
+        store.finishTransaction( event.transaction )
+      end
+
+
+
+            -- Connect to store at startup, if available.
+      -- if store.availableStores.apple then
+      --   currentProductList = appleProductList
+      --   store.init("apple", transactionCallback)
+      --   print("Using Apple's in-app purchase system.")
+        
+      -- elseif store.availableStores.google then
+      --   currentProductList = googleProductList
+      --   store.init("google", transactionCallback)
+      --   print("Using Google's Android In-App Billing system.")
+        
+      -- else
+      --   print("In-app purchases is not supported on this system/device.")
+      -- end
+
+        if ( system.getInfo("platformName") == "Android" ) then
+          store.init("google", transactionCallback)
+          --print("Using Google's Android In-App Billing system.")
+        else
+            if store.availableStores.apple then
+              store.init("apple", transactionCallback)
+            --  print("Using Apple's in-app purchase system.")
+              
+            else
+              --print("In-app purchases is not supported on this system/device.")
+            end  
+        end
+
+
+        seletedCategory = "gems"
 
         local function printTable( t, label, level )
         if label then print( label ) end
@@ -984,30 +1468,106 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
         end
       end
 
-       
-       openCategory()
-         
 
+        local function productCallback( event )
+            --print( "Showing valid products:", #event.products )
+            for i = 1,#event.products do
+                -- print( event.products[i].title )
+                -- print( event.products[i].description )
+                -- print( event.products[i].price )
+                -- print( event.products[i].localizedPrice )
+                -- print( event.products[i].productIdentifier )
+
+
+                for key,cat in pairs(commonData.catalog.items) do
+                  for idx=1,#cat do
+                  
+                    if (cat[idx].storeId and cat[idx].storeId  == event.products[i].productIdentifier) then
+--                      print ("items matched")
+                      cat[idx].cashCost = event.products[i].localizedPrice 
+                    end  
+                  end
+                end    
+            end
+
+  --          print( "Showing invalid products:", #event.invalidProducts )
+            for i = 1,#event.invalidProducts do
+                --printTable( event.invalidProducts[i] )
+            end
+
+              openCategory()
+        
+        end
+
+        local isProductLoaded = false
+        local productsReloadCount  = 5
+        
+        local function loadProducts()
+          if not isProductLoaded then
+            
+            if ( store.canLoadProducts ) then
+              store.loadProducts( productList, productCallback )
+              isProductLoaded = true 
+            else
+
+              if (productsReloadCount > 0 ) then
+                productsReloadCount = productsReloadCount -1
+                timer.performWithDelay(2000 , loadProducts , 1)              
+              end
+            end
+          end
+
+          return store.canLoadProducts
+        end
+        
+        if not loadProducts() then
+           openCategory()
+        end      
+       
+      
       areYouSureBackground.xScale = 0.5 *display.actualContentWidth / areYouSureBackground.contentWidth 
       areYouSureBackground.yScale = areYouSureBackground.xScale
-      byWithCoinsButton.xScale = 0.2 *display.actualContentWidth / byWithCoinsButton.contentWidth 
-      byWithCoinsButton.yScale = byWithCoinsButton.xScale
+      buyWithCoinsButton.xScale = 0.2 *display.actualContentWidth / buyWithCoinsButton.contentWidth 
+      buyWithCoinsButton.yScale = buyWithCoinsButton.xScale
+
+      buyWithGemsButton.xScale = 0.2 *display.actualContentWidth / buyWithGemsButton.contentWidth 
+      buyWithGemsButton.yScale = buyWithGemsButton.xScale
+      
+      buyWithCashButton.xScale = 0.2 *display.actualContentWidth / buyWithCashButton.contentWidth 
+      buyWithCashButton.yScale = buyWithCashButton.xScale
+      
+      
       
       cancelBuyButton.xScale = 0.2 *display.actualContentWidth / cancelBuyButton.contentWidth 
       cancelBuyButton.yScale = cancelBuyButton.xScale
 
-      byWithCoinsButtonIcon.x = byWithCoinsButton.x + 30
-      byWithCoinsButtonIcon.y = byWithCoinsButton.y
+      buyWithCoinsButtonIcon.x = buyWithCoinsButton.x + 30
+      buyWithCoinsButtonIcon.y = buyWithCoinsButton.y
 
+      buyWithGemsButtonIcon.x = buyWithGemsButton.x + 30
+      buyWithGemsButtonIcon.y = buyWithGemsButton.y
+
+      buyWithCashButtonIcon.x = buyWithCashButton.x + 30
+      buyWithCashButtonIcon.y = buyWithCashButton.y
+      
       
       areYouSurePopup:insert(blackRect)
       areYouSurePopup:insert(areYouSureBackground)
-      areYouSurePopup:insert(byWithCoinsButton)
+      areYouSurePopup:insert(buyWithCoinsButton)
       
-      areYouSurePopup:insert(byWithCoinsButtonIcon)
+      areYouSurePopup:insert(buyWithCoinsButtonIcon)
       
       areYouSurePopup:insert(buyWithCoinsText)
       
+      areYouSurePopup:insert(buyWithGemsButton)      
+      areYouSurePopup:insert(buyWithGemsButtonIcon)      
+      areYouSurePopup:insert(buyWithGemsText)
+
+      areYouSurePopup:insert(buyWithCashButton)      
+      areYouSurePopup:insert(buyWithCashButtonIcon)      
+      areYouSurePopup:insert(buyWithCashText)
+
+
       areYouSurePopup:insert(buyNotificationRect)
       
       areYouSurePopup:insert(buyNotificationText)
@@ -1027,8 +1587,16 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
     sceneGroup:insert(coinsCountText)
     sceneGroup:insert(coinImg)
 
+    sceneGroup:insert(gemsShadowText)
+    sceneGroup:insert(gemsCountText)
+    sceneGroup:insert(gemImg)
+
+
     sceneGroup:insert(useButton)
     sceneGroup:insert(buyButton)
+    -- sceneGroup:insert(useDisabled)
+    -- sceneGroup:insert(buyDisabled)
+    
      sceneGroup:insert(categories)   
      
      
@@ -1069,6 +1637,7 @@ function scene:show( event )
       -- Example: start timers, begin animation, play audio, etc.
       if(event.params and event.params.gameData) then
            coinsCount = commonData.gameData.coins  
+           gemsCount = commonData.gameData.gems  
            setCoinsCount()
       end
 

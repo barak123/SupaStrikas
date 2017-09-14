@@ -2,6 +2,7 @@ local commonData = require( "commonData" )
 
 local composer = require( "composer" )
 local widget = require( "widget" )
+local particleDesigner = require( "particleDesigner" )
 
 --local fuse = require( "plugin.fuse" )
 require( "menu" )
@@ -17,8 +18,11 @@ local isSimulator = "simulator" == system.getInfo( "environment" )
 local scene = composer.newScene()
 local playButton = nil
 local background = nil
+local newLevelBackground = nil
 
 local rateUsButton = nil
+local showAdButton =  nil
+
 
 local achivmetBarFull = nil
 local achivmetBar = nil
@@ -26,7 +30,8 @@ local highScoreShadowText = nil
 local parent = nil
 local scoreText  = nil
 local scoreTextS  = nil
-local packsIndicator = nil
+local openPkgButton = nil
+local openPkgButton2 = nil
  
  local highScoreText = nil
 
@@ -37,6 +42,8 @@ local shareButton = nil
 
 local scoreTitleText = nil 
 local scoreTitleTextS = nil
+local levelText = nil 
+local nextLevelText = nil 
 local comboText = nil 
 local comboTextS = nil
 local dailyRewardBlocker = nil
@@ -56,18 +63,26 @@ local notificationData = nil
 local scoreBox = nil
 local chalengesData = nil
 local chalengesBox = nil
+local gameOverGroup = nil
+local newLevelGroup = nil
+local newItemsGroup = nil
 
-local tip = nil
-local tip2 = nil
-local tip3 = nil
 local packReminder = nil
 local dailyReward = nil
+local dailyRewardGroup = nil
 local activeScreen = 1
 
 local xpBarMiddle = nil
 local xpBarEnd = nil
 local xpBarBG = nil
 local xpBarStart = nil
+local xpEmiter = nil
+
+local newLevelText = {
+  levelUp = nil,
+  newLevel = nil,
+  newItems = nil
+}
 
 
 ---------------------------------------------------------------------------------
@@ -121,15 +136,15 @@ local function rateUsListener( event )
 
 local function logHighScore(gameData , newHighScore)
   local coinsToNotify = {}
-  coinsToNotify[1] = 20  
-  coinsToNotify[2] = 50
-  coinsToNotify[3] = 75  
-  coinsToNotify[4] = 100  
-  coinsToNotify[5] = 150
-  coinsToNotify[6] = 200  
-  coinsToNotify[7] = 300  
-  coinsToNotify[8] = 400    
-  coinsToNotify[9] = 500
+  coinsToNotify[1] = 500  
+  coinsToNotify[2] = 1000
+  coinsToNotify[3] = 3000  
+  coinsToNotify[4] = 6000  
+  coinsToNotify[5] = 10000
+  coinsToNotify[6] = 20000  
+  coinsToNotify[7] = 30000  
+  coinsToNotify[8] = 40000    
+  coinsToNotify[9] = 50000
 
   for i=1,9 do
     
@@ -137,13 +152,20 @@ local function logHighScore(gameData , newHighScore)
     if gameData.highScore < coinsToNotify[i] and
        coinsToNotify[i] < newHighScore then
 
-          commonData.analytics.logEvent( "reached " ..  tostring(coinsToNotify[i]) .. " meters", { gamesCount= tostring( gameData.gamesCount)  } )
+           if system.getInfo("environment") ~= "simulator" then
+            if not commonData.gameData.abVersion then
+               commonData.analytics.logEvent( "reached " ..  tostring(coinsToNotify[i]) .. " points", { gamesCount= tostring( gameData.gamesCount)  } )
+            else      
+              commonData.analytics.logEvent( "reached " ..  tostring(coinsToNotify[i]) .. " points in version " .. tostring( commonData.gameData.abVersion), 
+                { gamesCount= tostring( gameData.gamesCount)  } )
+            end
+        end
+          
     end  
   end
 
    
 end
-
 
 
 local function logGamesCount(gameData)
@@ -167,10 +189,17 @@ local function logGamesCount(gameData)
     if gameData.gamesCount  == gamesToAlert[i]  then
 
          if system.getInfo("environment") ~= "simulator" then
-          commonData.analytics.logEvent( "Played " ..  tostring(gameData.gamesCount) .. " games", 
-            {  highScore = tostring(  gameData.highScore) ,
-              totalCoins = tostring(  gameData.coins + gameData.usedcoins) ,
-              avgScore =  tostring(gameData.totalScore / math.max(gameData.gamesCount, 1)) } )
+            if not commonData.gameData.abVersion then
+                commonData.analytics.logEvent( "Played " ..  tostring(gameData.gamesCount) .. " games", 
+                  {  highScore = tostring(  gameData.highScore) ,
+                    totalCoins = tostring(  gameData.coins + gameData.usedcoins) ,
+                    avgScore =  tostring(gameData.totalScore / math.max(gameData.gamesCount, 1)) } )
+            else      
+              commonData.analytics.logEvent( "Played " ..  tostring(gameData.gamesCount) .. " games in version " .. tostring( commonData.gameData.abVersion), 
+                  {  highScore = tostring(  gameData.highScore) ,
+                    totalCoins = tostring(  gameData.coins + gameData.usedcoins) ,
+                    avgScore =  tostring(gameData.totalScore / math.max(gameData.gamesCount, 1)) } )
+            end
         end
         
         break
@@ -193,24 +222,24 @@ local function showText( )
       --boosterCoinsText.alpha = 1
       --boosterCoinImg.alpha = 1
    else
-      if tip then 
-        tip.alpha = 1   
-          tip:setSequence("start")
-          tip:play()  
-          okButtonDelay = 2000
-      end
+      -- if tip then 
+      --   tip.alpha = 1   
+      --     tip:setSequence("start")
+      --     tip:play()  
+      --     okButtonDelay = 2000
+      -- end
 
-      if tip2 then 
-        tip2.alpha = 1   
-          tip2:setSequence("start")
-          tip2:play()  
-          okButtonDelay = 2000
-      end
+      -- if tip2 then 
+      --   tip2.alpha = 1   
+      --     tip2:setSequence("start")
+      --     tip2:play()  
+      --     okButtonDelay = 2000
+      -- end
 
-      if tip3 then 
-        tip3.alpha = 1             
-          okButtonDelay = 2000
-      end
+      -- if tip3 then 
+      --   tip3.alpha = 1             
+      --     okButtonDelay = 2000
+      -- end
    end
    
    if shouldDisplayOkButton then
@@ -269,6 +298,32 @@ local function showPrizeNotification( header , text , coins, displyOk )
     timer.performWithDelay(1500 , showText , 1)
 end
 
+
+local function adBonus( event )
+        showAdButton.alpha = 0
+        
+        playButton.alpha = 1
+        commonData.gameData.coins = commonData.gameData.coins + 20     
+        commonData.gameData.adsPressed = commonData.gameData.adsPressed + 1   
+
+        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+
+        logCoins(commonData.gameData , 20)
+        commonData.analytics.logEvent( "endWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
+
+        parent:outerCoinsReward(20 ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
+
+        if commonData.gameData.adsPressed == 100 then
+          
+          initAchivments(commonData.gameData.unlockedAchivments)
+
+          unlockAchivment("MoneyMachine", true) 
+        end
+
+end
+
+
 local function printTable( t, label, level )
   if label then print( label ) end
   level = level or 1
@@ -290,6 +345,25 @@ local function printTable( t, label, level )
   end
 end
 
+local superawesome = require( "plugin.superawesome" )
+ 
+-- Pre-declare a placement ID
+local myPlacementID = "34643"
+ 
+local function adListener( event )
+ 
+    if ( event.phase == "init" ) then  -- Successful initialization
+        -- Load a banner ad
+        superawesome.load( "video", { placementId=myPlacementID } )
+    elseif ( event.phase == "playbackEnded" ) then  -- Successful initialization
+        adBonus(event)
+    end
+end
+ 
+-- Initialize the SuperAwesome plugin
+superawesome.init( adListener, { testMode=false } )
+ 
+-- Sometime later, check if the ad is loaded
 
 local function pairsByHighScore (t)
       local a = {}
@@ -323,6 +397,15 @@ local function showActiveScreen()
 
 local function showGameOver( gameResult , isFirstLoad)
 
+        gameOverGroup.alpha =0 
+        newLevelGroup.alpha =0 
+        dailyRewardGroup.alpha =0 
+
+        -- if math.random(2) == 1 then
+             showAdButton.alpha = 1
+        -- else
+        --     showAdButton.alpha = 0
+        -- end      
 
 
              local memUsed = (collectgarbage("count"))
@@ -334,7 +417,7 @@ local function showGameOver( gameResult , isFirstLoad)
     
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
-        packsIndicator.alpha = 0
+        
 
        if ( not commonData.gameData) then 
           commonData.gameData = loadTable(GAME_DATA_FILE)
@@ -360,19 +443,9 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.adsPressed = 0
             commonData.gameData.madePurchase = false
             commonData.gameData.unlockedAchivments = {}
-            commonData.gameData.selectedSkin = "littleDribbler"
-            commonData.gameData.selectedBall = "Ball001"
-            commonData.gameData.selectedShoes = "Default"
-            commonData.gameData.selectedPants = "default"
-            commonData.gameData.selectedShirt = "defaultShirt"
-
-            
-            
-
+          
           end  
        end 
-
- 
    
       --Called when the scene is now on screen.
       -- Insert code here to make the scene come alive.
@@ -383,7 +456,7 @@ local function showGameOver( gameResult , isFirstLoad)
             scoreText.text = commonData.comma_value(endGameScore)
             scoreTextS.text = commonData.comma_value(endGameScore)
             
-
+            --commonData.kidoz.show( "rewardedVideo" )
             local function buildChallengesPart()
 
                   if not chalengesData or not chalengesData.numChildren then
@@ -395,8 +468,6 @@ local function showGameOver( gameResult , isFirstLoad)
                           chalengesData[1]:removeSelf()          
                         
                     end
-                  
-              
                   
                    local challengeTextOptions = 
                   {
@@ -502,7 +573,7 @@ local function showGameOver( gameResult , isFirstLoad)
                return true
             end 
                     --for GameCenter, default to the leaderboard name from iTunes Connect
-            local myCategory = "Little Dribble High Score"
+            local myCategory = ""
 
             if ( system.getInfo( "platformName" ) == "Android" ) then
                --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
@@ -590,7 +661,7 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.coins = commonData.gameData.coins + gameResult.coins
             commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
             commonData.gameData.totalScore = commonData.gameData.totalScore + gameResult.gameScore
-            commonData.gameData.totalMeters = commonData.gameData.totalMeters + gameResult.meters
+            
             commonData.gameData.bounces = commonData.gameData.bounces + gameResult.bounces
             commonData.gameData.bouncesPerfect = commonData.gameData.bouncesPerfect + gameResult.bouncesPerfect
             commonData.gameData.bouncesGood = commonData.gameData.bouncesGood + gameResult.bouncesGood
@@ -600,25 +671,98 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.gameData.unlockedAchivments = getUnlockedAchivments()
             commonData.gameData.unlockedChallenges = getUnlockedChallenges()
 
-            print(commonData.gameData.totalMeters )
+            -- local newLevelScene = composer.getScene( "newLevel"  )
+
+            -- if (newLevelScene) then
+
+            --   --print("REUSE SCENE")
+            --  newLevelScene:outerRefreshResults(gameStats)
+            --  print("reuse new levelStart")
+            -- else
+
+            --   --print("CREATE GAME OVER")
+            --  local options = { isModal = false,
+            --                        effect = "fade",
+            --                        params = {results = gameStats , gameDisplay = sceneGroup}}
+            --  composer.showOverlay( "newLevel" , options )  
+
+            --  print("new overlay")
+            -- end 
+
+            
+            
             local currentLevel = commonData.getLevel() 
             local levelStart = 50 * currentLevel * (currentLevel +1)
             local completeRatio = (commonData.gameData.totalMeters - levelStart) / ((currentLevel+1)  * 100)
-            print(levelStart)
-            print(((currentLevel+1)  * 100))
-            print(completeRatio)
-
-
-
+            
+            local temp = xpBarMiddle.xScale
             xpBarMiddle:scale(completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.contentWidth, 1)
             xpBarMiddle.x = xpBarStart.x + xpBarMiddle.contentWidth / 2 + xpBarStart.contentWidth/2 
             xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
-    
+            xpEmiter.x = xpBarEnd.x
+            
+            levelText.text = "LVL " .. currentLevel
+            nextLevelText.text = currentLevel+1
             if not commonData.gameData.highestCombo or commonData.gameData.highestCombo < gameResult.combo then
               commonData.gameData.highestCombo = gameResult.combo
             end  
 
 
+            commonData.gameData.totalMeters = commonData.gameData.totalMeters + gameResult.meters
+            completeRatio = (commonData.gameData.totalMeters - levelStart) / ((currentLevel+1)  * 100)
+
+
+            local newLevel = commonData.getLevel() 
+
+            if newLevel > currentLevel  then
+               for j = 1, newItemsGroup.numChildren do
+                 if (newItemsGroup[1]) then
+                    newItemsGroup[1]:removeSelf()
+                 end 
+              end
+              newLevelText.newLevel.text = newLevel
+      
+              newLevelGroup.alpha = 1
+
+             
+              if commonData.catalog.itemsByLevel[newLevel] then
+                newLevelText.newItems.alpha =1
+                for newItemsIdx = 1, #commonData.catalog.itemsByLevel[newLevel] do
+                  local  img = display.newImage(commonData.catalog.itemsByLevel[newLevel][newItemsIdx].image) 
+                   if (img) then
+                       img.y = 225 
+                       img.x = 30 +  70 * newItemsIdx
+                       img.xScale = 60 / img.contentWidth   
+                       img.yScale = img.xScale
+                       newItemsGroup:insert(img)   
+                   end    
+
+                    
+                end
+              else
+                newLevelText.newItems.alpha =0  
+              end
+
+           
+            else
+              gameOverGroup.alpha = 1
+            end  
+            --local newScale = completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.contentWidth
+            if completeRatio > 1 then
+              completeRatio = 1
+            end  
+
+            local newScale = completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.width
+            --local newScale = 20
+            print(newScale)
+
+            --transition.scaleTo( xpBarMiddle, { xScale=newScale, time=500 } )
+            transition.to(xpBarMiddle, {x = xpBarStart.x + xpBarMiddle.width* newScale  / 2 + xpBarStart.contentWidth/2, xScale = newScale,  time = 500})
+            -- transition.moveTo( xpBarMiddle, { x=xpBarStart.x + xpBarMiddle.width* newScale  / 2 + xpBarStart.contentWidth/2 , time=500 } )
+            transition.moveTo( xpBarEnd, { x=xpBarStart.x + xpBarMiddle.width* newScale + xpBarStart.contentWidth/2 + xpBarEnd.contentWidth/2 - 1, time=500 } )
+            transition.moveTo( xpEmiter, { x=xpBarStart.x + xpBarMiddle.width* newScale + xpBarStart.contentWidth/2 + xpBarEnd.contentWidth/2 - 1, time=500 } )
+            
+          
             comboText.text = "HIGHEST COMBO: " ..  gameResult.combo
             comboTextS.text = "HIGHEST COMBO: " ..   gameResult.combo
             comboText.alpha = 1
@@ -644,7 +788,7 @@ local function showGameOver( gameResult , isFirstLoad)
               commonData.gameData.fisrtGameTime = todayStart
             end
             
-            if  commonData.gameData.lastGameTime  and  (commonData.gameData.lastGameTime < todayStart or 
+            if  commonData.gameData.lastGameTime  and  (commonData.gameData.lastGameTime < todayStart or --1==1 or
               (commonData.gameData.gamesCount == 10 and commonData.gameData.fisrtGameTime == todayStart)) then
 
 
@@ -657,30 +801,27 @@ local function showGameOver( gameResult , isFirstLoad)
               end
               
               if commonData.gameData.daysInARow > 1 then
-                commonData.analytics.logEvent( "dailyBonus day " .. tostring( commonData.gameData.daysInARow) , { gamesCount= tostring( commonData.gameData.gamesCount),
+                local version = ""
+                if  commonData.gameData.abVersion then
+                 version = " in version " .. tostring( commonData.gameData.abVersion)
+                end
+
+                commonData.analytics.logEvent( "dailyBonus day " .. tostring( commonData.gameData.daysInARow) ..  version, { gamesCount= tostring( commonData.gameData.gamesCount),
                 appOpened= tostring( commonData.gameData.appOpened)
                  } )
               end
               local coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
 
-              if (coinsDailyReward > 120) then
-                coinsDailyReward  = 120
-              end  
+              -- if (coinsDailyReward > 120) then
+              --   coinsDailyReward  = 120
+              -- end  
               --showNotification("DAILY REWARD! \n\n" ..  tostring( coinsDailyReward ) .. " COINS \n\n ")
               --showPrizeNotification("DAILY REWARD!" , "play every day and get better rewards")
 
 
               if not dailyReward then
                 dailyReward = display.newGroup()
-
-                local coinImg1 = display.newImage( "images/DailyRewardBox.png")
               
-                coinImg1.x = 180
-              
-                coinImg1.y = 140
-              
-                coinImg1:scale(0.6,0.6)
-
 
                 local boosterTextOptions = 
                 {
@@ -690,7 +831,7 @@ local function showGameOver( gameResult , isFirstLoad)
                     y = 20,
                     width = 300,     --required for multi-line and alignment
                     font = "UnitedSansRgHv",   
-                    fontSize = 15,
+                    fontSize = 13,
                     align = "center"  --new alignment parameter
                 }
 
@@ -710,45 +851,162 @@ local function showGameOver( gameResult , isFirstLoad)
               --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
                -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
 
-                day1Text = display.newText(boosterHeaderTextOptions)
-                day1Text:setFillColor(194/256,236/256,254/256)
-                day1Text.x = 115
-                day1Text.y = 170
-                day1Text.text = coinsDailyReward 
 
                 --oosterHeaderText.y =   boosterHeaderText.y  + (display.actualContentHeight - display.contentHeight)/2  
 
-                day2Text = display.newText(boosterTextOptions)
-                day2Text:setFillColor(194/256,236/256,254/256)
-                day2Text.x = 193
-                day2Text.y = 165
-                day2Text.text = math.min(coinsDailyReward + 20 , 120) 
+               
 
-                day3Text = display.newText(boosterTextOptions)
-                day3Text:setFillColor(194/256,236/256,254/256)
-                day3Text.x = 248
-                day3Text.y = 165
-                day3Text.text = math.min(coinsDailyReward + 40 , 120) 
+                local dailySubTitleText = display.newText(boosterTextOptions)
+                dailySubTitleText:setFillColor(194/256,236/256,254/256)
+                dailySubTitleText.x = 190
+                dailySubTitleText.y = 225 
+                dailySubTitleText.text = getTransaltedText("DailyRewardText")
 
-                day4Text = display.newText(boosterTextOptions)
-                day4Text:setFillColor(194/256,236/256,254/256)
-                day4Text.x = 303
-                day4Text.y = 165
-                day4Text.text = math.min(coinsDailyReward + 60 , 120)
+              --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
+               -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
 
-                dayText = display.newText(boosterHeaderTextOptions)
-                dayText:setFillColor(194/256,236/256,254/256)
-                dayText.x = 100
-                dayText.y = 205
-                dayText.text = getTransaltedText("DailyRewardDay") .." " .. commonData.gameData.daysInARow  
+                local  dailyTitleText = display.newText(boosterHeaderTextOptions)
+                dailyTitleText:setFillColor(194/256,236/256,254/256)
+                dailyTitleText.x = 190
+                dailyTitleText.y = 60
+                dailyTitleText.text = getTransaltedText("DailyRewardTitle") 
+                           
+
+                 local function dailyOkBtnListener( event )
+          
+                      if ( "ended" == event.phase ) then
+                        
+                        commonData.buttonSound()
+
+
+                       
+                        --newLevelGroup.alpha = 0
+
+                        
+                          if (commonData.gameData.daysInARow < 7) then
+                            if not coinsDailyReward then
+                               coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
+                            end  
+                            commonData.gameData.coins = commonData.gameData.coins + coinsDailyReward        
+                        
+                            logCoins(commonData.gameData , coinsDailyReward) 
+                          else
+                            commonData.gameData.gems = commonData.gameData.gems + 1     
+                            commonData.gameData.daysInARow = 0
+                            coinsDailyReward = nil
+                          end  
+                        
+                          commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+                          timer.performWithDelay(300, 
+                            function()
+                             parent:outerCoinsReward(coinsDailyReward ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
+                              dailyRewardGroup.alpha = 0
+                              gameOverGroup.alpha = 1
+                            end
+                          , 1)
+
+                      end
+                      return true
+                 end
+
+                  local dailyOkBtn = widget.newButton
+                  {
+                      x = 240,
+                      y = 280,
+                      id = "boosterButton",
+                      defaultFile = "images/OKUp.png",
+                      overFile = "images/OKDown.png",
+                      onEvent = dailyOkBtnListener
+                  }
+                 dailyOkBtn.xScale =  (display.actualContentWidth*0.3) / dailyOkBtn.width
+                  dailyOkBtn.yScale = dailyOkBtn.xScale  
+                 
+
+                  local dailyBackground = display.newRect(240, 160, 700,400)
+                  dailyBackground.fill.effect = "generator.radialGradient"
+             
+                  dailyBackground.fill.effect.color2 = { 0.8, 0, 0.2, 1 }
+                  dailyBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 0.85 }
+                  dailyBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
+                  dailyBackground.fill.effect.aspectRatio  = 1
+                 
                 
-                dailyReward:insert(coinImg1)
-                dailyReward:insert(day1Text)
-                dailyReward:insert(day2Text)
-                dailyReward:insert(day3Text)
-                dailyReward:insert(day4Text)
-                dailyReward:insert(dayText)
-                notificationData:insert(dailyReward)
+                 local dailyBackground2 = display.newImage("images/TeamImage.png")
+                 --background:setFillColor(59/255,  131/255 , 163/255)
+                 dailyBackground2.x = 240
+                 dailyBackground2.y = 160
+                 dailyBackground2.xScale = display.actualContentWidth / dailyBackground2.contentWidth 
+                 dailyBackground2.yScale = display.actualContentHeight  / dailyBackground2.contentHeight
+
+                 
+
+                 dailyReward:insert(dailyBackground)
+                 dailyReward:insert(dailyBackground2)
+
+                 --commonData.gameData.daysInARow =3 
+                 for i=1,7 do
+                      local card = nil
+                      if  i == commonData.gameData.daysInARow then
+                        card =  display.newImage("images/shop/ShopItemExlusive.png")             
+                      else
+                        card =  display.newImage("images/shop/ItemsNoCash.png")            
+                      end  
+                      
+                      card.xScale = display.actualContentWidth * 0.14 / card.contentWidth 
+                      card.yScale =  card.xScale 
+
+                      card.x = 240 - display.actualContentWidth / 2 + card.contentWidth /2 + (i-1) * (card.contentWidth + 3)
+                      card.y = 160
+                      dailyReward:insert(card)
+
+                     local dayText = display.newText(boosterTextOptions)
+                      dayText:setFillColor(194/256,236/256,254/256)
+                      dayText.x = card.x
+                      dayText.y = card.y - card.contentHeight/2 + 15
+                      dayText.text = getTransaltedText("DailyRewardDay") .." " .. i 
+
+                     dailyReward:insert(dayText) 
+                     local priceImg = nil
+                     if i == 7 then
+                      priceImg = display.newImage("images/SupaGem.png")
+                     else
+                      priceImg = display.newImage("images/IcoCoins.png")
+                     end 
+
+                     --background:setFillColor(59/255,  131/255 , 163/255)
+                     priceImg.x = card.x
+                     priceImg.y = card.y 
+                     priceImg.xScale = card.contentWidth * 0.5 / priceImg.contentWidth 
+                     priceImg.yScale = priceImg.xScale
+                     
+                     dailyReward:insert(priceImg)  
+
+
+
+                      local day1Text = display.newText(boosterTextOptions)
+                      day1Text:setFillColor(194/256,236/256,254/256)
+                      day1Text.x = card.x
+                      day1Text.y = card.y + card.contentHeight/2  - 20
+
+                       if i == 7 then
+                        day1Text.text = "1"  .. " Supa Gems" 
+                       else
+                        day1Text.text = 20 + i * 20  .. " Coins" 
+                       end 
+                      
+
+                      dailyReward:insert(day1Text)  
+                 end
+
+                
+                
+               
+                dailyReward:insert(dailyOkBtn)
+                dailyReward:insert(dailyTitleText)
+                dailyReward:insert(dailySubTitleText)
+                
+                dailyRewardGroup:insert(dailyReward)
               
               end  
 
@@ -767,6 +1025,8 @@ local function showGameOver( gameResult , isFirstLoad)
                 logCoins(commonData.gameData , coinsDailyReward)                
               end
              
+            dailyRewardGroup.alpha = 1 
+            gameOverGroup.alpha = 0
             --  local function validateDailyReward(event)
                       
             --       -- no internet - no glory
@@ -803,7 +1063,7 @@ local function showGameOver( gameResult , isFirstLoad)
             -- dailyRewardBlocker.alpha = 0.01
             -- network.request( URL, "GET", validateDailyReward ) 
 
-            giveDailyReward()
+         --   giveDailyReward()
           
           
 
@@ -851,17 +1111,27 @@ local function showGameOver( gameResult , isFirstLoad)
            
             logGamesCount(commonData.gameData)
             
-           
-            commonData.analytics.logEvent( "finishGame", { gamesCount= tostring( commonData.gameData.gamesCount) ,  
+            local version = ""
+             if  commonData.gameData.abVersion then
+                 version = " in version " .. tostring( commonData.gameData.abVersion)
+             end
+
+            local sameLegBounces = gameResult.bounces - gameResult.bouncesPerfect - gameResult.bouncesGood - gameResult.bouncesEarly - gameResult.bouncesLate
+            print(tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces))         
+                  
+            commonData.analytics.logEvent( "finishGame" .. version , { gamesCount= tostring( commonData.gameData.gamesCount) ,  
                                                 gameScore= tostring( gameResult.gameScore) , 
                                                 highScore= tostring(  commonData.gameData.highScore) ,
+                                                pgbs = tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces),
                                                 reason= tostring(gameResult.finishReason)  } )
 
             
             if (commonData.gameData.packs > 0) then
-              packsIndicator.alpha = 1
+              openPkgButton.alpha = 0
+              openPkgButton2.alpha = 1
             else  
-              packsIndicator.alpha = 0
+              openPkgButton2.alpha = 0
+              openPkgButton.alpha = 1
             end
 
 
@@ -923,6 +1193,12 @@ function scene:create( event )
      scoreBox = display.newGroup()
      chalengesBox = display.newGroup()
      chalengesData = display.newGroup()
+
+     gameOverGroup = display.newGroup()
+     newLevelGroup = display.newGroup()
+     newItemsGroup = display.newGroup()
+     dailyRewardGroup = display.newGroup()
+
      
      buttonsSet = "BlueSet"
      --everything from here down to the return line is what makes
@@ -936,6 +1212,73 @@ function scene:create( event )
      background.x = 240
      background.y = 160 
 
+      
+
+      local newLevelBackground = display.newRect(240, 160, 700,400)
+      newLevelBackground.fill.effect = "generator.radialGradient"
+ 
+      newLevelBackground.fill.effect.color2 = { 0.8, 0, 0.2, 1 }
+      newLevelBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 1 }
+      newLevelBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
+      newLevelBackground.fill.effect.aspectRatio  = 1
+     
+    
+      
+
+      newLevelText.levelUp = display.newText({text = "LEVEL UP!", font = "UnitedSansRgHv", fontSize = 25}  )
+      
+      newLevelText.newLevel = display.newText({text = "5",font = "UnitedSansRgHv", fontSize = 45}  )
+      newLevelText.newLevel.text = "5"
+      newLevelText.newLevel:setFillColor(1,206/255,0)
+
+      newLevelText.newItems = display.newText({text = "You can use now the following items:", font = "UnitedSansRgHv", fontSize = 25}  )
+      
+      newLevelText.levelUp.x = 240
+      newLevelText.levelUp.y = 50
+
+      newLevelText.newLevel.x = 240
+      newLevelText.newLevel.y = 110
+
+      newLevelText.newItems.x = 240
+      newLevelText.newItems.y = 170
+      
+
+      local function newLevelOkBtnListener( event )
+          
+          if ( "ended" == event.phase ) then
+            
+            commonData.buttonSound()
+
+
+            gameOverGroup.alpha = 1
+            newLevelGroup.alpha = 0
+            
+          end
+          return true
+     end
+
+      local newLevelOkBtn = widget.newButton
+      {
+          x = 240,
+          y = 280,
+          id = "boosterButton",
+          defaultFile = "images/OKUp.png",
+          overFile = "images/OKDown.png",
+          onEvent = newLevelOkBtnListener
+      }
+     newLevelOkBtn.xScale =  (display.actualContentWidth*0.3) / newLevelOkBtn.width
+      newLevelOkBtn.yScale = newLevelOkBtn.xScale  
+
+      
+     newLevelGroup:insert(newLevelBackground)
+     newLevelGroup:insert(newLevelText.levelUp)
+     newLevelGroup:insert(newLevelText.newLevel)
+     newLevelGroup:insert(newLevelText.newItems)
+     newLevelGroup:insert(newItemsGroup)
+     
+     newLevelGroup:insert(newLevelOkBtn)
+
+     
       
        local chalengesTable = display.newImage("images/ChallengeScreenTable.png")
 
@@ -986,6 +1329,7 @@ function scene:create( event )
           --composer.hideOverlay(true, "fade", 400 )
           sceneGroup.alpha = 0
           parent:outerRestartGame()
+          commonData.kidoz.hide( "panelView")
           
 
        
@@ -1023,7 +1367,7 @@ function scene:create( event )
               commonData.buttonSound()
               native.setActivityIndicator( true )
 
-              self.view.alpha=0
+              --self.view.alpha=0
               local group = display.getCurrentStage()
               -- local gameScene   = composer.getScene( "game" )
               -- group = gameScene.view
@@ -1059,7 +1403,7 @@ function scene:create( event )
               parent.view.y = savedY
 
 
-              self.view.alpha=1            
+             --  self.view.alpha=1            
               
               --local serviceName = "twitter"  --supported values are "twitter", "facebook", or "sinaWeibo"
               local serviceName = event.target.id
@@ -1068,8 +1412,8 @@ function scene:create( event )
                 local items =
                       {
                         { type = "image", value = { filename="result.png", baseDir=system.TemporaryDirectory } },
-                        { type = "string", value ="Little Dribble!"},
-                        { type = "url", value = "http://littledribblegame.com/" },
+                        { type = "string", value ="Supa Strikas Dash!"},
+                        { type = "url", value = "http://www.supastrikas.com/" },
                       }
 
                   local popupName = "activity"
@@ -1122,7 +1466,7 @@ function scene:create( event )
                       native.showPopup( "social",
                       {
                           service = serviceName,
-                          message = "Little Dribble!",
+                          message = "Supa Strikas!",
                           listener = listener,
                           image = 
                           {
@@ -1171,20 +1515,20 @@ function scene:create( event )
          if ( "ended" == event.phase ) then
           notification.alpha = 0 
 
-          if tip then
-            tip:removeSelf()
-            tip = nil
-          end  
+          -- if tip then
+          --   tip:removeSelf()
+          --   tip = nil
+          -- end  
 
-          if tip2 then
-            tip2:removeSelf()
-            tip2 = nil
-          end  
+          -- if tip2 then
+          --   tip2:removeSelf()
+          --   tip2 = nil
+          -- end  
 
-          if tip3 then
-            tip3:removeSelf()
-            tip3 = nil
-          end  
+          -- if tip3 then
+          --   tip3:removeSelf()
+          --   tip3 = nil
+          -- end  
 
 
           if dailyReward then
@@ -1194,6 +1538,30 @@ function scene:create( event )
 
          end 
            return true
+       end
+
+        local function showAdListener( event )
+            if ( "ended" == event.phase ) then
+                  local isSimulator = (system.getInfo("environment") == "simulator");
+                  commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
+                if (not isSimulator)  then
+                  -- local isAdLoaded =  superawesome.isLoaded( myPlacementID )
+
+                  --  if isAdLoaded then
+                    superawesome.show( myPlacementID )
+                  -- end
+
+     
+                    showAdButton.alpha = 0
+                     
+              
+                else
+                    showAdButton.alpha = 0
+                    adBonus(event)
+                  
+                end
+           end 
+         return true
        end
 
       
@@ -1216,18 +1584,40 @@ function scene:create( event )
      playButton.x =  playButton.x +  (display.actualContentWidth - display.contentWidth) /2
      --playButton.alpha = 0
 
+      local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
       local menuButton = widget.newButton
       {
           x = 240,
           y = 280,
-          id = "menuButton",
-          defaultFile = buttonsSet .. "/End/MainMenuUp.png",
-          overFile = buttonsSet .. "/End/MainMenuDown.png",
-          onEvent = menuListener
+          id = "menuButton",          
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
+          onEvent = menuListener,
+          label = getTransaltedText("MainMenu"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
       menuButton.xScale =  (display.actualContentWidth* 0.28) / menuButton.width
       menuButton.yScale =   menuButton.xScale  -- (display.actualContentHeight* 0.1) / menuButton.height
-   
+      
+       showAdButton = widget.newButton
+      {
+          x = 70,
+          y = 180,
+          id = "showAdButton",
+          defaultFile = buttonsSet .. "/End/WatchAdUp.png",
+          overFile = buttonsSet .. "/End/WatchAdDown.png",
+          onEvent = showAdListener
+      }
+      showAdButton.xScale =  (display.contentWidth*0.15) / showAdButton.width
+      showAdButton.yScale = showAdButton.xScale  
+      showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
     
       rateUsButton = widget.newButton
       {
@@ -1261,28 +1651,43 @@ function scene:create( event )
       shareButton.yScale =  shareButton.xScale-- (display.actualContentHeight*0.22) / shareButton.height
 
 
-      local openPkgButton = widget.newButton
+      openPkgButton = widget.newButton
       {
           x = 360,
           y = 278,
           id = "openPkgButton",
-          defaultFile = buttonsSet .. "/End/OpenPacksUp.png",
-          overFile = buttonsSet .. "/End/OpenPacksDown.png",
-          onEvent = packsListener
+          defaultFile = buttonsSet .. "/End/EGPacksUp.png",
+          overFile = buttonsSet .. "/End/EGPacksDown.png",
+          onEvent = packsListener,
+          label = getTransaltedText("Packs"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
      openPkgButton.xScale =  (display.actualContentWidth*0.25) / openPkgButton.width
       openPkgButton.yScale = openPkgButton.xScale  -- (display.actualContentHeight*0.22) / openPkgButton.height
 
 
+       openPkgButton2 = widget.newButton
+      {
+          x = 360,
+          y = 278,
+          id = "openPkgButton2",
+          defaultFile = buttonsSet .. "/End/EGPacksActive.png",
+          overFile = buttonsSet .. "/End/EGPacksDown.png",
+          onEvent = packsListener,
+          label = getTransaltedText("Packs"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     openPkgButton2.xScale =  (display.actualContentWidth*0.25) / openPkgButton2.width
+      openPkgButton2.yScale = openPkgButton2.xScale  -- 
 
-      packsIndicator = display.newImage("images/PacksIndicator.png")
+
      
-      packsIndicator:scale(0.3,0.3)
-
-     -- packsIndicator:setFillColor(1,0,0)
-
-      packsIndicator.x =  openPkgButton.x  - openPkgButton.contentWidth/2 + 17
-      packsIndicator.y =  openPkgButton.y
 
 
      boosterButton = widget.newButton
@@ -1356,6 +1761,18 @@ function scene:create( event )
 
     comboText.alpha = 0
     comboTextS.alpha = 0
+
+    levelText = display.newText("", 0, 0 , "UnitedSansRgHv" , 10)
+    levelText.x = 240
+    levelText.y = 240 
+    levelText.text = ""
+    levelText:setFillColor(255/255,241/255,208/255)
+
+    nextLevelText = display.newText("", 0, 0 , "UnitedSansRgHv" , 10)
+    nextLevelText.x = 240
+    nextLevelText.y = 240 
+    nextLevelText.text = ""
+    nextLevelText:setFillColor(255/255,241/255,208/255)
 
 
     local coinTextOptions = 
@@ -1562,8 +1979,16 @@ function scene:create( event )
     xpBarEnd:scale(0.5,0.5)
     xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
     xpBarEnd.y = 240
+
+    xpEmiter = particleDesigner.newEmitter( "fire1.json" )
+    xpEmiter:scale(0.05,0.005)
+    xpEmiter.x = xpBarEnd.x 
+    xpEmiter.y = 240
+
     --boosterHandImg:scale(0.4,0.4)
 
+    nextLevelText.x = xpBarBG.x + xpBarBG.contentWidth / 2 + 15
+    levelText.x =  xpBarBG.x - xpBarBG.contentWidth / 2  - 15
     
     rightArrowButton.y = scoreScreenText.y 
     leftArrowButton.y = rightArrowButton.y 
@@ -1573,9 +1998,9 @@ function scene:create( event )
     chalengesBox:insert(challengesText)
     chalengesBox:insert(chalengesData)
        
-     sceneGroup:insert(blackRect)
+     gameOverGroup:insert(blackRect)
 
-     sceneGroup:insert(background)    
+     gameOverGroup:insert(background)    
 
      scoreBox:insert(scoreScreenText)     
      scoreBox:insert(scoreTitleTextS)     
@@ -1587,24 +2012,29 @@ function scene:create( event )
      scoreBox:insert(xpBarBG)    
      scoreBox:insert(xpBarStart)    
      scoreBox:insert(xpBarMiddle)  
-     scoreBox:insert(xpBarEnd)      
+     scoreBox:insert(xpBarEnd) 
+     scoreBox:insert(xpEmiter) 
+     
+     scoreBox:insert(levelText)  
+     scoreBox:insert(nextLevelText) 
+          
      
      
-     sceneGroup:insert(highScoreTitleShadow)     
-     sceneGroup:insert(highScoreTitle)     
+     gameOverGroup:insert(highScoreTitleShadow)     
+     gameOverGroup:insert(highScoreTitle)     
      
-     sceneGroup:insert(highScoreShadowText)     
-     sceneGroup:insert(highScoreText)   
+     gameOverGroup:insert(highScoreShadowText)     
+     gameOverGroup:insert(highScoreText)   
 
      
 
      
-     sceneGroup:insert(scoreBox)     
-     sceneGroup:insert(chalengesBox)     
-     sceneGroup:insert(confetti)   
+     gameOverGroup:insert(scoreBox)     
+     gameOverGroup:insert(chalengesBox)     
+     gameOverGroup:insert(confetti)   
 
-     sceneGroup:insert(rightArrowButton)   
-     sceneGroup:insert(leftArrowButton)   
+     gameOverGroup:insert(rightArrowButton)   
+     gameOverGroup:insert(leftArrowButton)   
 
 
        
@@ -1612,16 +2042,18 @@ function scene:create( event )
      chalengesBox.alpha = 0
      
      
-     sceneGroup:insert(playButton)
+     gameOverGroup:insert(playButton)
+     gameOverGroup:insert(showAdButton)
      
-     sceneGroup:insert(shareButton)
-     sceneGroup:insert(openPkgButton)
-     sceneGroup:insert(menuButton)     
+     gameOverGroup:insert(shareButton)
+     gameOverGroup:insert(openPkgButton)
+     gameOverGroup:insert(openPkgButton2)
+     gameOverGroup:insert(menuButton)     
 
-     sceneGroup:insert(packsIndicator)
+     
      
        
-      sceneGroup:insert(dailyRewardBlocker)
+      gameOverGroup:insert(dailyRewardBlocker)
 
      notification:insert(boosterRect)
      
@@ -1646,9 +2078,16 @@ function scene:create( event )
      notification.x =   notification.x  + (display.actualContentWidth - display.contentWidth)/2  
    
      
-     sceneGroup:insert(notification)
-     sceneGroup:insert(loadingBlocker) 
+     gameOverGroup:insert(notification)
+     gameOverGroup:insert(loadingBlocker) 
 
+
+     sceneGroup:insert(gameOverGroup) 
+     sceneGroup:insert(newLevelGroup) 
+     sceneGroup:insert(dailyRewardGroup) 
+     
+
+     
      
      --this is what gets called when playButton gets touched
      --the only thing that is does is call the transition
@@ -1670,19 +2109,23 @@ function scene:show( event )
       -- Called when the scene is still off screen (but is about to come on screen).
       -- loadingBlocker.alpha = 0.01
       -- playButton.alpha = 0
+        gameOverGroup.alpha =0 
+        newLevelGroup.alpha =0 
+
       parent = event.parent
        local isSimulator = (system.getInfo("environment") == "simulator");
  
         
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
-        packsIndicator.alpha = 0
+        
 
      
 
 
    elseif ( phase == "did" ) then
 
+       commonData.kidoz.show( "panelView")
       if(event.params and event.params.results) then
         showGameOver(event.params.results , true)
       end  
@@ -1700,6 +2143,7 @@ function scene:hide( event )
 
    if ( phase == "will" ) then
       boosterMsg:pause()
+      commonData.kidoz.hide( "panelView")
       -- Called when the scene is on screen (but is about to go off screen).
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.
@@ -1736,7 +2180,7 @@ function scene:outerRefreshResults(gameResult)
 
   end 
  end, 19)
- 
+ commonData.kidoz.show( "panelView")
 end
 
 

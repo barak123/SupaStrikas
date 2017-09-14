@@ -104,6 +104,71 @@ local dictionary =
 			["he"] = "קבל חבילת מתנה לסיום האימון",			
 			["it"] = "Ottieni un pacco regalo gratuito per aver finito l’addestramento",			
 		},			
+["Play"] =
+		{
+			["en"] = "PLAY",
+			["he"] = "שחק",			
+			
+		},	
+["Shop"] =
+		{
+			["en"] = "CUSTOMIZE",
+			["he"] = "חנות",			
+			
+		},	
+["Packs"] =
+		{
+			["en"] = "PACKS",
+			["he"] = "חבילות",			
+			
+		},	
+["Back"] =
+		{
+			["en"] = "Back",
+			["he"] = "חזור",			
+			
+		},	
+["Buy"] =
+		{
+			["en"] = "Buy",
+			["he"] = "קנה",			
+			
+		},	
+["Use"] =
+		{
+			["en"] = "Use",
+			["he"] = "בחר",			
+			
+		},	
+["Cancel"] =
+		{
+			["en"] = "Cancel",
+			["he"] = "ביטול",			
+			
+		},	
+["SupaGems"] =
+		{
+			["en"] = "Supa Gems",
+			["he"] = "סופה ג׳מס",			
+			
+		},	
+["Highscore"] =
+		{
+			["en"] = "High score",
+			["he"] = "שיא",			
+			
+		},	
+["MainMenu"] =
+		{
+			["en"] = "MAIN MENU",
+			["he"] = "תפריט",						
+		},	
+["ShareScore"] =
+		{
+			["en"] = "SHARE SCORE",
+			["he"] = "שתף תוצאה",						
+		},			
+
 
 
 }

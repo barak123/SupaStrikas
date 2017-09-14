@@ -18,26 +18,20 @@ function hand.new (skeletonData)
 
 
 	self.json = spine.SkeletonJson.new()
-	self.json.scale = 0.25
-	self.skeletonData = self.json:readSkeletonDataFile("NewTutorial/TutorialHand.json")
+	self.json.scale = 0.35
+	--self.skeletonData = self.json:readSkeletonDataFile("NewTutorial/TutorialHand.json")
+	self.skeletonData = self.json:readSkeletonDataFile("Tutorialhand/finger.json")
 
 	self.skeleton = {}
 	self.skeleton = spine.Skeleton.new(self.skeletonData)
 
-	local arrowHandle = nil
-	local arrowHandle2 = nil
 	function self.skeleton:createImage (attachment)
 		-- Customize where images are loaded.
 		
-		local newPart =  display.newImage("NewTutorial/" .. attachment.name .. ".png")
+		local newPart =  display.newImage("Tutorialhand/" .. attachment.name .. ".png")
 
 	
-			if (string.ends(attachment.name , "TutorialArrowUp") ) then
-				arrowHandle = newPart
-			end
-			if (string.ends(attachment.name , "TutorialArrowUp+Down") ) then
-				arrowHandle2 = newPart
-			end
+		
 			
 	--	end
 		return newPart
@@ -76,7 +70,7 @@ function hand.new (skeletonData)
 		--print(trackIndex.." event: "..state:getCurrent(trackIndex).animation.name..", "..event.data.name..", "..event.intValue..", "..event.floatValue..", '"..(event.stringValue or "").."'")
 	end
 
-	local arrow = self.skeleton:findBone("Arrow")
+	
 	--local headSlot = skeleton:findSlot("head")
 
 	local function handleFrame(event)
@@ -106,45 +100,14 @@ function hand.new (skeletonData)
 		isPaused = false	
 	end
 
-	function self:swipeLeft()
-		self.state:setAnimationByName(0, "HandUpDown", true, 0) --
-		if (arrowHandle2) then
-			arrowHandle2.alpha = 1
-		end 
 
 	
-	end
-
-	function self:swipeRight()
-		self.state:setAnimationByName(0, "HandUpDown", true, 0) --
-		if (arrowHandle2) then
-			arrowHandle2.alpha = 1
-		end 
-
-	
-	end
-
-	function self:handUp()
-		self.state:setAnimationByName(0, "HandUp", true, 0) --
-
-		if (arrowHandle) then
-			arrowHandle.alpha = 1
-		end 
-
-	end
 
 
 	function self:tapLeft()
-		self.state:setAnimationByName(0, "HandJump", true, 0) --
+		self.state:setAnimationByName(0, "Tap", true, 0) --
 
-		if (arrowHandle) then
-			arrowHandle.alpha = 0
-		end
-
-		if (arrowHandle2) then
-			arrowHandle2.alpha = 0
-		end 
-
+		
 
 		-- for i,slotData in ipairs(self.skeleton.slots) do
 		-- 	if slotData.attachment and slotData.attachment.name then
@@ -166,15 +129,8 @@ function hand.new (skeletonData)
 
 
 	function self:tapRight()
-		self.state:setAnimationByName(0, "HandJump", true, 0) --
-		if (arrowHandle) then
-			arrowHandle.alpha = 0
-		end
-
-		if (arrowHandle2) then
-			arrowHandle2.alpha = 0
-		end 
-
+		self.state:setAnimationByName(0, "Tap", true, 0) --
+		
 	end
 
 	local replayHandle =nil
@@ -188,10 +144,10 @@ function hand.new (skeletonData)
 		local animationName = nil
 
 		if isLeft then
-			animationName = "HandJump"
+			animationName = "Tap"
 			self.skeleton.group.x  = leftX
 		else
-			animationName = "HandJump"
+			animationName = "Tap"
 			self.skeleton.group.x  = rightX
 		end	
 		--print(right_leg.data.rotation)

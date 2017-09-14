@@ -188,6 +188,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 		function self.skeleton:createImage (attachment)
 			-- Customize where images are loaded.
 			
+			--print(attachment.name)
 			local attachmentImg =  attachment.name
 			
 			
@@ -582,6 +583,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		
 		function self:startKick(pIsLeftLeg,pIsBadKick)
+			print("startLick")
 
 			isKicking = true
 			isWalking = false
