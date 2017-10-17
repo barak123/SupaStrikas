@@ -162,7 +162,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/Shakes.png"
       items.skins[skinIdx].id = "Shakes" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 3
+      items.skins[skinIdx].level = 5
     
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -182,7 +182,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/Rasta.png"
       items.skins[skinIdx].id = "Rasta" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 5
+      items.skins[skinIdx].level = 5      
 
 
       local ballIdx = 1
@@ -364,18 +364,18 @@ local M = {}
 
        local boostIdx = 1
       
-
+      
       items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Rainbow"
+      items.boosts[boostIdx].name = "Fire"
       items.boosts[boostIdx].coinsCost = 300
       items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/boostparticles/ShopImgRGBBall.png"
+      items.boosts[boostIdx].image = "images/boostparticles/ShopImgToonFire.png"
       items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "rgbGlow"       
+      items.boosts[boostIdx].id = "fireBall"       
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      items.boosts[boostIdx].level = 1
 
-         boostIdx =  boostIdx + 1
+      boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "purpleSmoke"
       items.boosts[boostIdx].coinsCost = 3
@@ -384,8 +384,21 @@ local M = {}
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "purpleSmoke"       
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 1
+      items.boosts[boostIdx].level = 2
 
+
+      boostIdx =  boostIdx + 1
+      items.boosts[boostIdx] = {}
+      items.boosts[boostIdx].name = "Rainbow"
+      items.boosts[boostIdx].coinsCost = 300
+      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].image = "images/boostparticles/ShopImgRGBBall.png"
+      items.boosts[boostIdx].imgScale = 1  
+      items.boosts[boostIdx].id = "rgbGlow"       
+      items.boosts[boostIdx].packCategory = 4
+      items.boosts[boostIdx].level = 3
+
+      
 
          boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
@@ -396,30 +409,10 @@ local M = {}
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "ice"       
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      items.boosts[boostIdx].level = 6
 
 
-        boostIdx =  boostIdx + 1
-      items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Fire"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/boostparticles/ShopImgToonFire.png"
-      items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "fireBall"       
-      items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
-
-      boostIdx =  boostIdx + 1
-      items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Toon"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
-      items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "toonFire"       
-      items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      
 
        boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
@@ -430,8 +423,20 @@ local M = {}
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "electric"       
       items.boosts[boostIdx].packCategory = 4
+      items.boosts[boostIdx].level = 10
+
+      boostIdx =  boostIdx + 1
+      items.boosts[boostIdx] = {}
+      items.boosts[boostIdx].name = "Pixel"
+      items.boosts[boostIdx].coinsCost = 300
+      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
+      items.boosts[boostIdx].imgScale = 1  
+      items.boosts[boostIdx].id = "pixelBall"       
+      items.boosts[boostIdx].packCategory = 4
       items.boosts[boostIdx].level = 13
 
+      
 
         boostIdx =  boostIdx + 1
        items.boosts[boostIdx] = {}
@@ -449,27 +454,27 @@ local M = {}
 
     
 
-        boostIdx =  boostIdx + 1
-      items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Fireworks"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
-      items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "fireworks"       
-      items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      --   boostIdx =  boostIdx + 1
+      -- items.boosts[boostIdx] = {}
+      -- items.boosts[boostIdx].name = "Fireworks"
+      -- items.boosts[boostIdx].coinsCost = 300
+      -- items.boosts[boostIdx].gemsCost = 2
+      -- items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
+      -- items.boosts[boostIdx].imgScale = 1  
+      -- items.boosts[boostIdx].id = "fireworks"       
+      -- items.boosts[boostIdx].packCategory = 4
+      -- items.boosts[boostIdx].level = 13
 
-        boostIdx =  boostIdx + 1
-      items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Ring"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
-      items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "ring"       
-      items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      --   boostIdx =  boostIdx + 1
+      -- items.boosts[boostIdx] = {}
+      -- items.boosts[boostIdx].name = "Ring"
+      -- items.boosts[boostIdx].coinsCost = 300
+      -- items.boosts[boostIdx].gemsCost = 2
+      -- items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
+      -- items.boosts[boostIdx].imgScale = 1  
+      -- items.boosts[boostIdx].id = "ring"       
+      -- items.boosts[boostIdx].packCategory = 4
+      -- items.boosts[boostIdx].level = 13
 
 
 

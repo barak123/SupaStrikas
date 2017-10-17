@@ -261,12 +261,13 @@ local function buttonListener( event )
           
           if (ob.onGround and not gameStatus.preventJump) then
             monster.accel = 19
-            if gameStatus.preventKick then
-
-               leftHand:pause()
+         leftHand:pause()
                rightHand:pause()
                leftHand.skeleton.group.alpha = 0
-               rightHand.skeleton.group.alpha = 0                                         
+               rightHand.skeleton.group.alpha = 0   
+            if gameStatus.preventKick then
+
+               
                gameStatus.preventKick = false
            end
 
@@ -335,6 +336,11 @@ local function boosterButtonListener( event )
       ob.notification.alpha = 0 
       gameStatus.isConfirmationRequired = false
       gameStatus.ignoreClick = false
+
+      if (gameStatus.isGamePaused) then
+        commonData.resumeGame()
+      end
+        
       --notificationRect.alpha = 0
      end 
     return true
@@ -375,10 +381,53 @@ ob.boosterButton = widget.newButton
  ob.kickOverImg = display.newImage("images/KickBallOver.png")
  ob.tipCircle = display.newImage("images/TipCircle.png")
 
-ob.tipCircle:scale(0.7,0.7)
+ob.tipCircle:scale(0.5,0.5)
 ob.tipCircle.x = 200
 ob.tipCircle.y = 140
  
+
+    local boosterTextOptions = 
+    {
+        --parent = textGroup,
+        text = "",     
+        x = 420,
+        y = 20,
+        width = 300,     --required for multi-line and alignment
+        font = "UnitedSansRgHv",   
+        fontSize = 15,
+        align = "center"  --new alignment parameter
+    }
+
+    local boosterHeaderTextOptions = 
+    {
+        --parent = textGroup,
+        text = "",     
+        x = 420,
+        y = 20,
+        --width = 230,     --required for multi-line and alignment
+        font = "UnitedSansRgHv",   
+        fontSize = 25,
+        align = "center"  --new alignment parameter
+    }
+
+   
+
+    ob.boosterText = display.newText(boosterTextOptions)
+    ob.boosterText:setFillColor(255/255,241/255,208/255)
+    ob.boosterText.x = 190
+    ob.boosterText.y = 225 
+    ob.boosterText.alpha = 0
+    ob.boosterText.text =getTransaltedText("TimingTip")
+
+  --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
+   -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
+
+    ob.boosterHeaderText = display.newText(boosterHeaderTextOptions)
+    ob.boosterHeaderText:setFillColor(255/255,241/255,208/255)
+    ob.boosterHeaderText.x = 190
+    ob.boosterHeaderText.y = 80
+    ob.boosterHeaderText.alpha = 0
+    ob.boosterHeaderText.text =getTransaltedText("SupaTip")
 
 ob.kickOverImg:scale(0.7,0.7)
 ob.kickOverImg.x = 200
@@ -396,6 +445,9 @@ ob.notification:insert(ob.boosterMsg.skeleton.group)
 ob.notification:insert(ob.jumpOverImg)
 ob.notification:insert(ob.kickOverImg)
 ob.notification:insert(ob.tipCircle)
+ob.notification:insert(ob.boosterText)
+ob.notification:insert(ob.boosterHeaderText)
+
 
 ob.notification:insert(ob.boosterButton)
 ob.notification.alpha = 0
@@ -1383,6 +1435,10 @@ gameOverRect2.shouldStopGame = false
 physics.addBody( gameOverRect2, "kinematic", upperGameOverElement )
 
 
+if ob.isSimulator then
+  --gameOverRect.shouldStopGame = true
+end
+
 
 monster.alpha = ob.defualtAlpha
        --create cones
@@ -1719,7 +1775,7 @@ end
 
 ob.activeMusicHdl = backgroundMusicHdl
 
-local function resumeGame()
+commonData.resumeGame = function ()
         timer.resume(gameStatus.mainTimer)
         physics.start()
         --physics.setTimeStep(0)
@@ -1751,7 +1807,7 @@ commonData.pauseGame = function ()
               if (gameStatus.isGamePaused) then
                 local length = comments:resume()
 
-                timer.performWithDelay(length * 1000, resumeGame, 1)
+                timer.performWithDelay(length * 1000, commonData.resumeGame, 1)
                 ob.pausedGroup.alpha = 0 
                 pauseButton.alpha = 0
                 ob.muteButton.alpha = 0              
@@ -2454,17 +2510,23 @@ end
 function restartGame()
 
        gameStatus.forceSwap = false
-      if commonData.gameData.abVersion == 1 then
-        if commonData.gameData.gamesCount == 0 then
-          gameStatus.forceSwap = true
-        end  
-      else  
-        if commonData.gameData.gamesCount < 3 then
-          gameStatus.forceSwap = true
-        end  
+      if commonData.gameData.gamesCount < 3 or
+        (commonData.gameData.gamesCount % 5 == 0 and commonData.gameData.highScore < 2000)
+        then
+        gameStatus.forceSwap = true
+      end  
+
+      if (commonData.gameData.gamesCount % 20 == 0 and commonData.gameData.highScore < 2000) then
+        commonData.gameData.tipCircleShown = false
+      end   
+    
+
+      if ob.isSimulator then
+--          gameStatus.forceSwap = true
+        --commonData.gameData.tipCircleShown = false
       end
       
-      -- commonData.gameData.abVersion = 2
+      
       -- gameStatus.forceSwap = true
       -- TODO: save in file
       -- gameStatus.jumpOverShowed  = false
@@ -2722,7 +2784,7 @@ function restartGame()
     end
 
 
-      if commonData.gameData.abVersion == 1 and gameStatus.forceSwap then 
+      if commonData.gameData.gamesCount == 0 then 
       -- TODO: cahnge
         ob.getNextObstecalePos(40,3)
       else
@@ -2763,6 +2825,11 @@ function restartGame()
       ob.stageGroup.maskX = 240
         ob.stageGroup.maskY = 160
 
+      if gameStatus.forceSwap then
+          leftHand:init()          
+          leftHand:tapLeft()
+          leftHand.skeleton.group.alpha = 1  
+      end   
       
       if(gameStatus.isTutorial) then
                 
@@ -2950,7 +3017,8 @@ function scene:show( event )
               local ultraBallImg  = "images/UltraBall.png"
               if boostersConfig.ultraBallsImgs[commonData.selectedBooster] then
                 ultraBallImg = boostersConfig.ultraBallsImgs[commonData.selectedBooster] 
-              end  
+              end 
+
 
               ultraBall = display.newImage(ultraBallImg)
               ultraBall.name = "fire"
@@ -2961,6 +3029,12 @@ function scene:show( event )
               ultraBall.isFixedRotation = true
 
               fire:insert( ultraBall )
+
+              local fireSoundName  = "fireballKick.mp3"
+              if boostersConfig.ultraBallsSounds[commonData.selectedBooster] then
+                fireSoundName = boostersConfig.ultraBallsSounds[commonData.selectedBooster] 
+              end 
+              sounds.fireKickSound = audio.loadSound( fireSoundName )  
 
          end 
          fire.boosterName = commonData.selectedBooster
@@ -3223,7 +3297,7 @@ function scene:show( event )
                         if (nextObstecaleRnd > 8 ) then
                           ob.getNextObstecalePos(6 ,4)
                         else
-                          ob.getNextObstecalePos(4, 3 )
+                          ob.getNextObstecalePos(3, 3 )
                         end 
                       end  
               
@@ -3560,6 +3634,8 @@ function scene:show( event )
     ob.kickOverImg.alpha = 0
     ob.jumpOverImg.alpha = 0
     ob.tipCircle.alpha = 0
+    ob.boosterHeaderText.alpha = 0
+    ob.boosterText.alpha = 0
     
     gameStatus.isAnyLeg = true
     gameStatus.ignoreClick = true
@@ -3866,6 +3942,10 @@ gameStatus.isGameActive = true
         ob.coach:pause()
         
         --comments:pause()
+       leftHand:pause()
+       rightHand:pause()
+       leftHand.skeleton.group.alpha = 0
+       rightHand.skeleton.group.alpha = 0                                         
         
         ob.obstacleArrow.alpha = 0
         pauseButton.alpha = 0
@@ -4050,7 +4130,7 @@ gameStatus.isGameActive = true
 
             
             if gameStatus.forceSwap and math.abs(230 - ballon.y) < 10  then
-              if (commonData.gameData.abVersion == 1 and gameStats.bounces < 8) or  gameStats.bounces < 4 then
+              if (commonData.gameData.gamesCount == 0 and gameStats.bounces < 8) or  gameStats.bounces < 4 then
                 pauseBall()
                 tm:setFillColor(0,1,0)
                 tm.xScale = 0.17 + 1 / 300
@@ -4278,7 +4358,7 @@ gameStatus.isGameActive = true
    
 
     ob.touched = function ( event )
-            if commonData.gameData.abVersion == 1 and gameStatus.forceSwap and  not gameStatus.isStaticBall and gameStats.bounces < 8 then
+            if commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall and gameStats.bounces < 8 then
                 return
             end
             
@@ -4325,13 +4405,14 @@ gameStatus.isGameActive = true
                                 if (ob.onGround and not gameStatus.preventJump) then
                                   gameStatus.isAnyLeg = true
                                   monster.accel = 19
+                                   leftHand:pause()
+                                   rightHand:pause()
+                                   leftHand.skeleton.group.alpha = 0
+                                   rightHand.skeleton.group.alpha = 0   
 
                                      if gameStatus.preventKick then
 
-                                         leftHand:pause()
-                                         rightHand:pause()
-                                         leftHand.skeleton.group.alpha = 0
-                                         rightHand.skeleton.group.alpha = 0                                         
+                                                                              
                                          ob.leftCtrl.alpha = 1
                                          ob.leftCtrl:setFillColor(1,1,1)
                                          ob.rightCtrl:setFillColor(1,1,1)
@@ -4383,7 +4464,7 @@ gameStatus.isGameActive = true
         
                                       
                                       if  gameStatus.forceSwap and 
-                                        ((commonData.gameData.abVersion == 1 and gameStats.bounces < 8) or  gameStats.bounces < 4) and
+                                        ((commonData.gameData.gamesCount == 0 and gameStats.bounces < 8) or  gameStats.bounces < 4) and
                                         ((rightHand.skeleton.group.alpha == 1  and gameStatus.isLeftLeg) or
                                         (leftHand.skeleton.group.alpha == 1 and not gameStatus.isLeftLeg)) then
                                         
@@ -4404,6 +4485,10 @@ gameStatus.isGameActive = true
                                            ob.rightCtrl.alpha = 1
                                         
                                         else
+
+                                          ob.rightTimer.alpha = 0
+                                          ob.leftTimer.alpha = 0
+
                                           if gameStatus.isLeftLeg then
                                             ob.leftCtrl.fill.effect = "filter.brightness"
                                             ob.leftCtrl.fill.effect.intensity = 1
@@ -4832,17 +4917,34 @@ gameStatus.isGameActive = true
                     if (ob.onGround) then            
 
 
-                        if (not commonData.gameData.tipCircleShown  and commonData.gameData.gamesCount > 0) then
+                        if (not commonData.gameData.tipCircleShown  and commonData.gameData.gamesCount > 0 and score < 15) then
                             commonData.gameData.tipCircleShown = true
 
-                           handleFisrtObstacle()                               
-                                 
-                                 ballon.y = 240
-                                 ballon.x = BALL_X                         
-                                 gameStatus.preventJump = true
 
+                            ob.boosterButton.alpha = 0
+                            ob.kickOverImg.alpha = 0
+                            ob.jumpOverImg.alpha = 0
+                            ob.tipCircle.alpha = 0
+                            ob.boosterHeaderText.alpha = 0
+                            ob.boosterText.alpha = 0
+                            ob.boosterMsg:init()  
+
+                          timer.performWithDelay(100 , function ()                          
+                             ob.notification.alpha = 1
+                           end , 1)   
+
+                           commonData.pauseGame()
+                           pauseButton.alpha = 0
+                           ob.pausedGroup.alpha = 0
+                           ob.muteButton.alpha = 0              
+                            ob.unMuteButton.alpha = 0
+  
+                                 
+                               
                                 timer.performWithDelay(1500 , function ()                                
                                   ob.tipCircle.alpha = 1
+                                  ob.boosterHeaderText.alpha = 1
+                                  ob.boosterText.alpha = 1
                                 end , 1)
                                 timer.performWithDelay(2500 , function ()
                                   ob.boosterButton.alpha = 1                          
@@ -4872,6 +4974,7 @@ gameStatus.isGameActive = true
          
         else
           if (gameStatus.isUltraMode) then
+
             commonData.playSound( sounds.fireKickSound )
 
              for j = 1, fire.numChildren do
@@ -4919,7 +5022,7 @@ gameStatus.isGameActive = true
           end  
         end
 
-        if commonData.gameData.abVersion == 1  and (gameStatus.forceSwap and gameStats.bounces < 8) then
+        if commonData.gameData.gamesCount == 0  and (gameStatus.forceSwap and gameStats.bounces < 8) then
           isPerfectKcick = true
         end  
 
@@ -5234,6 +5337,10 @@ gameStatus.isGameActive = true
                                 
                                  gameStats.finishReason = "fallByCone"
                                  timer.performWithDelay(1000, stopGame, 1)  
+
+                                 if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                   commonData.gameData.jumpOverShowed = true
+                                 end
                                
                          elseif ( event.object1.name == "bird" or  event.object2.name == "bird") then
                               if gameStatus.isUltraMode then
@@ -5249,7 +5356,10 @@ gameStatus.isGameActive = true
                               
                                  gameStats.finishReason = "fallByBot"
                                  timer.performWithDelay(1000, stopGame, 1)  
-                               
+                                
+                                 if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                   commonData.gameData.jumpOverShowed = true
+                                 end
                                
                         elseif ( event.object1.name == "trash" or  event.object2.name == "trash" ) then
                             if gameStatus.isUltraMode then
@@ -5267,6 +5377,10 @@ gameStatus.isGameActive = true
                                     gameStats.finishReason = "fallByCan"
                                     timer.performWithDelay(1000, stopGame, 1)  
                                 
+                                if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                   commonData.gameData.jumpOverShowed = true
+                                 end
+
                         elseif ( event.object1.name == "defender" or  event.object2.name == "defender") then
                             if gameStatus.isUltraMode then
                                 return

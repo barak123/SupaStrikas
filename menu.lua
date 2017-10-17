@@ -736,7 +736,7 @@ Runtime:addEventListener( "system", systemEvents )
           labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 80 , 
-          labelXOffset = 70,
+          labelXOffset = 90,
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
 
       }
@@ -795,7 +795,7 @@ Runtime:addEventListener( "system", systemEvents )
           labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 64 , 
-          labelXOffset = 90,
+          labelXOffset = 120,
           labelColor = { default={ gradient}, over={ 255/255,241/255,208/255 } }
       }
 
@@ -822,7 +822,7 @@ Runtime:addEventListener( "system", systemEvents )
           labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 64 , 
-          labelXOffset = 110,
+          labelXOffset = 150,
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
         packsButton.xScale =  (display.actualContentWidth*0.25) / packsButton.width
@@ -997,17 +997,17 @@ Runtime:addEventListener( "system", systemEvents )
       playIcon.yScale = (playButton.contentHeight * 0.5) / playIcon.contentHeight 
       playIcon.xScale = playIcon.yScale
       playIcon.y = playButton.y 
-      playIcon.x = playButton.x - playButton.contentWidth/2 + playIcon.contentWidth/2 
+      playIcon.x = playButton.x - playButton.contentWidth/2 + playIcon.contentWidth/2 + 3
 
       shopIcon.yScale = (shopButton.contentHeight * 0.5) / shopIcon.contentHeight 
       shopIcon.xScale = shopIcon.yScale
       shopIcon.y = shopButton.y
-      shopIcon.x = shopButton.x - shopButton.contentWidth/2 + shopIcon.contentWidth/2 
+      shopIcon.x = shopButton.x - shopButton.contentWidth/2 + shopIcon.contentWidth/2  + 3
       
        packsIcon.yScale = (packsButton.contentHeight * 0.5) / packsIcon.contentHeight 
       packsIcon.xScale = packsIcon.yScale
       packsIcon.y = packsButton.y
-      packsIcon.x = packsButton.x - packsButton.contentWidth/2 + packsIcon.contentWidth/2  + 3
+      packsIcon.x = packsButton.x - packsButton.contentWidth/2 + packsIcon.contentWidth/2  + 6
 
       
       -- playText.x = playButton.x

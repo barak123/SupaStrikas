@@ -356,30 +356,29 @@ achivments["MoneyMachine"] = {}
 achivments["LittleBragger"] = {}
 
 
-achivments["LittleDribbler"].code = 		"CgkI5qOApf8bEAIQCQ"
-achivments["LittleMexican"].code = 			"CgkI5qOApf8bEAIQAw"
-achivments["LittleBolt"].code = 			"CgkI5qOApf8bEAIQBg"
-achivments["BigMexican"].code = 			"CgkI5qOApf8bEAIQBA"
-achivments["MasterLaSombrero"].code = 		"CgkI5qOApf8bEAIQBQ"
-achivments["LittleBigBolt"].code = 			"CgkI5qOApf8bEAIQBw"
-achivments["PiniBalili"].code = 			"CgkI5qOApf8bEAIQIg"
-achivments["BigDribbler"].code = 			"CgkI5qOApf8bEAIQCg"
+achivments["LittleDribbler"].code = 		"CgkI_YzqptgFEAIQAg"
+achivments["LittleMexican"].code = 			"CgkI_YzqptgFEAIQCA"
+achivments["LittleBolt"].code = 			"CgkI_YzqptgFEAIQAw"
+achivments["BigMexican"].code = 			"CgkI_YzqptgFEAIQBg"
+achivments["MasterLaSombrero"].code = 		"CgkI_YzqptgFEAIQCQ"
+achivments["LittleBigBolt"].code = 			"CgkI5qOApf8bEAIQBw" -- ???
+achivments["PiniBalili"].code = 			"CgkI5qOApf8bEAIQIg" 
+achivments["BigDribbler"].code = 			"CgkI_YzqptgFEAIQBA"
 achivments["DribbleMaster"].code = 			"CgkI5qOApf8bEAIQCw"
-achivments["LittleBigSpender"].code = 		"CgkI5qOApf8bEAIQEA"
-achivments["YouLittleRunner"].code =  		"CgkI5qOApf8bEAIQDQ"
+achivments["LittleBigSpender"].code = 		"CgkI_YzqptgFEAIQCg"
+achivments["YouLittleRunner"].code =  		"CgkI_YzqptgFEAIQCw"
 achivments["NoSkill"].code = 				"CgkI5qOApf8bEAIQDg"
 achivments["LittlePerfectSombrero"].code =  "CgkI5qOApf8bEAIQDw"
-
 achivments["LittleGoldDigger"].code =	    "CgkI5qOApf8bEAIQEQ"
 achivments["LittleCoward"].code = 			"CgkI5qOApf8bEAIQEg"
 achivments["LittlePerfectCollector"].code = "CgkI5qOApf8bEAIQEw"
 achivments["LittleJumper"].code = 			"CgkI5qOApf8bEAIQFA"
-achivments["LittlePerformer"].code = 		"CgkI5qOApf8bEAIQFQ"
+achivments["LittlePerformer"].code = 		"CgkI_YzqptgFEAIQDA"
 achivments["LittleMexicanBird"].code = 		"CgkI5qOApf8bEAIQFg"
-achivments["GOAL"].code = 					"CgkI5qOApf8bEAIQHg"
-achivments["PackWinner"].code = 			"CgkI5qOApf8bEAIQHw"
-achivments["MoneyMachine"].code = 			"CgkI5qOApf8bEAIQGQ"
-achivments["LittleBragger"].code = 			"CgkI5qOApf8bEAIQGg"
+achivments["GOAL"].code = 					"CgkI_YzqptgFEAIQBQ"
+achivments["PackWinner"].code = 			"CgkI_YzqptgFEAIQDQ"
+achivments["MoneyMachine"].code = 			"CgkI_YzqptgFEAIQDg"
+achivments["LittleBragger"].code = 			"CgkI_YzqptgFEAIQDw"
 
 achivments["LittleDribbler"].isUnlocked = false
 achivments["LittleMexican"].isUnlocked = false

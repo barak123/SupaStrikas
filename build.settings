@@ -7,6 +7,10 @@ settings = {
 			   "landscapeLeft"
           },
      },
+    splashScreen = 
+    {
+        enable = false
+    },
 	 androidPermissions = {
 		"android.permission.INTERNET",
 		"com.android.vending.BILLING",
@@ -18,11 +22,13 @@ settings = {
      --code, but if you don't have it referenced here it
      --will not work
      iphone = {
+          xcassets = "Images.xcassets",  
           plist = {
                 UIAppFonts = {
                     "troika.otf"
                },
                
+               UILaunchStoryboardName = "LaunchScreen",
                
                 NSLocationAlwaysUsageDescription = { "" },
                 NSLocationWhenInUseUsageDescription = { "" },
@@ -49,6 +55,10 @@ settings = {
         {
             publisherId = "com.coronalabs",
             supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
+        },
+         ["plugin.admob"] =
+        {
+            publisherId = "com.coronalabs"
         },
     ["plugin.superawesome"] =
     {

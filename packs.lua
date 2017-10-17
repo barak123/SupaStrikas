@@ -335,18 +335,39 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
          end
             
 
-       local backButton = widget.newButton
+       local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
+      }
+
+
+        local backButton = widget.newButton
       {
           x = 60,
           y = 20,
           id = "backButton",
-          defaultFile = "images/shop/BACK.png",
-          overFile = "images/shop/BACK Down.png",
+           defaultFile = "MainMenu/EmptyBtnUp.png",          
+          overFile = "MainMenu/EmptyBtnDown.png",          
+          label = getTransaltedText("Back"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 64 , 
+          labelXOffset = 200,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = backButtonListener
       }
-      backButton:scale(0.5,0.5)
 
+       backButton.xScale =  (display.actualContentWidth*0.25) / backButton.width
+       backButton.yScale = backButton.xScale  
+
+      
       backButton.x = display.screenOriginX  + backButton.contentWidth /2
+      local  backIcon = display.newImage("images/IcoBack.png")
+      
+      backIcon.yScale = (backButton.contentHeight * 0.4) / backIcon.contentHeight 
+      backIcon.xScale = backIcon.yScale
+      backIcon.y = backButton.y
+      backIcon.x = backButton.x - backButton.contentWidth/2 + backIcon.contentWidth/2  + 3
 
     
        local buyTrophie = widget.newButton
@@ -510,6 +531,8 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
     
      sceneGroup:insert(backButton)
+     sceneGroup:insert(backIcon)
+     
      sceneGroup:insert(buyTrophie)
      sceneGroup:insert(buyTrophieDisabled)
        

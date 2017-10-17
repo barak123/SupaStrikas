@@ -19,7 +19,8 @@ local scene = composer.newScene()
 local playButton = nil
 local background = nil
 local newLevelBackground = nil
-
+local skipAdmob = false
+local admobTime = nil
 local rateUsButton = nil
 local showAdButton =  nil
 
@@ -345,6 +346,36 @@ local function printTable( t, label, level )
   end
 end
 
+local admob = require( "plugin.admob" )
+ 
+-- AdMob listener function
+local function adListener( event )
+ 
+    if ( event.phase == "init" ) then  -- Successful initialization
+        admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+        admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+
+    elseif ( event.phase == "displayed" ) then  -- Successful initialization    
+         admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+        admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+        playButton.alpha = 1
+        
+        if sceneGroup.alpha == 0 then
+          commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
+          skipAdmob = true
+        end
+  
+    elseif ( event.phase == "reward" ) then  -- Successful initialization
+        adBonus(event)      
+        
+    end
+end
+ 
+-- Initialize the AdMob plugin
+admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640", testMode=true } )
+
+
+
 local superawesome = require( "plugin.superawesome" )
  
 -- Pre-declare a placement ID
@@ -446,7 +477,47 @@ local function showGameOver( gameResult , isFirstLoad)
           
           end  
        end 
-   
+      
+
+        local gmCnt = commonData.gameData.gamesCount
+       if (gmCnt == 0) then
+        gmCnt = 1
+       end 
+       local showAdRnd =  gmCnt % 5 
+               
+         if not  admob.isLoaded( "interstitial" ) then
+            admob.load( "interstitial" )
+         end
+
+         if not  admob.isLoaded( "rewardedVideo" ) then
+            admob.load( "rewardedVideo" )
+         end
+
+         if not  superawesome.isLoaded( "video" ) then
+            superawesome.load( "video", { placementId=myPlacementID } )
+         end
+
+         if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+          commonData.kidoz.show( "panelView")      
+        end
+       if (commonData.gameData.gamesCount > 30  and --not  commonData.gameData.madePurchase and 
+            (commonData.gameData.adsPressed / gmCnt) < 0.2  and showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
+                                       -- show the advert.
+  
+                
+                admob.show("interstitial") 
+                playButton.alpha = 0
+                admobTime = system.getTimer() 
+                timer.performWithDelay(3000,function ()
+                  playButton.alpha = 1
+                end,1)
+           
+      else
+        playButton.alpha = 1
+
+      end 
+
+
       --Called when the scene is now on screen.
       -- Insert code here to make the scene come alive.
       -- Example: start timers, begin animation, play audio, etc.
@@ -475,7 +546,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       text = "",     
                       x = 420,
                       y = 20,
-                      width = 300,     --required for multi-line and alignment
+                    --  width = 300,     --required for multi-line and alignment
                       font = "UnitedSansRgHv",   
                       fontSize = 15,
                       align = "left"  --new alignment parameter
@@ -487,7 +558,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       text = "",     
                       x = 420,
                       y = 20,
-                      width = 100,     --required for multi-line and alignment
+                      --width = 100,     --required for multi-line and alignment
                       font = "UnitedSansRgHv",   
                       fontSize = 15,
                       align = "right"  --new alignment parameter
@@ -522,10 +593,11 @@ local function showGameOver( gameResult , isFirstLoad)
                       bullet:scale(0.5,0.5)
                       bullet.y = 95 + i* 22
                       bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 35
+                      challegesText.text = challeges[i].text
                       challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
                       challegesText.y = 95 + i* 22
-                      challegesText.text = challeges[i].text
 
+                     
                       
                       challegesCoinsText.y = 95 + i* 22
                       challegesCoinsText.text = challeges[i].coins
@@ -536,6 +608,15 @@ local function showGameOver( gameResult , isFirstLoad)
 
                       challegesCoinsText.x = challegesCoin.x - challegesCoin.contentWidth/2  - challegesCoinsText.contentWidth/2 - 10
                       
+                       if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
+                        challegesText.xScale  =  (background.contentWidth*0.5) / challegesText.contentWidth
+                        challegesText.yScale  = challegesText.xScale 
+                        challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+                      end
+
+
+                      
+
                       chalengesData:insert(bullet)
                       chalengesData:insert(challegesCoin)
                       chalengesData:insert(challegesCoinsText)
@@ -731,19 +812,23 @@ local function showGameOver( gameResult , isFirstLoad)
                   local  img = display.newImage(commonData.catalog.itemsByLevel[newLevel][newItemsIdx].image) 
                    if (img) then
                        img.y = 225 
-                       img.x = 30 +  70 * newItemsIdx
+                       img.x = 70 * newItemsIdx
                        img.xScale = 60 / img.contentWidth   
                        img.yScale = img.xScale
                        newItemsGroup:insert(img)   
                    end    
-
-                    
                 end
+
+
               else
                 newLevelText.newItems.alpha =0  
               end
 
-           
+              print(newItemsGroup.contentWidth) 
+              local x, y = newItemsGroup:contentToLocal( 240, 0 )
+              print(x) 
+              newItemsGroup.x= 200 - newItemsGroup.contentWidth/2  
+
             else
               gameOverGroup.alpha = 1
             end  
@@ -754,7 +839,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
             local newScale = completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.width
             --local newScale = 20
-            print(newScale)
+            
 
             --transition.scaleTo( xpBarMiddle, { xScale=newScale, time=500 } )
             transition.to(xpBarMiddle, {x = xpBarStart.x + xpBarMiddle.width* newScale  / 2 + xpBarStart.contentWidth/2, xScale = newScale,  time = 500})
@@ -828,10 +913,10 @@ local function showGameOver( gameResult , isFirstLoad)
                     --parent = textGroup,
                     text = "",     
                     x = 420,
-                    y = 20,
+                    y = 12,
                     width = 300,     --required for multi-line and alignment
-                    font = "UnitedSansRgHv",   
-                    fontSize = 13,
+                    font = "UnitedItalicRgHv",   
+                    fontSize = 8,
                     align = "center"  --new alignment parameter
                 }
 
@@ -857,17 +942,17 @@ local function showGameOver( gameResult , isFirstLoad)
                
 
                 local dailySubTitleText = display.newText(boosterTextOptions)
-                dailySubTitleText:setFillColor(194/256,236/256,254/256)
-                dailySubTitleText.x = 190
-                dailySubTitleText.y = 225 
+                --dailySubTitleText:setFillColor(194/256,236/256,254/256)
+                dailySubTitleText.x = 240
+                dailySubTitleText.y = 80 
                 dailySubTitleText.text = getTransaltedText("DailyRewardText")
 
               --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
                -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
 
                 local  dailyTitleText = display.newText(boosterHeaderTextOptions)
-                dailyTitleText:setFillColor(194/256,236/256,254/256)
-                dailyTitleText.x = 190
+               -- dailyTitleText:setFillColor(194/256,236/256,254/256)
+                dailyTitleText.x = 240
                 dailyTitleText.y = 60
                 dailyTitleText.text = getTransaltedText("DailyRewardTitle") 
                            
@@ -961,7 +1046,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       dailyReward:insert(card)
 
                      local dayText = display.newText(boosterTextOptions)
-                      dayText:setFillColor(194/256,236/256,254/256)
+                      dayText:setFillColor(255/255,241/255,208/255)
                       dayText.x = card.x
                       dayText.y = card.y - card.contentHeight/2 + 15
                       dayText.text = getTransaltedText("DailyRewardDay") .." " .. i 
@@ -985,7 +1070,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
 
                       local day1Text = display.newText(boosterTextOptions)
-                      day1Text:setFillColor(194/256,236/256,254/256)
+                      day1Text:setFillColor(255/255,241/255,208/255)
                       day1Text.x = card.x
                       day1Text.y = card.y + card.contentHeight/2  - 20
 
@@ -1122,7 +1207,8 @@ local function showGameOver( gameResult , isFirstLoad)
             commonData.analytics.logEvent( "finishGame" .. version , { gamesCount= tostring( commonData.gameData.gamesCount) ,  
                                                 gameScore= tostring( gameResult.gameScore) , 
                                                 highScore= tostring(  commonData.gameData.highScore) ,
-                                                pgbs = tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces),
+                                                pgbsj = tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood) 
+                                                 .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces) ..  "/" .. tostring(gameResult.jumps) ,
                                                 reason= tostring(gameResult.finishReason)  } )
 
             
@@ -1217,27 +1303,33 @@ function scene:create( event )
       local newLevelBackground = display.newRect(240, 160, 700,400)
       newLevelBackground.fill.effect = "generator.radialGradient"
  
-      newLevelBackground.fill.effect.color2 = { 0.8, 0, 0.2, 1 }
-      newLevelBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 1 }
+      newLevelBackground.fill.effect.color2 = { 0.8, 0, 0.2, 0.7 }
+      newLevelBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 0.7 }
       newLevelBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
       newLevelBackground.fill.effect.aspectRatio  = 1
+
+      local newLevelBackground2 =  display.newImage("images/EndGameBG.png")
+       newLevelBackground2.xScale =  (display.actualContentWidth*0.7) / newLevelBackground2.contentWidth
+     newLevelBackground2.yScale =  (display.actualContentHeight*0.7) / newLevelBackground2.contentHeight
+     newLevelBackground2.x = 240
+     newLevelBackground2.y = 160 
      
     
       
 
-      newLevelText.levelUp = display.newText({text = "LEVEL UP!", font = "UnitedSansRgHv", fontSize = 25}  )
+      newLevelText.levelUp = display.newText({text = "LEVEL UP!", font = "UnitedSansRgHv", fontSize = 25 }  )
       
       newLevelText.newLevel = display.newText({text = "5",font = "UnitedSansRgHv", fontSize = 45}  )
       newLevelText.newLevel.text = "5"
       newLevelText.newLevel:setFillColor(1,206/255,0)
 
-      newLevelText.newItems = display.newText({text = "You can use now the following items:", font = "UnitedSansRgHv", fontSize = 25}  )
+      newLevelText.newItems = display.newText({text = "You can use now the following items:", font = "UnitedItalicRgHv", fontSize = 15}  )
       
       newLevelText.levelUp.x = 240
-      newLevelText.levelUp.y = 50
+      newLevelText.levelUp.y = newLevelBackground2.y - newLevelBackground2.contentHeight/2  +  newLevelText.levelUp.contentHeight /2  + 3
 
       newLevelText.newLevel.x = 240
-      newLevelText.newLevel.y = 110
+      newLevelText.newLevel.y = 130
 
       newLevelText.newItems.x = 240
       newLevelText.newItems.y = 170
@@ -1257,20 +1349,31 @@ function scene:create( event )
           return true
      end
 
+     local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
       local newLevelOkBtn = widget.newButton
       {
           x = 240,
-          y = 280,
+          y = 290,
           id = "boosterButton",
-          defaultFile = "images/OKUp.png",
-          overFile = "images/OKDown.png",
-          onEvent = newLevelOkBtnListener
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
+          onEvent = newLevelOkBtnListener,
+          label = getTransaltedText("OK"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
      newLevelOkBtn.xScale =  (display.actualContentWidth*0.3) / newLevelOkBtn.width
       newLevelOkBtn.yScale = newLevelOkBtn.xScale  
 
       
      newLevelGroup:insert(newLevelBackground)
+     newLevelGroup:insert(newLevelBackground2)
      newLevelGroup:insert(newLevelText.levelUp)
      newLevelGroup:insert(newLevelText.newLevel)
      newLevelGroup:insert(newLevelText.newItems)
@@ -1545,11 +1648,20 @@ function scene:create( event )
                   local isSimulator = (system.getInfo("environment") == "simulator");
                   commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
                 if (not isSimulator)  then
-                  -- local isAdLoaded =  superawesome.isLoaded( myPlacementID )
+                  local isSpwLoaded =  superawesome.isLoaded( myPlacementID )
+                  local isAdmobLoaded =  admob.isLoaded( "interstitial" )
 
-                  --  if isAdLoaded then
-                    superawesome.show( myPlacementID )
-                  -- end
+                    if isAdLoaded and not isAdmobLoaded then
+                        superawesome.show( myPlacementID )
+                    elseif not isAdLoaded and isAdmobLoaded then
+                        admob.show("rewardedVideo")
+                    elseif isAdLoaded and isAdmobLoaded then
+                        if math.random(10) < 8 then
+                          admob.show("rewardedVideo") 
+                        else
+                          superawesome.show( myPlacementID )
+                        end     
+                    end
 
      
                     showAdButton.alpha = 0
@@ -1642,13 +1754,20 @@ function scene:create( event )
           x = 120,
           y = 278,
           id = "share",
-          defaultFile = buttonsSet .. "/End/ShareScoreUp.png",
-          overFile = buttonsSet .. "/End/ShareScoreDown.png",
+           defaultFile = buttonsSet .. "/End/EGShareUp.png",
+          overFile = buttonsSet .. "/End/EGShareDown.png",
+          onEvent = packsListener,
+          label = getTransaltedText("ShareScore"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = nativeShareListener
       }
 
-      shareButton.xScale =  (display.actualContentWidth*0.25) / shareButton.width
+      shareButton.xScale = (display.actualContentWidth*0.25) / shareButton.width
       shareButton.yScale =  shareButton.xScale-- (display.actualContentHeight*0.22) / shareButton.height
+      
 
 
       openPkgButton = widget.newButton
@@ -2125,7 +2244,7 @@ function scene:show( event )
 
    elseif ( phase == "did" ) then
 
-       commonData.kidoz.show( "panelView")
+       
       if(event.params and event.params.results) then
         showGameOver(event.params.results , true)
       end  

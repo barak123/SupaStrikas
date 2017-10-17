@@ -848,7 +848,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
               (not commonData.catalog.items[seletedCategory][selectedItemIdx].level or
                commonData.catalog.items[seletedCategory][selectedItemIdx].level <= commonData.getLevel()  )) then
 
-              buyWithCoinsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
+              --buyWithCoinsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
+              buyWithCoinsText.text = commonData.catalog.items[seletedCategory][selectedItemIdx].coinsCost
               buyWithCoinsButton.alpha = 1
               buyWithCoinsButtonIcon.alpha = 1
               buyWithCoinsText.alpha = 1
@@ -873,7 +874,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
 
             if (commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost) then
-              buyWithGemsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
+              --buyWithGemsText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
+              buyWithGemsText.text = commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
               buyWithGemsButton.alpha = 1
               buyWithGemsButtonIcon.alpha = 1
               buyWithGemsText.alpha = 1
@@ -891,7 +893,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
             end
         
             if (commonData.catalog.items[seletedCategory][selectedItemIdx].cashCost) then
-              buyWithCashText.text = "USE " .. commonData.catalog.items[seletedCategory][selectedItemIdx].cashCost
+              buyWithCashText.text = commonData.catalog.items[seletedCategory][selectedItemIdx].cashCost
               buyWithCashButton.alpha = 1
               buyWithCashButtonIcon.alpha = 1
               buyWithCashText.alpha = 1
@@ -945,13 +947,23 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           return true
        end
 
+       local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
+      }
+
        buyButton = widget.newButton
       {
           x = 137,
           y = 250,
-          id = "buyButton",
-          defaultFile = "images/shop/BUY.png",
-          overFile = "images/shop/BUY Down.png",
+          id = "buyButton",          
+          defaultFile = "images/UseUp.png",          
+          overFile = "images/UseDown.png",          
+          label = getTransaltedText("Buy"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 30 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = buyButtonListener
       }
       buyButton:scale(0.5,0.5)
@@ -962,8 +974,13 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           x = 137,
           y = 250,
           id = "useButton",
-          defaultFile = "images/shop/USE.png",          
-          overFile = "images/shop/USE Down.png",
+          defaultFile = "images/UseUp.png",          
+          overFile = "images/UseDown.png",          
+          label = getTransaltedText("Use"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 30 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = useButtonListener
       }
        useButton:scale(0.5,0.5)
@@ -1223,8 +1240,14 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           x = 295,
           y = BUTTON_3_Y,
           id = "cancelBuyButton",
-          defaultFile = "images/shop/Cancel.png",
-          overFile = "images/shop/CancelDown.png",
+          defaultFile = "images/shop/BuyWithCoins.png",          
+          overFile = "images/shop/BuyWithCoinsDown.png",
+          label = getTransaltedText("Cancel"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 48 , 
+         -- labelXOffset = 20,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = cancelButtonListener
       }
 
@@ -1238,18 +1261,37 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           return true
          end
 
+
+       
+
        local backButton = widget.newButton
       {
           x = 60,
           y = 20,
           id = "backButton",
-          defaultFile = "images/shop/BACK.png",
-          overFile = "images/shop/BACK Down.png",
+           defaultFile = "MainMenu/EmptyBtnUp.png",          
+          overFile = "MainMenu/EmptyBtnDown.png",          
+          label = getTransaltedText("Back"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 64 , 
+          labelXOffset = 200,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = backButtonListener
       }
-      backButton:scale(0.5,0.5)
+
+       backButton.xScale =  (display.actualContentWidth*0.25) / backButton.width
+       backButton.yScale = backButton.xScale  
+
       
       backButton.x = display.screenOriginX  + backButton.contentWidth /2
+      local  backIcon = display.newImage("images/IcoBack.png")
+      
+      backIcon.yScale = (backButton.contentHeight * 0.4) / backIcon.contentHeight 
+      backIcon.xScale = backIcon.yScale
+      backIcon.y = backButton.y
+      backIcon.x = backButton.x - backButton.contentWidth/2 + backIcon.contentWidth/2  + 3
+
 
       local coinTextOptions = 
       {
@@ -1260,27 +1302,24 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           width = 120,     --required for multi-line and alignment
           font = "UnitedSansRgHv",   
           fontSize = 13,
-          align = "left"  --new alignment parameter
+          align = "right"  --new alignment parameter
       }
 
 
                 
       
-      buyWithCoinsText = display.newText(coinTextOptions) 
-      buyWithCoinsText.text = "Buy with coins"
+      buyWithCoinsText = display.newText(coinTextOptions)       
       buyWithCoinsText.x = 315
       buyWithCoinsText.y = BUTTON_1_Y
       buyWithCoinsText:setFillColor(255/255,241/255,208/255)
 
-      buyWithGemsText = display.newText(coinTextOptions) 
-      buyWithGemsText.text = "Buy with gems"
+      buyWithGemsText = display.newText(coinTextOptions)       
       buyWithGemsText.x = 315
       buyWithGemsText.y = BUTTON_2_Y
       buyWithGemsText:setFillColor(255/255,241/255,208/255)
 
 
-      buyWithCashText = display.newText(coinTextOptions) 
-      buyWithCashText.text = "Buy with gems"
+      buyWithCashText = display.newText(coinTextOptions)       
       buyWithCashText.x = 315
       buyWithCashText.y = BUTTON_2_Y
       buyWithCashText:setFillColor(255/255,241/255,208/255)
@@ -1359,6 +1398,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           
           commonData.gameData.gems = commonData.gameData.gems + commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCount
           commonData.gameData.madePurchase = true
+          gemsCount = commonData.gameData.gems             
           commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
 
           setCoinsCount()
@@ -1550,6 +1590,9 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       buyWithCashButtonIcon.x = buyWithCashButton.x + 30
       buyWithCashButtonIcon.y = buyWithCashButton.y
       
+      buyWithCoinsText.x = buyWithCoinsButtonIcon.x - buyWithCoinsButtonIcon.contentWidth/2 - buyWithCoinsText.contentWidth /2 -3
+      buyWithGemsText.x = buyWithGemsButtonIcon.x - buyWithGemsButtonIcon.contentWidth/2 - buyWithGemsText.contentWidth /2 -3
+      buyWithCashText.x = buyWithCashButtonIcon.x - buyWithCashButtonIcon.contentWidth/2 - buyWithCashText.contentWidth /2 -3
       
       areYouSurePopup:insert(blackRect)
       areYouSurePopup:insert(areYouSureBackground)
@@ -1602,6 +1645,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
      
      sceneGroup:insert(itemDesc)  
      sceneGroup:insert(backButton)
+     sceneGroup:insert(backIcon)
+     
 
 
     sceneGroup:insert(areYouSurePopup)
@@ -1637,7 +1682,7 @@ function scene:show( event )
       -- Example: start timers, begin animation, play audio, etc.
       if(event.params and event.params.gameData) then
            coinsCount = commonData.gameData.coins  
-           gemsCount = commonData.gameData.gems  
+           gemsCount = commonData.gameData.gems             
            setCoinsCount()
       end
 

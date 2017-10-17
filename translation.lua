@@ -104,10 +104,17 @@ local dictionary =
 			["he"] = "קבל חבילת מתנה לסיום האימון",			
 			["it"] = "Ottieni un pacco regalo gratuito per aver finito l’addestramento",			
 		},			
+
+
+		-- es , de , fr , ar  , ru , uk 
 ["Play"] =
 		{
 			["en"] = "PLAY",
 			["he"] = "שחק",			
+			["es"] = "JUGAR",			
+			["de"] = "JUGAR",			
+			["fr"] = "JUGAR",			
+			["ar"] = "JUGAR",			
 			
 		},	
 ["Shop"] =
@@ -167,13 +174,30 @@ local dictionary =
 		{
 			["en"] = "SHARE SCORE",
 			["he"] = "שתף תוצאה",						
-		},			
+		},	
+["OK"] =
+		{
+			["en"] = "OK",
+			["he"] = "סבבה",						
+		},						
+["TimingTip"] =
+		{
+			["en"] = "Kick the ball when the circle turns green",
+			["he"] = "בעט בכדור כשהכפתור נהיה ירוק",						
+		},								
+["SupaTip"] =
+		{
+			["en"] = "SUPA TIP:",
+			["he"] = "סופה טיפ:",						
+		},								
 
 
 
 }
 
-local language =  system.getPreference("ui", "language")
+--local language =  system.getPreference("ui", "language")
+ local language = system.getPreference( "locale", "language" )
+
 
 if language == "Hebrew" or language == "עברית" then
 	language = "he"
@@ -183,8 +207,13 @@ if language == "Italian" or  language == "italian" or language == "Italiano" the
 	language = "it"
 end	
 
-local defaultLanguage = "en"
+if language == "uk" then
+ 	language = "ru"
+end	
 
+
+local defaultLanguage = "en"
+--local defaultLanguage = "he"
 
 function getTransaltedText( labelCode )
 	--print(language)
