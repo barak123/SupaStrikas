@@ -9,10 +9,12 @@ local widget = require( "widget" )
 local scene = composer.newScene()
 local levelSelectGroup
 
-local coinsReward = nil
+
 local buyButton = nil
 local useButton = nil
+local backButton = nil
 local useText = nil
+local continueText= nil
 local rewardBox = nil
 local coinsCountText = nil
 local coinsShadowText = nil
@@ -341,7 +343,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       }
 
 
-        local backButton = widget.newButton
+       backButton = widget.newButton
       {
           x = 60,
           y = 20,
@@ -351,8 +353,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
           label = getTransaltedText("Back"),
           labelAlign = "left",
           font = "UnitedItalicRgHv",  
-          fontSize = 64 , 
-          labelXOffset = 200,
+          fontSize = 64 ,           
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = backButtonListener
       }
@@ -434,22 +435,22 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
 
                 
       
-      local continueText = display.newText(coinTextOptions) 
-      continueText.text = "Continue"
+      continueText = display.newText(coinTextOptions) 
+      continueText.text = getTransaltedText("Continue") 
       continueText.x = 240
       continueText.y = 280
 
       useText = display.newText(coinTextOptions) 
-      useText.text = "Use"
+      useText.text = getTransaltedText("Use")
       useText.x = 240
       useText.y = 250
       --continueText:setFillColor(255/255,241/255,208/255)
 
       rewardBox = display.newGroup()
 
-      local rewardBoxBackground  = display.newImage("images/shop/BuyDialog.png")
-      rewardBoxBackgroundGreen  = display.newImage("images/shop/BuyDialog.png")
-     coinsReward  = display.newImage("PacksScreen/Coins.png")
+      local rewardBoxBackground  = display.newImage("images/shop/BuyDialogBlue.png")
+      rewardBoxBackgroundGreen  = display.newImage("images/shop/BuyDialogBlue.png")
+     
 
       youWonText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
       youWonSText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
@@ -462,8 +463,8 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       youWonSText.y = youWonText.y + 2
       youWonSText.x =  youWonText.x 
 
-      youWonText.text = "YOU WON!"      
-      youWonSText.text = "YOU WON!"
+      youWonText.text = getTransaltedText("YouWon") 
+      youWonSText.text = getTransaltedText("YouWon") 
 
       priceText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
       priceSText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
@@ -491,10 +492,7 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       
 
 
-      coinsReward.x = 240
-      coinsReward.y = 100
-      coinsReward:scale(0.4,0.4)
-
+      
 
       rewardBox:insert(rewardBoxBackgroundGreen)
       rewardBox:insert(rewardBoxBackground)
@@ -503,7 +501,6 @@ coinsShadowText.x = coinsShadowText.x + (display.actualContentWidth - display.co
       rewardBox:insert(priceSText)
       rewardBox:insert(priceText)
       
-      rewardBox:insert(coinsReward)
       
       rewardBox:insert(useButton)
       rewardBox:insert(continueButton)      
@@ -551,21 +548,6 @@ local function showCoins()
     
 end
 
-local function handleCoinsPrize(coinsPrice)
-    coinsReward.alpha = 1
-    useButton.alpha = 0
-    useText.alpha = 0 
-
-    priceText.text = coinsPrice .. " COINS"
-    priceSText.text = coinsPrice .. " COINS"
-
-    coinsCount = coinsCount + coinsPrice
-    commonData.gameData.coins = coinsCount
-    setCoinsCount(nil)
-    commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
-
-end
-
 
 local function handleItemPrize()
     
@@ -590,6 +572,7 @@ local function handleItemPrize()
       end
                   
              
+       local currentPlayerLevel = commonData:getLevel() 
        for i=1,math.random(10) + 10  do
           
            local categoryRnd  = math.random(5000)
@@ -603,21 +586,48 @@ local function handleItemPrize()
               categoryIdx = 4
            end  
            
-           
-         itemIdx = math.random(#commonData.catalog.packCategories[categoryIdx])  
+           local itemsByLevel = {}
+           local idx = 1
 
-        itemToBuy = commonData.catalog.packCategories[categoryIdx][itemIdx]
+           for j=1,#commonData.catalog.packCategories[categoryIdx]  do
+              if (not commonData.catalog.packCategories[categoryIdx][j].level or
+                  commonData.catalog.packCategories[categoryIdx][j].level <=  currentPlayerLevel) then
+                  itemsByLevel[idx] = commonData.catalog.packCategories[categoryIdx][j]  
+                  idx = idx + 1        
+               end
+           end 
+           
+           if idx > 1 then
+             itemIdx = math.random(#itemsByLevel)  
+
+            itemToBuy = itemsByLevel[itemIdx]
+          end
         
          
        end
 
        commonData.analytics.logEvent( "openPack", {  categoryIdx= tostring( categoryIdx ) } ) 
-           
-          while (shopItemsCount <= 10 and  commonData.shopItems[itemToBuy.id]) do
-            categoryIdx = 4
-            itemIdx = math.random(#commonData.catalog.packCategories[categoryIdx])  
-            itemToBuy = commonData.catalog.packCategories[categoryIdx][itemIdx]    
-          end  
+          
+          if  (itemToBuy == nil or (shopItemsCount <= 10 and  commonData.shopItems[itemToBuy.id])) then
+            local itemsByLevel = {}
+             local idx = 1
+             categoryIdx = 4
+
+             for j=1,#commonData.catalog.packCategories[categoryIdx]  do
+                if (not commonData.catalog.packCategories[categoryIdx][j].level or
+                    commonData.catalog.packCategories[categoryIdx][j].level <=  currentPlayerLevel) then
+                    itemsByLevel[idx] = commonData.catalog.packCategories[categoryIdx][j]  
+                    idx = idx + 1        
+                 end
+             end 
+
+
+            while (itemToBuy == nil or (shopItemsCount <= 10 and  commonData.shopItems[itemToBuy.id])) do
+              
+              itemIdx = math.random(#itemsByLevel)  
+              itemToBuy = itemsByLevel[itemIdx]    
+            end  
+          end
    --       if (cat[i].packChance) then
     --        if (prizeItemRnd <= accuSum + cat[i].packChance ) then
          
@@ -626,18 +636,18 @@ local function handleItemPrize()
              
              commonData.gameData.coins = commonData.gameData.coins  + 20
              setCoinsCount(nil)
-             youWonText.text = "TRY AGAIN! (+20)"      
-             youWonSText.text = "TRY AGAIN! (+20)"
+             youWonText.text = getTransaltedText("TryAgain") .. " ! (+20)"      
+             youWonSText.text = getTransaltedText("TryAgain") .. " ! (+20)"      
 
          else 
-             youWonText.text = "YOU WON!"      
-             youWonSText.text = "YOU WON!"
+             youWonText.text = getTransaltedText("YouWon") 
+             youWonSText.text = getTransaltedText("YouWon") 
 
              commonData.playSound(packNewRewardSound)
 
          end
             
-         coinsReward.alpha = 0
+         
          useButton.alpha = 1
          useText.alpha = 1 
 
@@ -709,12 +719,6 @@ local function handleItemPrize()
 
 end
 
-local function buildCoinsPrice()
-    
-    rewardBox.alpha = 1
-    
-    handleCoinsPrize(15 + math.random(15)) 
-end
 
 local function buildPrice()
     
@@ -763,7 +767,7 @@ function packsTouched(event )
         -- if (rnd > 85) then
         
         --   timer.performWithDelay(700, showCoins, 1)
-        --   timer.performWithDelay(1700, buildCoinsPrice, 1)          
+        
         -- else
        
           timer.performWithDelay(500, showSpinner, 1)
@@ -796,6 +800,12 @@ function scene:show( event )
       
      itemRewardCategory = nil
      itemReward = nil
+
+      
+      useText.text  =  getTransaltedText("Use")      
+      continueText.text = getTransaltedText("Continue")
+      backButton:setLabel(getTransaltedText("Back"))
+
 
    elseif ( phase == "did" ) then
     

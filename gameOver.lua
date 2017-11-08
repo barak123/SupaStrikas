@@ -23,6 +23,7 @@ local skipAdmob = false
 local admobTime = nil
 local rateUsButton = nil
 local showAdButton =  nil
+local isGameOverActive = true
 
 
 local achivmetBarFull = nil
@@ -66,6 +67,7 @@ local chalengesData = nil
 local chalengesBox = nil
 local gameOverGroup = nil
 local newLevelGroup = nil
+local promotionGroup = nil
 local newItemsGroup = nil
 
 local packReminder = nil
@@ -73,17 +75,21 @@ local dailyReward = nil
 local dailyRewardGroup = nil
 local activeScreen = 1
 
-local xpBarMiddle = nil
-local xpBarEnd = nil
-local xpBarBG = nil
-local xpBarStart = nil
-local xpEmiter = nil
+local xp = {
+  xpBarMiddle = nil,
+  xpBarEnd = nil,
+  xpBarBG = nil,
+  xpBarStart = nil,
+  xpEmiter = nil
+}
 
 local newLevelText = {
   levelUp = nil,
   newLevel = nil,
   newItems = nil
 }
+
+local promotionElements = {}
 
 
 ---------------------------------------------------------------------------------
@@ -360,7 +366,7 @@ local function adListener( event )
         admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
         playButton.alpha = 1
         
-        if sceneGroup.alpha == 0 then
+        if not isGameOverActive  then
           commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
           skipAdmob = true
         end
@@ -425,11 +431,273 @@ local function showActiveScreen()
       end  
     end  
 
+local function showPromotion( gameResult , isFirstLoad , currentPromo)
+
+     
+         local promotionBackground =  display.newImage("images/BGDotted.jpg")
+     promotionBackground.xScale =  (display.actualContentWidth*1) / promotionBackground.contentWidth
+     promotionBackground.yScale =  (display.actualContentHeight*1) / promotionBackground.contentHeight
+     promotionBackground.x = 240
+     promotionBackground.y = 160
+
+     promotionElements.promotionBackground2 =  display.newImage("images/BGStripes.png")
+     promotionElements.promotionBackground2.xScale =  (display.actualContentWidth*1) / promotionElements.promotionBackground2.contentWidth
+     promotionElements.promotionBackground2.yScale =  (display.actualContentHeight*1) / promotionElements.promotionBackground2.contentHeight
+     promotionElements.promotionBackground2.x = 240
+     promotionElements.promotionBackground2.y = 160
+
+    promotionElements.promotionBackground3 =  display.newImage("images/Coach.png")
+     
+     promotionElements.promotionBackground3.yScale =  (display.actualContentHeight* 0.9 ) / promotionElements.promotionBackground3.contentHeight
+     promotionElements.promotionBackground3.xScale  = promotionElements.promotionBackground3.yScale
+     promotionElements.promotionBackground3.x = 110 - (display.actualContentWidth - display.contentWidth)/2  
+     promotionElements.promotionBackground3.y = 160
+
+     promotionElements.promotionBackground3.y = 320 - promotionElements.promotionBackground3.contentHeight/2  + (display.actualContentHeight - display.contentHeight)/2  
+
+      local function goToShopListener( event )
+          
+          if ( "ended" == event.phase ) then
+            commonData.playSound( selectMenuSound ) 
+            
+            commonData.analytics.logEvent( "Claim promotion"  , { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                 } )
+
+            promotionElements.wings:pause()
+            promotionElements.wings2:pause()
+
+            local options = {params = {gameData = commonData.gameData}}
+            composer.gotoScene( "shop" , options )
+            
+          end
+          return true
+     end
+     local function cancelPromoBtnListener( event )
+          
+          if ( "ended" == event.phase ) then
+            
+            commonData.buttonSound()
+
+            commonData.analytics.logEvent( "Cancel promotion"  , { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                 } )
+
+
+            promotionElements.wings:pause()
+            promotionElements.wings2:pause()
+
+
+            promotionGroup.alpha = 0
+            
+          end
+          return true
+     end
+
+
+     local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
+      local promotoionClaimBtn = widget.newButton
+      {
+          x = 330,
+          y = 290,
+          id = "boosterButton",
+          defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+          overFile = "BlueSet/End/EGMainMenuDown.png",
+          onEvent = goToShopListener,
+          label = getTransaltedText("OK"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     promotoionClaimBtn.xScale =  (display.actualContentWidth*0.3) / promotoionClaimBtn.width
+     promotoionClaimBtn.yScale = promotoionClaimBtn.xScale  
+
+      local promotoionCancelBtn = widget.newButton
+      {
+          x = 170,
+          y = 290,
+          id = "boosterButton",
+          defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+          overFile = "BlueSet/End/EGMainMenuDown.png",
+          onEvent = cancelPromoBtnListener,
+          label = getTransaltedText("Cancel"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     promotoionCancelBtn.xScale =  (display.actualContentWidth*0.3) / promotoionCancelBtn.width
+     promotoionCancelBtn.yScale = promotoionCancelBtn.xScale  
+
+    
+
+   local gradient = {
+          type="gradient",
+          color3={ 255/255,1,1,1}, color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
+
+    promotionElements.promoText1 = display.newText({text="ONE TIME" , x = 250, y = 80, font = "UnitedSansRgHv", fontSize = 50,align = "center"})
+    promotionElements.promoShadow1 = display.newText({ text="ONE TIME" ,  x = 250, y = 80, font = "UnitedSansRgHv", fontSize = 52,align = "center"}) 
+    
+    promotionElements.promoText1:setFillColor(gradient)
+    promotionElements.promoShadow1:setFillColor(0,0,0)
+    
+    promotionElements.promoText2 = display.newText({ text="SPECIAL" ,  x = 250, y = 140, font = "UnitedSansRgHv", fontSize = 80,align = "center"})
+    promotionElements.promoShadow2 = display.newText({ text="SPECIAL" ,  x = 250, y = 140, font = "UnitedSansRgHv", fontSize = 82,align = "center"}) 
+    
+    promotionElements.promoText2:setFillColor(gradient)
+    promotionElements.promoShadow2:setFillColor(0,0,0)    
+    
+    promotionElements.promoText3 = display.newText({ text="OFFER" ,  x = 250, y = 200, font = "UnitedSansRgHv", fontSize = 80,align = "center"})
+    promotionElements.promoShadow3 = display.newText({ text="OFFER" ,  x = 250, y = 200, font = "UnitedSansRgHv", fontSize = 82,align = "center"}) 
+    
+    promotionElements.promoText3:setFillColor(gradient)
+    promotionElements.promoShadow3:setFillColor(0,0,0)
+    
+    promotionElements.promoText1.x =   promotionElements.promoText1.x  + (display.actualContentWidth - display.contentWidth)/2  
+    promotionElements.promoShadow1.x = promotionElements.promoText1.x 
+    
+    promotionElements.promoText2.x =   promotionElements.promoText2.x  + (display.actualContentWidth - display.contentWidth)/2  
+    promotionElements.promoShadow2.x = promotionElements.promoText2.x 
+    
+    
+    promotionElements.promoText3.x =   promotionElements.promoText3.x  + (display.actualContentWidth - display.contentWidth)/2  
+    promotionElements.promoShadow3.x = promotionElements.promoText3.x 
+
+    local promoIdx= 1
+    if currentPromo == "starterPack"  then
+      promoIdx= 1
+    elseif   currentPromo == "shakesPack"  then
+      promoIdx= 2
+    elseif   currentPromo == "megaPack"  then
+      promoIdx= 3
+    end  
+    commonData.catalog.items["gems"][promoIdx].hidden = false
+
+    promotionElements.promoImage = display.newImage(commonData.catalog.items["gems"][promoIdx].image)
+    promotionElements.promoImage.x = 240
+    promotionElements.promoImage.y = 120
+            
+    promotionElements.promoText4 = display.newText({text=commonData.catalog.items["gems"][promoIdx].name , x = 240, y = 40, font = "UnitedSansRgHv", fontSize = 40,align = "center"})
+    promotionElements.promoShadow4 = display.newText({ text=commonData.catalog.items["gems"][promoIdx].name ,  x = 240, y = 40, font = "UnitedSansRgHv", fontSize = 41,align = "center"}) 
+    
+    promotionElements.promoText4:setFillColor(gradient)
+    promotionElements.promoShadow4:setFillColor(0,0,0)
+
+    promotionElements.promoText5 = display.newText({text="90% OFF" , x = 240, y = 200, font = "UnitedSansRgHv", fontSize = 40,align = "center"})
+    promotionElements.promoShadow5 = display.newText({ text="90% OFF" ,  x = 240, y = 200, font = "UnitedSansRgHv", fontSize = 41,align = "center"}) 
+    
+    promotionElements.promoText5:setFillColor(gradient)
+    promotionElements.promoShadow5:setFillColor(0,0,0)
+    
+    
+    promotionElements.promoText6 = display.newText({text="ONLY TODAY" , x = 240, y = 250, font = "UnitedSansRgHv", fontSize = 40,align = "center"})
+    promotionElements.promoShadow6 = display.newText({ text="ONLY TODAY" ,  x = 240, y = 250, font = "UnitedSansRgHv", fontSize = 41,align = "center"}) 
+    
+    promotionElements.promoText6:setFillColor(gradient)
+    promotionElements.promoShadow6:setFillColor(0,0,0)
+
+    promotionElements.promoText4.alpha = 0
+    promotionElements.promoText5.alpha = 0
+    promotionElements.promoText6.alpha = 0
+    promotionElements.promoShadow4.alpha = 0
+    promotionElements.promoShadow5.alpha = 0
+    promotionElements.promoShadow6.alpha = 0
+    promotionElements.promoImage.alpha = 0
+        
+    
+    local promotionSpineAn = require "promotion"
+
+
+   
+
+    promotionElements.wings = promotionSpineAn.new()
+    promotionElements.wings.skeleton.group.alpha = 0
+    promotionElements.wings.skeleton.group.x = - 100
+    promotionElements.wings.skeleton.group.y = 300
+
+    promotionElements.wings2 = promotionSpineAn.new()
+    promotionElements.wings2.skeleton.group.alpha = 0
+    promotionElements.wings2.skeleton.group.x = 580
+    promotionElements.wings2.skeleton.group.y = 300
+
+    promotionElements.wings2.skeleton.group.xScale = -1
+
+    
+ 
+     promotionGroup:insert(promotionBackground)
+     promotionGroup:insert(promotionElements.promotionBackground2)
+     promotionGroup:insert(promotionElements.promotionBackground3)
+     promotionGroup:insert(promotionElements.promoShadow1)
+     promotionGroup:insert(promotionElements.promoText1)
+     promotionGroup:insert(promotionElements.promoShadow2)
+     promotionGroup:insert(promotionElements.promoText2)
+     promotionGroup:insert(promotionElements.promoShadow3)
+     promotionGroup:insert(promotionElements.promoText3)
+     promotionGroup:insert(promotionElements.promoShadow4)
+     promotionGroup:insert(promotionElements.promoText4)
+     promotionGroup:insert(promotionElements.promoShadow5)
+     promotionGroup:insert(promotionElements.promoText5)
+     promotionGroup:insert(promotionElements.promoShadow6)
+     promotionGroup:insert(promotionElements.promoText6)
+     promotionGroup:insert(promotionElements.wings.skeleton.group)
+     promotionGroup:insert(promotionElements.wings2.skeleton.group)
+     promotionGroup:insert(promotionElements.promoImage)
+           
+
+     promotionGroup:insert(promotoionCancelBtn)
+     promotionGroup:insert(promotoionClaimBtn)
+
+
+    promotionGroup.alpha =1 
+
+    
+    transition.moveTo(promotionElements.promotionBackground2 , { x= promotionElements.promotionBackground2.x - 100,alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoText1 , { x= promotionElements.promoText1.x - 30 ,alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoShadow1 , { x= promotionElements.promoShadow1.x - 30,alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoText2 , { alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoShadow2 , { alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoText3 , { x= promotionElements.promoText3.x + 30,alpha = 0, time=2000 } )
+    transition.moveTo(promotionElements.promoShadow3 , { x= promotionElements.promoShadow3.x + 30,alpha = 0, time=2000 } )
+
+    timer.performWithDelay(1800 , function ()
+      promotionElements.wings.skeleton.group.alpha = 1
+      promotionElements.wings:init()
+      promotionElements.wings2.skeleton.group.alpha = 1
+      promotionElements.wings2:init()
+
+      promotionElements.promoText4.alpha = 1
+      promotionElements.promoText5.alpha = 1
+      promotionElements.promoText6.alpha = 1
+      promotionElements.promoShadow4.alpha = 1
+      promotionElements.promoShadow5.alpha = 1
+      promotionElements.promoShadow6.alpha = 1
+      promotionElements.promoImage.alpha = 1
+
+      promotionElements.promotionBackground2.alpha = 0
+      promotionElements.promotionBackground3.alpha = 0
+      promotionElements.promoText1.alpha = 0
+      promotionElements.promoText2.alpha = 0
+      promotionElements.promoText3.alpha = 0
+      promotionElements.promoShadow1.alpha = 0
+      promotionElements.promoShadow2.alpha = 0
+      promotionElements.promoShadow3.alpha = 0
+    end,1)
+    
+end  
 
 local function showGameOver( gameResult , isFirstLoad)
 
+        isGameOverActive = true
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        promotionGroup.alpha =0 
         dailyRewardGroup.alpha =0 
 
         -- if math.random(2) == 1 then
@@ -442,7 +710,7 @@ local function showGameOver( gameResult , isFirstLoad)
              local memUsed = (collectgarbage("count"))
              local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            
-            
+        
             --print( string.format("%.00f", texUsed) .. " / " .. memUsed)
              
     
@@ -486,11 +754,12 @@ local function showGameOver( gameResult , isFirstLoad)
        local showAdRnd =  gmCnt % 5 
                
          if not  admob.isLoaded( "interstitial" ) then
-            admob.load( "interstitial" )
+            admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+        
          end
 
          if not  admob.isLoaded( "rewardedVideo" ) then
-            admob.load( "rewardedVideo" )
+            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
          end
 
          if not  superawesome.isLoaded( "video" ) then
@@ -500,11 +769,20 @@ local function showGameOver( gameResult , isFirstLoad)
          if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
           commonData.kidoz.show( "panelView")      
         end
+
+       if (gmCnt == 12) then
+          showPromotion( gameResult , isFirstLoad , "starterPack")     
+       elseif (gmCnt> 1 and  gmCnt % 121 == 1)  then   
+          showPromotion( gameResult , isFirstLoad , "shakesPack")     
+       elseif (gmCnt> 80 and  gmCnt % 121 == 70)   then  
+          showPromotion( gameResult , isFirstLoad , "megaPack")       
+       end 
+       
+       
        if (commonData.gameData.gamesCount > 30  and --not  commonData.gameData.madePurchase and 
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
                                        -- show the advert.
-  
-                
+           
                 admob.show("interstitial") 
                 playButton.alpha = 0
                 admobTime = system.getTimer() 
@@ -593,7 +871,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       bullet:scale(0.5,0.5)
                       bullet.y = 95 + i* 22
                       bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 35
-                      challegesText.text = challeges[i].text
+                      challegesText.text = getTransaltedText(challeges[i].name)  -- challeges[i].text
                       challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
                       challegesText.y = 95 + i* 22
 
@@ -608,7 +886,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
                       challegesCoinsText.x = challegesCoin.x - challegesCoin.contentWidth/2  - challegesCoinsText.contentWidth/2 - 10
                       
-                       if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
+                      if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
                         challegesText.xScale  =  (background.contentWidth*0.5) / challegesText.contentWidth
                         challegesText.yScale  = challegesText.xScale 
                         challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
@@ -733,8 +1011,8 @@ local function showGameOver( gameResult , isFirstLoad)
               
             else
 
-              scoreTitleText.text = "YOU REACHED:"
-              scoreTitleTextS.text = "YOU REACHED:"
+              scoreTitleText.text = getTransaltedText("youReached")  .. ":"
+              scoreTitleTextS.text = getTransaltedText("youReached")  .. ":"
             end 
             scoreTitleText.alpha = 1
             scoreTitleTextS.alpha = 1
@@ -776,11 +1054,11 @@ local function showGameOver( gameResult , isFirstLoad)
             local levelStart = 50 * currentLevel * (currentLevel +1)
             local completeRatio = (commonData.gameData.totalMeters - levelStart) / ((currentLevel+1)  * 100)
             
-            local temp = xpBarMiddle.xScale
-            xpBarMiddle:scale(completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.contentWidth, 1)
-            xpBarMiddle.x = xpBarStart.x + xpBarMiddle.contentWidth / 2 + xpBarStart.contentWidth/2 
-            xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
-            xpEmiter.x = xpBarEnd.x
+            local temp = xp.xpBarMiddle.xScale
+            xp.xpBarMiddle:scale(completeRatio * (xp.xpBarBG.contentWidth - 10) / xp.xpBarMiddle.contentWidth, 1)
+            xp.xpBarMiddle.x = xp.xpBarStart.x + xp.xpBarMiddle.contentWidth / 2 + xp.xpBarStart.contentWidth/2 
+            xp.xpBarEnd.x = xp.xpBarMiddle.x + xp.xpBarMiddle.contentWidth / 2 + xp.xpBarEnd.contentWidth/2 - 1
+            xp.xpEmiter.x = xp.xpBarEnd.x
             
             levelText.text = "LVL " .. currentLevel
             nextLevelText.text = currentLevel+1
@@ -824,32 +1102,32 @@ local function showGameOver( gameResult , isFirstLoad)
                 newLevelText.newItems.alpha =0  
               end
 
-              print(newItemsGroup.contentWidth) 
+              
               local x, y = newItemsGroup:contentToLocal( 240, 0 )
-              print(x) 
+              
               newItemsGroup.x= 200 - newItemsGroup.contentWidth/2  
 
             else
               gameOverGroup.alpha = 1
             end  
-            --local newScale = completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.contentWidth
+            --local newScale = completeRatio * (xp.xpBarBG.contentWidth - 10) / xp.xpBarMiddle.contentWidth
             if completeRatio > 1 then
               completeRatio = 1
             end  
 
-            local newScale = completeRatio * (xpBarBG.contentWidth - 10) / xpBarMiddle.width
+            local newScale = completeRatio * (xp.xpBarBG.contentWidth - 10) / xp.xpBarMiddle.width
             --local newScale = 20
             
 
-            --transition.scaleTo( xpBarMiddle, { xScale=newScale, time=500 } )
-            transition.to(xpBarMiddle, {x = xpBarStart.x + xpBarMiddle.width* newScale  / 2 + xpBarStart.contentWidth/2, xScale = newScale,  time = 500})
-            -- transition.moveTo( xpBarMiddle, { x=xpBarStart.x + xpBarMiddle.width* newScale  / 2 + xpBarStart.contentWidth/2 , time=500 } )
-            transition.moveTo( xpBarEnd, { x=xpBarStart.x + xpBarMiddle.width* newScale + xpBarStart.contentWidth/2 + xpBarEnd.contentWidth/2 - 1, time=500 } )
-            transition.moveTo( xpEmiter, { x=xpBarStart.x + xpBarMiddle.width* newScale + xpBarStart.contentWidth/2 + xpBarEnd.contentWidth/2 - 1, time=500 } )
+            --transition.scaleTo( xp.xpBarMiddle, { xScale=newScale, time=500 } )
+            transition.to(xp.xpBarMiddle, {x = xp.xpBarStart.x + xp.xpBarMiddle.width* newScale  / 2 + xp.xpBarStart.contentWidth/2, xScale = newScale,  time = 500})
+            -- transition.moveTo( xp.xpBarMiddle, { x=xp.xpBarStart.x + xp.xpBarMiddle.width* newScale  / 2 + xp.xpBarStart.contentWidth/2 , time=500 } )
+            transition.moveTo( xp.xpBarEnd, { x=xp.xpBarStart.x + xp.xpBarMiddle.width* newScale + xp.xpBarStart.contentWidth/2 + xp.xpBarEnd.contentWidth/2 - 1, time=500 } )
+            transition.moveTo( xp.xpEmiter, { x=xp.xpBarStart.x + xp.xpBarMiddle.width* newScale + xp.xpBarStart.contentWidth/2 + xp.xpBarEnd.contentWidth/2 - 1, time=500 } )
             
           
-            comboText.text = "HIGHEST COMBO: " ..  gameResult.combo
-            comboTextS.text = "HIGHEST COMBO: " ..   gameResult.combo
+            comboText.text = getTransaltedText("HighestCombo")  ..  ": " ..  gameResult.combo
+            comboTextS.text = getTransaltedText("HighestCombo")  ..  ": " ..   gameResult.combo
             comboText.alpha = 1
             comboTextS.alpha = 1
 
@@ -916,7 +1194,7 @@ local function showGameOver( gameResult , isFirstLoad)
                     y = 12,
                     width = 300,     --required for multi-line and alignment
                     font = "UnitedItalicRgHv",   
-                    fontSize = 8,
+                    fontSize = 10,
                     align = "center"  --new alignment parameter
                 }
 
@@ -927,17 +1205,11 @@ local function showGameOver( gameResult , isFirstLoad)
                     x = 420,
                     y = 20,
                     --width = 230,     --required for multi-line and alignment
-                    font = "UnitedSansRgHv",   
+                    font = "UnitedSansRgStencil",   
                     fontSize = 25,
                     align = "center"  --new alignment parameter
                 }
 
-
-              --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
-               -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
-
-
-                --oosterHeaderText.y =   boosterHeaderText.y  + (display.actualContentHeight - display.contentHeight)/2  
 
                
 
@@ -1075,7 +1347,7 @@ local function showGameOver( gameResult , isFirstLoad)
                       day1Text.y = card.y + card.contentHeight/2  - 20
 
                        if i == 7 then
-                        day1Text.text = "1"  .. " Supa Gems" 
+                        day1Text.text = "1"  .. getTransaltedText("SupaGems") 
                        else
                         day1Text.text = 20 + i * 20  .. " Coins" 
                        end 
@@ -1282,6 +1554,7 @@ function scene:create( event )
 
      gameOverGroup = display.newGroup()
      newLevelGroup = display.newGroup()
+     promotionGroup = display.newGroup()
      newItemsGroup = display.newGroup()
      dailyRewardGroup = display.newGroup()
 
@@ -1341,9 +1614,9 @@ function scene:create( event )
             
             commonData.buttonSound()
 
-
             gameOverGroup.alpha = 1
             newLevelGroup.alpha = 0
+            promotionGroup.alpha = 0
             
           end
           return true
@@ -1380,6 +1653,9 @@ function scene:create( event )
      newLevelGroup:insert(newItemsGroup)
      
      newLevelGroup:insert(newLevelOkBtn)
+
+
+
 
      
       
@@ -1431,6 +1707,7 @@ function scene:create( event )
           --composer.gotoScene( "game" , options )
           --composer.hideOverlay(true, "fade", 400 )
           sceneGroup.alpha = 0
+          isGameOverActive = false
           parent:outerRestartGame()
           commonData.kidoz.hide( "panelView")
           
@@ -1618,22 +1895,7 @@ function scene:create( event )
          if ( "ended" == event.phase ) then
           notification.alpha = 0 
 
-          -- if tip then
-          --   tip:removeSelf()
-          --   tip = nil
-          -- end  
-
-          -- if tip2 then
-          --   tip2:removeSelf()
-          --   tip2 = nil
-          -- end  
-
-          -- if tip3 then
-          --   tip3:removeSelf()
-          --   tip3 = nil
-          -- end  
-
-
+        
           if dailyReward then
             dailyReward:removeSelf()
             dailyReward = nil
@@ -1736,8 +1998,8 @@ function scene:create( event )
           x = 240,
           y = 265,
           id = "rateUsButton",
-          defaultFile = buttonsSet .. "/End/RateUp.png",
-          overFile = buttonsSet .. "/End/RateDown.png",
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
           onEvent = rateUsListener
       }
       rateUsButton.xScale =  (display.contentWidth*0.25) / rateUsButton.width
@@ -1900,7 +2162,7 @@ function scene:create( event )
         text = "",     
         x = 420,
         y = 20,
-        width = 130,     --required for multi-line and alignment
+        --width = 130,     --required for multi-line and alignment
         font = "UnitedSansRgHv",   
         fontSize = 20,
         align = "center"  --new alignment parameter
@@ -1913,8 +2175,9 @@ function scene:create( event )
     highScoreTitleShadow:setFillColor(128/255,97/255,40/255)
     highScoreTitleShadow.y = highScoreTitle.y + 2
 
-    highScoreTitle.text = "HIGH SCORE:"
-    highScoreTitleShadow.text = "HIGH SCORE:"
+    highScoreTitle.text = getTransaltedText("Highscore") 
+    highScoreTitleShadow.text = getTransaltedText("Highscore") 
+
     
     highScoreText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
     highScoreShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
@@ -1922,7 +2185,8 @@ function scene:create( event )
     highScoreShadowText.y = highScoreText.y + 2
     highScoreShadowText:setFillColor(69/255,69/255,69/255)
 
-    highScoreTitle.x =   highScoreTitle.x  + (display.actualContentWidth - display.contentWidth)/2  
+    local titleWidth = math.max(highScoreTitle.contentWidth , 100)
+    highScoreTitle.x =  470 - titleWidth/2  + (display.actualContentWidth - display.contentWidth)/2  
     highScoreTitleShadow.x = highScoreTitle.x 
     highScoreText.x = highScoreTitle.x
     highScoreShadowText.x = highScoreTitle.x
@@ -1976,7 +2240,7 @@ function scene:create( event )
         x = 420,
         y = 20,
         --width = 230,     --required for multi-line and alignment
-        font = "UnitedSansRgHv",   
+        font = "UnitedSansRgStencil",   
         fontSize = 25,
         align = "center"  --new alignment parameter
     }
@@ -2068,7 +2332,14 @@ function scene:create( event )
     challengesText.x = 240
     
     challengesText.y = 160 - background.contentHeight/2 + challengesText.contentHeight/2 + 3
-    challengesText.text = "CHALLENGES" 
+    challengesText.text = getTransaltedText("Challenges") 
+
+    if  challengesText.contentWidth > 150 then
+        challengesText.xScale  =  150  / challengesText.contentWidth
+        challengesText.yScale  = challengesText.xScale 
+        --challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+    end
+
 
     chalengesTable.isConstant = true
     challengesText.isConstant = true
@@ -2077,37 +2348,37 @@ function scene:create( event )
     scoreScreenText:setFillColor(255/255,241/255,208/255)
     scoreScreenText.x = 240
     scoreScreenText.y = 160 - background.contentHeight/2 + scoreScreenText.contentHeight/2 + 3
-    scoreScreenText.text = "SCORE" 
+    scoreScreenText.text = getTransaltedText("Score") 
 
-    xpBarBG  = display.newImage("BlueSet/End/XPBarBG.png")
-    xpBarBG:scale(0.5,0.5)
-    xpBarBG.x = 240
-    xpBarBG.y = 240
+    xp.xpBarBG  = display.newImage("BlueSet/End/XPBarBG.png")
+    xp.xpBarBG:scale(0.5,0.5)
+    xp.xpBarBG.x = 240
+    xp.xpBarBG.y = 240
 
-    xpBarStart  = display.newImage("BlueSet/End/XPBarStart.png")
-    xpBarStart:scale(0.5,0.5)
-    xpBarStart.x = xpBarBG.x - xpBarBG.contentWidth / 2 + xpBarStart.contentWidth/2 + 2
-    xpBarStart.y = 240
+    xp.xpBarStart  = display.newImage("BlueSet/End/XPBarStart.png")
+    xp.xpBarStart:scale(0.5,0.5)
+    xp.xpBarStart.x = xp.xpBarBG.x - xp.xpBarBG.contentWidth / 2 + xp.xpBarStart.contentWidth/2 + 2
+    xp.xpBarStart.y = 240
 
-    xpBarMiddle  = display.newImage("BlueSet/End/XPBarMiddle.png")
-    xpBarMiddle:scale(0.5,0.5)
-    xpBarMiddle.x = xpBarStart.x + xpBarMiddle.contentWidth / 2 + xpBarStart.contentWidth/2 
-    xpBarMiddle.y = 240
+    xp.xpBarMiddle  = display.newImage("BlueSet/End/XPBarMiddle.png")
+    xp.xpBarMiddle:scale(0.5,0.5)
+    xp.xpBarMiddle.x = xp.xpBarStart.x + xp.xpBarMiddle.contentWidth / 2 + xp.xpBarStart.contentWidth/2 
+    xp.xpBarMiddle.y = 240
 
-    xpBarEnd  = display.newImage("BlueSet/End/XPBarFinish.png")
-    xpBarEnd:scale(0.5,0.5)
-    xpBarEnd.x = xpBarMiddle.x + xpBarMiddle.contentWidth / 2 + xpBarEnd.contentWidth/2 - 1
-    xpBarEnd.y = 240
+    xp.xpBarEnd  = display.newImage("BlueSet/End/XPBarFinish.png")
+    xp.xpBarEnd:scale(0.5,0.5)
+    xp.xpBarEnd.x = xp.xpBarMiddle.x + xp.xpBarMiddle.contentWidth / 2 + xp.xpBarEnd.contentWidth/2 - 1
+    xp.xpBarEnd.y = 240
 
-    xpEmiter = particleDesigner.newEmitter( "fire1.json" )
-    xpEmiter:scale(0.05,0.005)
-    xpEmiter.x = xpBarEnd.x 
-    xpEmiter.y = 240
+    xp.xpEmiter = particleDesigner.newEmitter( "fire1.json" )
+    xp.xpEmiter:scale(0.05,0.005)
+    xp.xpEmiter.x = xp.xpBarEnd.x 
+    xp.xpEmiter.y = 240
 
     --boosterHandImg:scale(0.4,0.4)
 
-    nextLevelText.x = xpBarBG.x + xpBarBG.contentWidth / 2 + 15
-    levelText.x =  xpBarBG.x - xpBarBG.contentWidth / 2  - 15
+    nextLevelText.x = xp.xpBarBG.x + xp.xpBarBG.contentWidth / 2 + 15
+    levelText.x =  xp.xpBarBG.x - xp.xpBarBG.contentWidth / 2  - 15
     
     rightArrowButton.y = scoreScreenText.y 
     leftArrowButton.y = rightArrowButton.y 
@@ -2128,11 +2399,11 @@ function scene:create( event )
      scoreBox:insert(scoreText)    
      scoreBox:insert(comboTextS) 
      scoreBox:insert(comboText)    
-     scoreBox:insert(xpBarBG)    
-     scoreBox:insert(xpBarStart)    
-     scoreBox:insert(xpBarMiddle)  
-     scoreBox:insert(xpBarEnd) 
-     scoreBox:insert(xpEmiter) 
+     scoreBox:insert(xp.xpBarBG)    
+     scoreBox:insert(xp.xpBarStart)    
+     scoreBox:insert(xp.xpBarMiddle)  
+     scoreBox:insert(xp.xpBarEnd) 
+     scoreBox:insert(xp.xpEmiter) 
      
      scoreBox:insert(levelText)  
      scoreBox:insert(nextLevelText) 
@@ -2204,7 +2475,8 @@ function scene:create( event )
      sceneGroup:insert(gameOverGroup) 
      sceneGroup:insert(newLevelGroup) 
      sceneGroup:insert(dailyRewardGroup) 
-     
+     sceneGroup:insert(promotionGroup) 
+
 
      
      
@@ -2230,6 +2502,7 @@ function scene:show( event )
       -- playButton.alpha = 0
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        promotionGroup.alpha =0 
 
       parent = event.parent
        local isSimulator = (system.getInfo("environment") == "simulator");

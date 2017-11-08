@@ -6,6 +6,7 @@ local spine = require "spine-corona.spine"
 
 local comments = {}
 local swooshsound  = audio.loadSound( "Comments/WordSwoosh.mp3" )
+local resumeSound  = audio.loadSound( "Comments/ResumeSound.mp3" )
 function comments.new (skeletonData)
 
 	local self = {	
@@ -34,10 +35,12 @@ function comments.new (skeletonData)
 	-- self.rewards[6].animation = "Wow"
 
 	
-	self.rewards[1].sound = audio.loadSound( "sounds/Amazing.wav" )
-	self.rewards[2].sound = audio.loadSound( "sounds/OutterSpace.wav")
-	self.rewards[3].sound = audio.loadSound( "sounds/Unbelievable.wav" )
-	self.rewards[4].sound = audio.loadSound( "sounds/OhMy.wav" )
+	self.rewards[1].sound = audio.loadSound( "sounds/Amazing.mp3" )
+	self.rewards[2].sound = audio.loadSound( "sounds/OutterSpace.mp3")
+	self.rewards[3].sound = audio.loadSound( "sounds/Unbelievable.mp3" )
+	self.rewards[4].sound = audio.loadSound( "sounds/OhMy.mp3" )
+
+
 	-- self.rewards[5].sound = audio.loadSound( "Comments/Superb 2.mp3" )	
 	-- self.rewards[6].sound = audio.loadSound( "Comments/Wow 2.mp3" )
 	
@@ -134,8 +137,10 @@ function comments.new (skeletonData)
 	end
 
 	local function localPlaySound(event)	
+		print("playSound")
 		 local params = event.source.params           
          commonData.playSound( params.sound )
+         print("playSound end" )
 		
 	end
 
@@ -173,6 +178,7 @@ function comments.new (skeletonData)
 	end
 
 	function self:resume()	
+		print("resume")
 		--Runtime:addEventListener("enterFrame", handleFrame)
 		Runtime:addEventListener("enterFrame", handleFrame)		
 		isFirst = true
@@ -184,8 +190,13 @@ function comments.new (skeletonData)
 		self.state:setAnimationByName(0, animationName, true, 0) --  commentsYell
 		local animation = self.skeletonData:findAnimation(animationName)
 
+		local ts = timer.performWithDelay(1, localPlaySound, 1)
+        ts.params = {sound = resumeSound}
+
+
 		local duration = animation.duration / deltaMulti
 		timer.performWithDelay(duration * 1000, pauseAnimation, 1)
+		print("end")
 		
 		return duration 
 	end

@@ -34,7 +34,37 @@ local M = {}
 
       local gemIdx = 1
  
-       
+      items.gems[gemIdx] = {}
+      items.gems[gemIdx].name = "Starter pack"
+      items.gems[gemIdx].cashCost = 3
+      items.gems[gemIdx].image = "images/shop/gems/NorthShawIcon.png"      
+      items.gems[gemIdx].id = "starterPack"       
+      items.gems[gemIdx].storeId = "com.ld.starterPack" 
+      items.gems[gemIdx].hidden = true
+      items.gems[gemIdx].specialOffer = true
+      
+      gemIdx =gemIdx +  1
+      items.gems[gemIdx] = {}
+      items.gems[gemIdx].name = "Value pack"
+      items.gems[gemIdx].cashCost = 3
+      items.gems[gemIdx].image = "images/shop/gems/ShakesPromo.png"      
+      items.gems[gemIdx].id = "shakesPack"       
+      items.gems[gemIdx].storeId = "com.ld.shakesPack" 
+      items.gems[gemIdx].hidden = true
+      items.gems[gemIdx].specialOffer = true
+      
+      gemIdx =gemIdx +  1
+      items.gems[gemIdx] = {}
+      items.gems[gemIdx].name = "Value pack"
+      items.gems[gemIdx].cashCost = 3
+      items.gems[gemIdx].image = "images/shop/gems/RastaMatadorPromo.png"      
+      items.gems[gemIdx].id = "megaPack"       
+      items.gems[gemIdx].storeId = "com.ld.megaPack" 
+      items.gems[gemIdx].hidden = true
+      items.gems[gemIdx].specialOffer = true
+
+
+      gemIdx =gemIdx +  1
       items.gems[gemIdx] = {}
       items.gems[gemIdx].name = "3 SUPA GEMS"
       items.gems[gemIdx].cashCost = 3
@@ -139,7 +169,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/TwistingTiger.png"
       items.skins[skinIdx].id = "TwistingTiger" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 2
+      items.skins[skinIdx].level = 3
    
       skinIdx =skinIdx +  1
 
@@ -151,7 +181,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/CoolJoe.png"
       items.skins[skinIdx].id = "CoolJoe" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 3
+      items.skins[skinIdx].level = 4
 
       skinIdx =skinIdx +  1
 
@@ -172,7 +202,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/ElMatador.png"
       items.skins[skinIdx].id = "ElMatador"
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 5
+      items.skins[skinIdx].level = 6
 
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -182,7 +212,7 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/Rasta.png"
       items.skins[skinIdx].id = "Rasta" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 5      
+      items.skins[skinIdx].level = 7      
 
 
       local ballIdx = 1
@@ -218,7 +248,7 @@ local M = {}
       items.balls[ballIdx].imgScale = 1        
       items.balls[ballIdx].id = "WhiteBall"       
       items.balls[ballIdx].packCategory = 3
-      items.balls[ballIdx].level = 7
+      items.balls[ballIdx].level = 4
 
 
        ballIdx =  ballIdx + 1
@@ -276,7 +306,7 @@ local M = {}
       items.balls[ballIdx].imgScale = 1   
       items.balls[ballIdx].id = "PowerBall" 
       items.balls[ballIdx].packCategory = 4
-      items.balls[ballIdx].level = 13
+      items.balls[ballIdx].level = 11
 
       
 
@@ -359,7 +389,7 @@ local M = {}
       items.fields[fieldIdx].imgScale = 1  
       items.fields[fieldIdx].id = "EagleField"       
       items.fields[fieldIdx].packCategory = 4
-      items.fields[fieldIdx].level = 13
+      items.fields[fieldIdx].level = 12
 
 
        local boostIdx = 1
@@ -430,7 +460,7 @@ local M = {}
       items.boosts[boostIdx].name = "Pixel"
       items.boosts[boostIdx].coinsCost = 300
       items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
+      items.boosts[boostIdx].image = "images/boostparticles/PixelFire.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "pixelBall"       
       items.boosts[boostIdx].packCategory = 4
@@ -443,38 +473,16 @@ local M = {}
       items.boosts[boostIdx].name = "Ultra"
       items.boosts[boostIdx].coinsCost = 300
       items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
+      items.boosts[boostIdx].image = "images/boostparticles/ClassicFire.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "ultraBall" 
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 0
+      items.boosts[boostIdx].level = 14
    --   items.boosts[boostIdx].color = {r= g b}
 
 
 
     
-
-      --   boostIdx =  boostIdx + 1
-      -- items.boosts[boostIdx] = {}
-      -- items.boosts[boostIdx].name = "Fireworks"
-      -- items.boosts[boostIdx].coinsCost = 300
-      -- items.boosts[boostIdx].gemsCost = 2
-      -- items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
-      -- items.boosts[boostIdx].imgScale = 1  
-      -- items.boosts[boostIdx].id = "fireworks"       
-      -- items.boosts[boostIdx].packCategory = 4
-      -- items.boosts[boostIdx].level = 13
-
-      --   boostIdx =  boostIdx + 1
-      -- items.boosts[boostIdx] = {}
-      -- items.boosts[boostIdx].name = "Ring"
-      -- items.boosts[boostIdx].coinsCost = 300
-      -- items.boosts[boostIdx].gemsCost = 2
-      -- items.boosts[boostIdx].image = "images/shop/fields/dummy.png"
-      -- items.boosts[boostIdx].imgScale = 1  
-      -- items.boosts[boostIdx].id = "ring"       
-      -- items.boosts[boostIdx].packCategory = 4
-      -- items.boosts[boostIdx].level = 13
 
 
 
@@ -520,4 +528,23 @@ end
       M.items = items 
       M.packCategories = packCategories 
       M.itemsByLevel = itemsByLevel
+
+      M.getActiveItems = function (cat)
+              local index = 1    
+              local activeItems = {}
+            
+               
+            if (items[cat]) then  
+                  for i=1,#items[cat] do
+                        if (not items[cat][i].hidden) then
+                              activeItems[index] =items[cat][i]
+                              index = index + 1
+                        end          
+                  end
+            end
+
+            return activeItems
+              
+      end
+
 return M

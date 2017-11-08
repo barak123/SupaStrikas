@@ -2,7 +2,7 @@
 local commonData = require( "commonData" )
 local composer = require( "composer" )
 local widget = require( "widget" )
---parse = require( "mod_parse" )
+
 require( "game_config" )
 
 require "translation"
@@ -13,7 +13,9 @@ local mime=require("mime")
 local openssl = require "plugin.openssl"
 local isFlurryReady = false
 local shouldLogOpens = false
-
+local packsButton = nil
+local playButton = nil
+local shopButton = nil 
 
 commonData.catalog = require("catalog")
 
@@ -22,7 +24,7 @@ if ( system.getInfo("platformName") == "Android" ) then
 end
  
 local function gpgsLoginListener( event )
-    print( "Login event:", json.prettify(event) )
+    
 
     if commonData.loadAfterLogin then
       commonData.loadAfterLogin()
@@ -45,12 +47,12 @@ commonData.kidoz = require( "plugin.kidoz" )
 local function adListener( event )
  
     if ( event.phase == "init" ) then  -- Successful initialization
-        print( event.provider )
+        
         -- Load a KIDOZ panel view ad
         commonData.kidoz.load( "panelView", { adPosition="top" } )
  
     elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
-        print( event.type )
+        
         -- Show the ad
         
     end
@@ -77,9 +79,7 @@ local function logAppOpens()
     
 
     if commonData.gameData and commonData.gameData.appOpened  == opensToAlert[i]  then  
-      -- print("appOpened")
-      -- print(commonData.gameData.appOpened  )
-
+      
          if system.getInfo("environment") ~= "simulator" then
            local version = ""
              if  commonData.gameData.abVersion then
@@ -92,9 +92,7 @@ local function logAppOpens()
               totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
               avgScore =  tostring(commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)) } )
         end
-        -- print("app opened "  ..  tostring(commonData.gameData.appOpened) .. " times: "  .. tostring( commonData.gameData.gamesCount)  .. "," ..  tostring(  commonData.gameData.highScore)  .. "," .. 
-        --      tostring(  commonData.gameData.coins + commonData.gameData.usedcoins)  .. "," .. tostring(commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1))) 
-
+        
         break
     end  
   end  
@@ -438,14 +436,14 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
         io.close( file )
 
          local function gpgsSnapshotAfterSaveListener( event )
-          print( "gpgsSnapshotAfterSaveListener", json.prettify(event) )
+          --print( "gpgsSnapshotAfterSaveListener", json.prettify(event) )
         end
            
         local function gpgsSnapshotOpenForSaveListener( event )
             if not event.isError then
-              print("about to save")
-              print(contents)
-              print("end of data")
+              -- print("about to save")
+              -- print(contents)
+              -- print("end of data")
                 event.snapshot.contents.write( encodeB64(encryptedData) )  -- Write new data as a JSON string into the snapshot
                 commonData.gpgs.snapshots.save({
                     snapshot = event.snapshot,
@@ -721,7 +719,7 @@ Runtime:addEventListener( "system", systemEvents )
      local  buttonsSet = "BlueSet"
       
       -- Create the widget
-      local playButton = widget.newButton
+       playButton = widget.newButton
       {
           x = 160, 
           y = 110,
@@ -733,44 +731,15 @@ Runtime:addEventListener( "system", systemEvents )
          overFile = "MainMenu/EmptyBtnDown.png",
           
           label = getTransaltedText("Play"),
-          labelAlign = "left",
+          --labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 80 , 
-          labelXOffset = 90,
+          labelXOffset = -80,
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
 
       }
 
-      -- local coinTextOptions = 
-      -- {
-         
-      --     text = "",              
-      --     font = "UnitedSansRgHv",   
-      --     fontSize = 40,
-      --     align = "left"  --new alignment parameter
-      -- }
-
-
-                
       
-      -- local playText = display.newText(coinTextOptions) 
-      -- playText.text = "PLAY"
-      
-      -- playText:setFillColor(255/255,241/255,208/255)
-
-      -- local snapshot = display.newSnapshot( 400, 200 )
-      -- snapshot.x = display.contentCenterX
-      -- snapshot.y = display.contentCenterY-200
-
-       
-      -- snapshot.group:insert( playText )
-
-       
-      -- snapshot.fill.effect = "filter.bulge"
-      -- snapshot.fill.effect.intensity = 1.8
-
-      -- playButton:setLabel("PLAY")
-
 
        playButton.xScale =  (display.actualContentWidth*0.45) / playButton.width
        playButton.yScale = playButton.xScale  
@@ -779,7 +748,7 @@ Runtime:addEventListener( "system", systemEvents )
       playButton.x = playButton.x - (display.actualContentWidth - display.contentWidth)/2
 
 
-      local shopButton = widget.newButton
+      shopButton = widget.newButton
       {
           x = 160,
           y = 195,
@@ -792,10 +761,10 @@ Runtime:addEventListener( "system", systemEvents )
           
           
           label = getTransaltedText("Shop"),
-          labelAlign = "left",
+          --labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 64 , 
-          labelXOffset = 120,
+          --labelXOffset = 120,
           labelColor = { default={ gradient}, over={ 255/255,241/255,208/255 } }
       }
 
@@ -806,7 +775,7 @@ Runtime:addEventListener( "system", systemEvents )
        shopButton.y =  playButton.y + shopButton.contentHeight /2  + playButton.contentHeight /2 + 5
 
 
-    local packsButton = widget.newButton
+     packsButton = widget.newButton
       {
           x = 160,
           y = 195,
@@ -819,13 +788,14 @@ Runtime:addEventListener( "system", systemEvents )
           
           
           label = getTransaltedText("Packs"),
-          labelAlign = "left",
+          --labelAlign = "left",
           font = "UnitedItalicRgHv",  
           fontSize = 64 , 
-          labelXOffset = 150,
+          --labelXOffset = 150,
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
-        packsButton.xScale =  (display.actualContentWidth*0.25) / packsButton.width
+
+       packsButton.xScale =  (display.actualContentWidth*0.25) / packsButton.width
        packsButton.yScale = packsButton.xScale  
        packsButton.x = packsButton.x - (display.actualContentWidth - display.contentWidth)/2
        packsButton.y =  shopButton.y + packsButton.contentHeight /2  + shopButton.contentHeight /2 + 5
@@ -918,7 +888,7 @@ Runtime:addEventListener( "system", systemEvents )
           left = 280,
           top = 180,
           id = "muteButton",
-          defaultFile = "ExtrasMenu/Mute.png",
+          defaultFile = "ExtrasMenu/UnMute.png",
           overFile = "ExtrasMenu/UnMuteDown.png",
           onEvent = muteListener
       }
@@ -932,7 +902,7 @@ Runtime:addEventListener( "system", systemEvents )
           left = 280,
           top = 180,
           id = "unMuteButton",
-          defaultFile = "ExtrasMenu/UnMute.png",
+          defaultFile = "ExtrasMenu/Mute.png",
           overFile = "ExtrasMenu/MuteDown.png",
           onEvent = unMuteListener
       }
@@ -942,6 +912,49 @@ Runtime:addEventListener( "system", systemEvents )
       unMuteButton.xScale =   unMuteButton.yScale 
 
       unMuteButton.alpha = 0
+
+      local changeLangGroup = display.newGroup()
+
+      local function changeLangListener( event )
+         if ( "ended" == event.phase ) then
+              commonData.playSound( selectMenuSound ) 
+              changeLangGroup.alpha = 1 - changeLangGroup.alpha          
+          end
+           return true
+      end
+
+      local function pickLangListener( event )
+         if ( "ended" == event.phase ) then
+              commonData.playSound( selectMenuSound ) 
+              commonData.gameData.language = event.target.id
+              --setTransalteLang(event.target.id)  
+              changeLangGroup.alpha = 0
+              
+               playButton:setLabel(getTransaltedText("Play")) 
+               shopButton:setLabel(getTransaltedText("Shop")) 
+               packsButton:setLabel(getTransaltedText("Packs")) 
+
+               playButton.labelAlign = "left"
+               commonData.saveTable(commonData.gameData, GAME_DATA_FILE , nil , true)
+          end
+           return true
+      end
+      
+
+      local changeLangButton = widget.newButton
+      {
+          left = 380,
+          top = 180,
+          id = "changeLangButton",
+          defaultFile = "ExtrasMenu/LangUp.png",
+          overFile = "ExtrasMenu/LangDown.png",
+          onEvent = changeLangListener
+      }
+
+       
+      changeLangButton.yScale = (display.actualContentHeight *0.1) / changeLangButton.height
+      changeLangButton.xScale =  changeLangButton.yScale 
+
 
 
 
@@ -983,10 +996,12 @@ Runtime:addEventListener( "system", systemEvents )
         muteButton.y = achivButton.y
         unMuteButton.y = achivButton.y
         fbLikeButton.y = achivButton.y
+        changeLangButton.y  = achivButton.y
         
         muteButton.x = achivButton.x + (achivButton.contentWidth )/2  + (muteButton.contentWidth )/2   + 10
         unMuteButton.x = muteButton.x
         fbLikeButton.x = muteButton.x + (muteButton.contentWidth )/2  + fbLikeButton.contentWidth/2 + 10
+        changeLangButton.x  = fbLikeButton.x + (changeLangButton.contentWidth )/2  + fbLikeButton.contentWidth/2 + 10
       
 
       local  playIcon = display.newImage("MainMenu/IcoPlay.png")
@@ -1008,6 +1023,33 @@ Runtime:addEventListener( "system", systemEvents )
       packsIcon.xScale = packsIcon.yScale
       packsIcon.y = packsButton.y
       packsIcon.x = packsButton.x - packsButton.contentWidth/2 + packsIcon.contentWidth/2  + 6
+
+
+      local  langBar = display.newImage("ExtrasMenu/LangBar.png")
+      langBar.yScale = (display.actualContentHeight *0.1) / langBar.height      
+       langBar.xScale = langBar.yScale
+       changeLangGroup:insert(langBar)
+       langBar.y = changeLangButton.y - (changeLangButton.contentHeight )/2  - langBar.contentHeight/2  
+       langBar.x  = changeLangButton.x 
+      
+
+      local allLanguages = {"en","he","es","de","fr","ar","ru","it","pl","pt"}
+
+      for i=1,#allLanguages do
+        local pickLangButton = widget.newButton
+          {
+              x = changeLangButton.x + (changeLangButton.contentWidth )/2 - 158  + 25 * i,
+              y = langBar.y,
+              id = allLanguages[i],
+              defaultFile = "images/languages/" .. allLanguages[i] .. ".png",
+              --overFile = "ExtrasMenu/UnMuteDown.png",
+              onEvent = pickLangListener
+          }
+          changeLangGroup:insert(pickLangButton)
+      end
+
+      changeLangGroup.alpha = 0
+
 
       
       -- playText.x = playButton.x
@@ -1066,43 +1108,7 @@ Runtime:addEventListener( "system", systemEvents )
 
       hero.skeleton.group.x = hero.skeleton.group.x + (display.actualContentWidth - display.contentWidth)/2
       
-      -- local cloudsSpine =  require ("clouds")
-      -- clouds = cloudsSpine.new()
-
-      -- clouds.skeleton.group.x = 100
-      
-      -- clouds.skeleton.group.y = 60
-
-      local params = nil
-      local function parseNetworkListener ()
-          response = event.response
-          decodedResponse = json.decode(response)
-          --print (decodedResponse)
-
-      end
-      --network.request( “https://api.parse.com/1/classes/coffee” ,”GET”, parseNetworkListener, params)
-      --network.request( "https://api.parse.com/little-dribble/classes/test" ,"GET", parseNetworkListener, params)
---https://www.parse.com/apps/little-dribble/collections#class/test
-      
-      -- local function networkListener( event )
-      --       if ( event.isError ) then
-      --           print( "Network error - download failed" )
-      --       elseif ( event.phase == "began" ) then
-      --           print( "Progress Phase: began" )
-      --       elseif ( event.phase == "ended" ) then
-      --           print( "Displaying response image file" )
-      --           -- myImage = display.newImage( event.response.filename, event.response.baseDirectory, 60, 40 )
-      --           -- myImage.alpha = 0
-      --           -- transition.to( myImage, { alpha=1.0 } )
-      --       end
-      --   end
-
-      --   local params = {}
-      --   params.progress = true
-
-
-      
-      
+     
       
      sceneGroup:insert(background)   
      sceneGroup:insert(abstract)   
@@ -1141,6 +1147,11 @@ Runtime:addEventListener( "system", systemEvents )
       
       sceneGroup:insert(muteButton)
       sceneGroup:insert(unMuteButton)
+      sceneGroup:insert(changeLangGroup)
+      sceneGroup:insert(changeLangButton)
+      
+      
+      
 
  
      sceneGroup:insert(splash)
@@ -1174,6 +1185,8 @@ function scene:show( event )
       if splash then
           splash:removeSelf()
           splash = nil
+          local shopHdl = require("shop")
+          shopHdl:initStore()
           loadGameScene()
       end
     
@@ -1182,7 +1195,7 @@ function scene:show( event )
    local function loadRemoteTable(filename , callback )
 
         local function gpgsSnapshotOpenForReadListener( event )
-           print( "gpgsSnapshotOpenForReadListener")
+           
             if event.isError then
               callback(commonData.loadTable(filename))
             else  
@@ -1190,22 +1203,19 @@ function scene:show( event )
 
                   
                   local decryptedData = cipher:decrypt (decodeB64(data) , dataFileEncKey )
-                  print( decryptedData)
+                  
                   myTable = json.decode(decryptedData);
 
                  
-                  print( "Read successfully")
-                  print( "myTable:", json.prettify(myTable) )
-                  
                 callback(myTable)
             end
         end
  
        if isSimulator or  system.getInfo("platformName") ~= "Android" or not commonData.gpgs.isConnected() then
-        print( "Load From Local")
+        
         callback(commonData.loadTable(filename))
        else
-        print( "Load From Remote")
+        
           commonData.gpgs.snapshots.open({
               filename = filename,
               listener = gpgsSnapshotOpenForReadListener
@@ -1223,12 +1233,8 @@ function scene:show( event )
 
           commonData.shopItems["Klaus"] =true
           commonData.shopItems["Stadium"] =true
-          --commonData.shopItems["Neymar"] =true
-          
-          commonData.shopItems["Default"] =true
-          
+          commonData.shopItems["fireBall"] =true
           commonData.shopItems["NormalBall"] =true
-          commonData.shopItems["White"] =true
           
        
           if (not commonData.gameData.selectedSkin or not commonData.shopItems[commonData.gameData.selectedSkin]) then
@@ -1289,7 +1295,7 @@ function scene:show( event )
             commonData.gameData.adsPressed = 0
             commonData.gameData.madePurchase = false
             commonData.gameData.daysInARow = false
-            
+            commonData.gameData.language = system.getPreference( "locale", "language" )
             commonData.gameData.unlockedAchivments = {}
             commonData.gameData.unlockedChallenges = {}
             commonData.gameData.selectedSkin = "Klaus"
@@ -1305,8 +1311,15 @@ function scene:show( event )
          
         
           if (not commonData.gameData.packs ) then
-            commonData.gameData.packs = 1
+            commonData.gameData.packs = 0
           end
+
+          if (not commonData.gameData.language ) then
+           commonData.gameData.language = system.getPreference( "locale", "language" )
+          end
+          playButton:setLabel(getTransaltedText("Play")) 
+          shopButton:setLabel(getTransaltedText("Shop")) 
+          packsButton:setLabel(getTransaltedText("Packs")) 
 
           if (not commonData.gameData.packsBought ) then
              commonData.gameData.packsBought = 0
@@ -1410,12 +1423,12 @@ function scene:show( event )
      
      
    elseif ( phase == "did" ) then
-    --print("shoooowowiwiw   selectedSkin")
+    
     hero:init()
       hero:menuIdle()
 
        if splash then
-        local splashSound =  audio.loadSound( "sounds/123 Supa Strikas.wav" )
+        local splashSound =  audio.loadSound( "sounds/123 Supa Strikas.mp3" )
         commonData.playSound(splashSound)
       end
   
@@ -1432,11 +1445,11 @@ function scene:show( event )
         
        else 
 
-          print("no game data")
+          
           loadRemoteTable(GAME_DATA_FILE , loadGameData)        
 
           commonData.loadAfterLogin = function ( )
-            print("loadAfterLogin")
+            
             loadRemoteTable(GAME_DATA_FILE , loadGameData)        
           end
        end -- end common data not exists
@@ -1468,13 +1481,13 @@ function scene:hide( event )
       -- Called when the scene is on screen (but is about to go off screen).
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.
-       --print("menuuuuusuububuubu hideeeee1")
+       --
         hero:pause()
 
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
      
-      --print("menuuuuusuububuubu hideeeee")
+      
 
       --clouds:pause()
    end

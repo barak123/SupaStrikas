@@ -13,6 +13,7 @@ local gamesCountText = nil
 local perfectRatioText = nil
 local distanceText = nil
 local comboText = nil
+local backButton = nil
 
 ---------------------------------------------------------------------------------
 -- All code outside of the listener functions will only be executed ONCE
@@ -79,7 +80,7 @@ function scene:create( event )
         text = "",     
         x = 420,
         y = 20,
-        width = 300,     --required for multi-line and alignment
+        width = 220,     --required for multi-line and alignment
         font = "troika",   
         fontSize = 20,
         align = "left"  --new alignment parameter
@@ -116,21 +117,41 @@ function scene:create( event )
       return true
      end
 
-       local backButton = widget.newButton
+        local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
+      }
+
+
+         backButton = widget.newButton
       {
           x = 60,
           y = 20,
           id = "backButton",
-          defaultFile = "images/shop/BACK.png",
-          overFile = "images/shop/BACK Down.png",
+           defaultFile = "MainMenu/EmptyBtnUp.png",          
+          overFile = "MainMenu/EmptyBtnDown.png",          
+          label = getTransaltedText("Back"),
+          labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 64 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
           onEvent = backButtonListener
       }
-      backButton:scale(0.5,0.5)
+
+       backButton.xScale =  (display.actualContentWidth*0.25) / backButton.width
+       backButton.yScale = backButton.xScale  
 
       
       backButton.x = display.screenOriginX  + backButton.contentWidth /2
+      local  backIcon = display.newImage("images/IcoBack.png")
+      
+      backIcon.yScale = (backButton.contentHeight * 0.4) / backIcon.contentHeight 
+      backIcon.xScale = backIcon.yScale
+      backIcon.y = backButton.y
+      backIcon.x = backButton.x - backButton.contentWidth/2 + backIcon.contentWidth/2  + 3
 
-
+    
+     
      sceneGroup:insert(background)
      sceneGroup:insert(highScoreText)
      sceneGroup:insert(scoreText)
@@ -143,6 +164,7 @@ function scene:create( event )
 
      
      sceneGroup:insert(backButton)
+     sceneGroup:insert(backIcon)
      --this is what gets called when playButton gets touched
      --the only thing that is does is call the transition
      --from this scene to the game scene, "downFlip" is the
@@ -170,15 +192,16 @@ function scene:show( event )
       if(event.params and event.params.gameData) then
 
            
-             highScoreText.text  = "HIGH SCORE" 
+             highScoreText.text  = getTransaltedText("Highscore") 
              scoreText.text =  commonData.comma_value(event.params.gameData.highScore)
-             gamesCountText.text = "GAMES PLAYED: ".. commonData.comma_value(event.params.gameData.gamesCount)
-             distanceText.text = "TOTAL METERS: ".. commonData.comma_value(event.params.gameData.totalMeters)
-             comboText.text = "HIGHEST COMBO: ".. event.params.gameData.highestCombo
-             averageScoreText.text = "AVARAGE SCORE: ".. 
+             gamesCountText.text = getTransaltedText("GamesPlayed")  .. ": ".. commonData.comma_value(event.params.gameData.gamesCount)
+             distanceText.text =  getTransaltedText("totalMeters")  .. ": " .. commonData.comma_value(event.params.gameData.totalMeters)
+             comboText.text = getTransaltedText("HighestCombo")  .. ": ".. event.params.gameData.highestCombo
+             averageScoreText.text = getTransaltedText("AverageScore")  .. ": ".. 
                                 string.format("%.00f" , event.params.gameData.totalScore / math.max(event.params.gameData.gamesCount, 1))    
-             perfectRatioText.text = "PERFECT RATIO: "..  
+             perfectRatioText.text = getTransaltedText("PerfectRatio") .. ": "..  
                                 string.format("%.00f" , 100 * event.params.gameData.bouncesPerfect / math.max(event.params.gameData.bounces, 1)) .. "%"       
+            backButton:setLabel(getTransaltedText("Back"))                                
 
       end
    end
@@ -194,6 +217,7 @@ function scene:hide( event )
       -- Called when the scene is on screen (but is about to go off screen).
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.
+
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
    end

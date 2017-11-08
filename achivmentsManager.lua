@@ -40,6 +40,40 @@ challenges["marathon"] = {}
 challenges["goldDigger"] = {}
 
 
+challenges["reacehedMeters10"].name = "reacehedMeters10"
+challenges["reacehedMeters20"].name = "reacehedMeters20"
+challenges["reacehedMeters50"].name =  "reacehedMeters50"
+challenges["reacehedMeters100"].name =  "reacehedMeters100"
+challenges["reacehedMeters150"].name =  "reacehedMeters150"
+challenges["reacehedMeters200"].name =  "reacehedMeters200"
+challenges["reacehedMeters300"].name =  "reacehedMeters300"
+challenges["kick5time"].name =  "kick5time"
+challenges["collectCoin"].name =  "collectCoin"
+challenges["jumpObstecale"].name =  "jumpObstecale"
+--challenges["buyPack"] = {}
+challenges["swap6"].name =  "swap6"
+--challenges["changeBall"] = {}
+challenges["perfect4"].name =  "perfect4"
+challenges["perfect6"].name =  "perfect6"
+challenges["scoreGoal"].name =  "scoreGoal"
+challenges["noJump60"].name =  "noJump60"
+challenges["runFromBully"].name =  "runFromBully"
+challenges["maxSpeed"].name =  "maxSpeed"
+
+
+challenges["collectSpreeCoins"].name =  "collectSpreeCoins"
+challenges["collectSpreeCoins2"].name =  "collectSpreeCoins2"
+challenges["topScore350"].name =  "topScore350"
+challenges["topScore3100"].name =  "topScore3100"
+
+challenges["hattrick"].name =  "hattrick"
+challenges["fireGoal"].name =  "fireGoal"
+challenges["headerGoal"].name =  "headerGoal"
+challenges["saltaGoal"].name =  "saltaGoal"
+challenges["marathon"].name =  "marathon"
+challenges["goldDigger"].name =  "goldDigger"
+
+
 -- challenges["changeShoes"] = {}
 -- challenges["changeShirt"] = {}
 -- challenges["changePants"] = {}

@@ -162,6 +162,7 @@ local ob = {
   jumpOverImg = nil,
   kickOverImg = nil,
   redRect = nil,
+  redRectAlpha = nil,
   stageGroup = nil,
   scoreTextMove = nil,
   scoreBg = nil, 
@@ -681,102 +682,6 @@ emitter2.x = 440
 emitter2.y = 120
 
 
--- emitter1:scale(0.05,0.05)
--- local emitter1 = particleDesigner.newEmitter( "fire1.json" )
--- emitter1:scale(0.05,0.05)
-
--- local emitter3 = particleDesigner.newEmitter( "fire3.json" )
--- emitter3:scale(0.05,0.05)
-
--- -- local emitter2 = particleDesigner.newEmitter( "fire2.json" )
--- -- emitter2:scale(0.05,0.05)
-
-
--- local emitter4 = particleDesigner.newEmitter( "fire4.json" )
--- emitter4:scale(0.05,0.05)
-
-
---  local emitter = particleDesigner.newEmitter( "fire.json" )
-
--- fire:insert( emitter1 )
-
--- -- fire:insert( emitter4 )
--- -- fire:insert( emitter3 )
--- fire:insert( emitter2 )
--- --fire:insert( emitter )
-
---local emitterParams = particleDesigner.loadParams(  "fire.json"  )
-
--- local selectedBooster = "ultraBall"
--- for i=1,#boostersConfig[selectedBooster] do
---   local emitter = display.newEmitter( boostersConfig[selectedBooster][i] )
---   emitter:scale(0.005,0.005)
---   fire:insert( emitter )
--- end
-
-
---emitterParams.textureFileName = 
--- local emitter1 = display.newEmitter( icyParams )
-
--- local emitter2 = display.newEmitter( smokeParams )
---local emitter = display.newEmitter( yellowParams )
-
--- emitter:scale(0.005,0.005)
--- emitter1:scale(0.005,0.005)
--- emitter2:scale(0.005,0.005)
-
-
--- emitter1.textureFileName = "images/boostparticles/SmokeParticle.jpg"
--- emitter2.textureFileName = "images/boostparticles/SmokeParticle.jpg"
--- emitter3.textureFileName = "images/boostparticles/SmokeParticle.jpg"
--- emitter4.textureFileName = "images/boostparticles/SmokeParticle.jpg"
--- emitter.startColorRed = 0
--- emitter.endColorRed = 0
--- emitter.startColorGreen = 0
--- emitter.endColorGreen = 0
--- emitter.startColorBlue = 1
--- emitter.endColorBlue = 1
-
--- emitter1.startColorRed = 105/255
--- emitter1.endColorRed = 105/255
--- emitter1.startColorGreen = 105/255
--- emitter1.endColorGreen = 105/255
--- emitter1.startColorBlue = 105/255
--- emitter1.endColorBlue = 105/255
-
-
--- emitter2.startColorRed = 1
--- emitter2.endColorRed = 1
--- emitter2.startColorGreen = 0
--- emitter2.endColorGreen = 0
--- emitter2.startColorBlue = 0
--- emitter2.endColorBlue = 0
-
--- emitter3.startColorRed = 0
--- emitter3.endColorRed = 0
--- emitter3.startColorGreen = 0
--- emitter3.endColorGreen = 0
--- emitter3.startColorBlue = 1
--- emitter3.endColorBlue = 1
-
--- emitter4.startColorRed = 0
--- emitter4.endColorRed = 0
--- emitter4.startColorGreen = 0
--- emitter4.endColorGreen = 0
--- emitter4.startColorBlue = 1
--- emitter4.endColorBlue = 1
-
--- fire:insert( emitter1 )
-
--- -- fire:insert( emitter4 )
--- -- fire:insert( emitter3 )
--- fire:insert( emitter2 )
--- --fire:insert( emitter )
-
-
--- local emitter = particleDesigner.newEmitter( "trippy.json" )
--- emitter:scale(0.05,0.005)
-
 
 fire.isFixedRotation = true
 
@@ -1089,12 +994,6 @@ ob.ultraGlow.y = 273
 ob.ultraGlow.alpha = 0
 
 
-ob.holdDevice = display.newImage("images/HoldDevice.png")
-ob.holdDevice.x = 240
-ob.holdDevice.y = 190
-ob.holdDevice:scale(0.6,0.6)
-ob.holdDevice.alpha = 0
-
 
 
 ob.scoreBg = display.newImage("images/Scoreboard/ScoreBG.png")
@@ -1130,7 +1029,7 @@ multiText.y = ob.scoreBg.y + 8
 multiText.x = ob.scoreBg.x + 100
 multiText:setFillColor(1,206/255,0)
 
-ob.scoreTextMove = display.newText("", 0, 0 , "troika" , 32)
+ob.scoreTextMove = display.newText("", 0, 0 , "UnitedSansRgHv" , 32)
 ob.scoreTextMove.alpha = 0
 ob.scoreTextMove:setFillColor(1,206/255,0)
 
@@ -1144,23 +1043,7 @@ ob.scoreTextMove.x = 840
 ob.scoreTextMove.y = 20
 
 
- local function boosterRectListener( event )   
-
-    if ( event.phase == "ended"  ) then
-      gameStatus.isConfirmationRequired = false
-      ob.holdDevice.alpha = 0      
-      ob.holdDeviceBlocker.alpha = 0
-
-    end
-      return true
- end
-
-ob.holdDeviceBlocker = display.newRect(240, 160, 700,400)
-ob.holdDeviceBlocker:setFillColor(0, 0, 0)
-ob.holdDeviceBlocker.alpha = 0
-ob.holdDeviceBlocker:addEventListener("touch", boosterRectListener )
-ob.holdDevice:addEventListener("touch", boosterRectListener )
-
+ 
 
 ob.instructionBlocker = display.newRect(240, 160, 700,400)
 ob.instructionBlocker:setFillColor(0, 0, 0)
@@ -1197,7 +1080,7 @@ local coinTextOptions =
     x = 100,
     y = 23,
     width = 120,     --required for multi-line and alignment
-    font = "troika",   
+    font = "UnitedSansRgHv",   
     fontSize = 20,
     align = "left"  --new alignment parameter
 }
@@ -1436,7 +1319,7 @@ physics.addBody( gameOverRect2, "kinematic", upperGameOverElement )
 
 
 if ob.isSimulator then
-  --gameOverRect.shouldStopGame = true
+  gameOverRect.shouldStopGame = true
 end
 
 
@@ -1696,7 +1579,7 @@ sounds.perfectSpreeSound2 = audio.loadSound( "Comments/SpreeFireSFX.mp3" )
 sounds.perfectSpreeSound3 = audio.loadSound( "sounds/combo1.mp3" )
 
 sounds.badKickSound = audio.loadSound( "Ball_Kick_Bad.mp3" )
---goodKickeSound = audio.loadSound( "Ball_Kick_Good.wav" )
+
 sounds.fireKickSound = audio.loadSound( "fireballKick.mp3" )  
 sounds.perfectKickSound = audio.loadSound( "Ball_Kick_Perfect.mp3" )
 sounds.trophieGoalSound  = audio.loadSound( "TrophieGoal.mp3" )
@@ -1800,11 +1683,13 @@ commonData.resumeGame = function ()
 
 end
 
-commonData.pauseGame = function ()
-
-      if (gameStatus.isGameActive) then
+commonData.pauseGame = function (event)
+        if (event == nil or  "ended" == event.phase ) then
+          
+           if (gameStatus.isGameActive) then
   
               if (gameStatus.isGamePaused) then
+                print("pause game")
                 local length = comments:resume()
 
                 timer.performWithDelay(length * 1000, commonData.resumeGame, 1)
@@ -1812,6 +1697,7 @@ commonData.pauseGame = function ()
                 pauseButton.alpha = 0
                 ob.muteButton.alpha = 0              
                 ob.unMuteButton.alpha = 0
+                print("pause game end")
               elseif gameStatus.speed > 0 then
 
                 if commonData.isMute then
@@ -1860,7 +1746,11 @@ commonData.pauseGame = function ()
                   gameStatus.isGamePaused = true
 
               end
-      end
+           end
+         end 
+       return false
+
+      
   end
  
 
@@ -1965,7 +1855,8 @@ pauseButton.x = pauseButton.x + (displayActualContentWidth - display.contentWidt
           x = 420,
           y = 23,
           id = "muteButton",
-          defaultFile = "ExtrasMenu/Mute.png",
+          
+          defaultFile = "ExtrasMenu/UnMute.png",
           overFile = "ExtrasMenu/UnMuteDown.png",
           onEvent = muteListener
       }
@@ -1978,7 +1869,7 @@ pauseButton.x = pauseButton.x + (displayActualContentWidth - display.contentWidt
           x = 420,
           y = 23,
           id = "unMuteButton",
-          defaultFile = "ExtrasMenu/UnMute.png",
+          defaultFile = "ExtrasMenu/Mute.png",
           overFile = "ExtrasMenu/MuteDown.png",
           onEvent = unMuteListener
       }
@@ -2208,9 +2099,6 @@ sceneGroup:insert(playButton)
 sceneGroup:insert(ob.pausedGroup)
 
 
-sceneGroup:insert(ob.holdDeviceBlocker)
-sceneGroup:insert(ob.holdDevice)
-sceneGroup:insert(ob.holdDevice)
 
 sceneGroup:insert(ob.notification)
 
@@ -2539,6 +2427,7 @@ function restartGame()
 
       ob.notification.alpha = 0
       ob.redRect.alpha = 0
+      ob.redRectAlpha = 0 
       ob.scoreTextMove.alpha = 0
       ob.scoreFull.alpha = 0
       ob.rightTimer.alpha = 0
@@ -2999,7 +2888,7 @@ function scene:show( event )
               --local selectedBooster = "ultraBall"
               
               for i=1,#boostersConfig[commonData.selectedBooster] do
-                print("create emittr")
+                
                 local boostConf = boostersConfig[commonData.selectedBooster][i]
                 if boostConf.duration and boostConf.duration == -1 then
                   boostConf.duration = ULTRA_MODE_DURATION / 1000
@@ -3011,7 +2900,7 @@ function scene:show( event )
                 emitter.isOnKickEmitter = boostersConfig[commonData.selectedBooster][i].onKick
                 emitter.isEmitter = true
                 fire:insert( emitter )
-                print("finish emittr")
+                
               end
 
               local ultraBallImg  = "images/UltraBall.png"
@@ -3333,7 +3222,7 @@ function scene:show( event )
 
            setCoinsCount(nil)
 
-           newChallegeText.text = newChallenge.text
+           newChallegeText.text = getTransaltedText(newChallenge.name) --  newChallenge.text
 
            timer.performWithDelay(4000, 
             function ()
@@ -3364,11 +3253,28 @@ function scene:show( event )
 
              hero:setWalkSpeed(gameStatus.speed)
             
-           
 
             if ob.redRect.alpha < 0.6 then
-              ob.redRect.alpha = ob.redRect.alpha + 0.01
+              ob.redRectAlpha = ob.redRectAlpha + 1
+              ob.redRect.alpha =  ob.redRectAlpha / 100
             end
+
+            if ob.redRectAlpha == 5  then 
+                                     
+                                      timer.performWithDelay(50 , function ()                                
+                                               ob.redRect.alpha = 0.7 -  ob.redRect.alpha                                               
+                                                 if ob.redRectAlpha == 0  then 
+                                                      ob.redRect.alpha = 0 
+                                                 end
+                                            end , 6)
+
+                                      --       timer.performWithDelay(300 , function ()                                
+                                      --          ob.leftCtrl:setFillColor(1,1,1)
+                                      --          ob.leftCtrl.fill.effect = nil
+                                      --          ob.rightCtrl:setFillColor(1,1,1)
+                                      --          ob.leftCtrl.fill.effect = nil
+                                      --       end , 1)
+                                      end
           end   
 
           
@@ -3981,12 +3887,12 @@ gameStatus.isGameActive = true
           -- end
          if (gameStatus.prevScore1 >= 50 and gameStatus.prevScore2 >= 50 and score >= 50) then  
            reportChallenge("topScore350")   
-           --print("LittlePerformer")
+           
          end   
          if (gameStatus.prevScore1 >= 100 and gameStatus.prevScore2 >= 100 and score >= 100) then  
            reportChallenge("topScore3100")   
            achivmentAlert("LittlePerformer")   
-           --print("LittlePerformer")
+           
          end
 
          ob.obstacleArrow.alpha = 0 
@@ -4140,14 +4046,6 @@ gameStatus.isGameActive = true
 
             end
               
-            --print(distanceFromPerfect)
-            -- if ob.isSimulator and distanceFromPerfect < -1000 then
-            --   monster.kickTimer = 1
-            --   gameStatus.lastY = 240
-            --   gameStatus.startY = 240
-            --   gameStatus.isLeftLeg = not gameStatus.isPrevLeft
-            --   hero:startKick(gameStatus.isLeftLeg, false)
-            -- end  
             
           end
         end  
@@ -4229,7 +4127,7 @@ gameStatus.isGameActive = true
                         ob.jumpLeg.width = 0
 
                         if gameStats.bounces > 0 and gameStatus.speed > 0 then
-                          --print("walk update monster")
+                          
                           hero:walk()
                           
                           if (not ob.wasOnGround) then
@@ -4488,21 +4386,16 @@ gameStatus.isGameActive = true
 
                                           ob.rightTimer.alpha = 0
                                           ob.leftTimer.alpha = 0
+                                          ob.leftCtrl.fill.effect = "filter.brightness"
+                                          ob.leftCtrl.fill.effect.intensity = 1
+                                          ob.rightCtrl.fill.effect = "filter.brightness"
+                                          ob.rightCtrl.fill.effect.intensity = 1
 
                                           if gameStatus.isLeftLeg then
-                                            ob.leftCtrl.fill.effect = "filter.brightness"
-                                            ob.leftCtrl.fill.effect.intensity = 1
+                                            
                                             ob.leftCtrl:setFillColor(1,0,0)
-
-
-                                            timer.performWithDelay(50 , function ()                                
-                                               ob.leftCtrl.alpha = 1.5 -  ob.leftCtrl.alpha
-                                            end , 6)
-
-                                            timer.performWithDelay(300 , function ()                                
-                                               ob.leftCtrl:setFillColor(1,1,1)
-                                               ob.leftCtrl.fill.effect = nil
-                                            end , 1)
+                                           
+                                            ob.rightCtrl:setFillColor(0,1,0)
 
                                             rightHand:init()  
                                             
@@ -4515,9 +4408,10 @@ gameStatus.isGameActive = true
                                                  
                                        
                                           else
-                                            ob.rightCtrl.fill.effect = "filter.brightness"
-                                            ob.rightCtrl.fill.effect.intensity = 1
+                                            
                                             ob.rightCtrl:setFillColor(1,0,0)
+                                            
+                                            ob.leftCtrl:setFillColor(0,1,0)
 
                                               leftHand:init()
                                               timer.performWithDelay(1 , function ()                          
@@ -4525,15 +4419,23 @@ gameStatus.isGameActive = true
                                                      leftHand:tapLeft()      
                                                      end , 1)
 
-                                             timer.performWithDelay(50 , function ()                                
+                                          
+                                          end
+
+                                            timer.performWithDelay(50 , function ()                                
+                                               ob.leftCtrl.alpha = 1.5 -  ob.leftCtrl.alpha
                                                ob.rightCtrl.alpha = 1.5 -  ob.rightCtrl.alpha
+                                               
                                             end , 6)
 
                                             timer.performWithDelay(300 , function ()                                
+                                               ob.leftCtrl:setFillColor(1,1,1)
+                                               ob.leftCtrl.fill.effect = nil
                                                ob.rightCtrl:setFillColor(1,1,1)
                                                ob.rightCtrl.fill.effect = nil
                                             end , 1)
-                                          end
+
+
                                         end  
                                         gameStatus.startY = event.yStart
                                         gameStatus.lastY = gameStatus.startY  
@@ -4710,45 +4612,6 @@ gameStatus.isGameActive = true
         end             
       end 
 
-    ob.kickInstruct = function ()
-      ob.instructionBlocker.alpha = 0.8 
-      kickToStart.alpha = 0
-      ballon.alpha = 0
-      if (ballSkin) then
-        ballSkin.alpha = 0
-      end  
-      gameStatus.isGameActive = false
-      ob.chaser.skeleton.group.alpha = 0
-
-
-      local kickBallCallback = function (type)
-
-        if (initKickColorHandle) then
-         timer.cancel( initKickColorHandle )
-        end 
-
-        
-        initKickColorHandle = timer.performWithDelay(4, initKickColor, 100)
-           
-
-        if (type == "perfect") then
-          
-          commonData.playSound( sounds.perfectKickSound )  
-          scoreText.text = "GOOD"
-        elseif (type == "good") then
-          
-          commonData.playSound( sounds.perfectKickSound )  
-          scoreText.text = "FINE"
-        else  
-          
-          commonData.playSound( sounds.badKickSound ) 
-          scoreText.text = "BAD"
-        end
-      end
-
-      hero:dribbleLoop(ob.finishInstrunct, kickBallCallback)
-    end  
-
     local function kickBall()
 
       -- ignore kick if ball going up
@@ -4764,6 +4627,7 @@ gameStatus.isGameActive = true
 
       collisionRect.isSensor = true
       ob.redRect.alpha = 0
+       ob.redRectAlpha = 0 
       
     --  collisionRect.x = 0
        monster.kickTimer = 0
@@ -5322,6 +5186,21 @@ gameStatus.isGameActive = true
                                      local vx, vy = ballon:getLinearVelocity()
                                      ob.bubble:floor()
                                      commonData.playSound( sounds.ballFallSound , { fadein = 400 - vy}) 
+
+                                     -- print (vy)
+                                     -- if vy < 35 then 
+                                     
+                                     --  timer.performWithDelay(50 , function ()                                
+                                     --           ob.redRect.alpha = 1.5 -  ob.redRect.alpha                                               
+                                     --        end , 6)
+
+                                     --  --       timer.performWithDelay(300 , function ()                                
+                                     --  --          ob.leftCtrl:setFillColor(1,1,1)
+                                     --  --          ob.leftCtrl.fill.effect = nil
+                                     --  --          ob.rightCtrl:setFillColor(1,1,1)
+                                     --  --          ob.leftCtrl.fill.effect = nil
+                                     --  --       end , 1)
+                                     --  end
                                   end
                               
                         elseif ( event.object1.name == "cone" or  event.object2.name == "cone") then
@@ -5513,7 +5392,7 @@ gameStatus.isGameActive = true
              local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            
             
-            --print( string.format("%.00f", texUsed))
+            
             
          
         end

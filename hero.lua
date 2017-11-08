@@ -583,14 +583,14 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		
 		function self:startKick(pIsLeftLeg,pIsBadKick)
-			print("startLick")
+			
 
 			isKicking = true
 			isWalking = false
 			
 			self.skeleton:setToSetupPose()
 
-		--	print(self.skeleton.time)
+		
 
 			if commonData.selectedSkin == "Zombie" then
 					if pIsLeftLeg then
