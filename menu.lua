@@ -279,6 +279,8 @@ end
 
 
 
+local prevMem = 0
+ local memUsed = 0 
 -- "scene:create()"
 function scene:create( event )
 
@@ -290,6 +292,14 @@ commonData.selectedBall = "NormalBall"
 commonData.selectedField = "Stadium"
 commonData.selectedBooster = "fireBall"
 
+ -- timer.performWithDelay(1000 , 
+ --      function (  )
+ --            prevMem = memUsed
+ --             memUsed = (collectgarbage("count"))            
+ --             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
+ --           print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
+        
+ --      end, -1)
 
 commonData.shopSkin = commonData.selectedSkin 
 commonData.shopBall = commonData.selectedBall 
@@ -738,8 +748,6 @@ Runtime:addEventListener( "system", systemEvents )
           labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
 
       }
-
-      
 
        playButton.xScale =  (display.actualContentWidth*0.45) / playButton.width
        playButton.yScale = playButton.xScale  
@@ -1304,7 +1312,7 @@ function scene:show( event )
             commonData.gameData.selectedBooster = "fireBall"
             
             commonData.gameData.appOpened = 0  
-            commonData.gameData.abVersion = math.random(2)
+            commonData.gameData.abVersion = 3
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)

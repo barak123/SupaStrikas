@@ -137,10 +137,10 @@ function comments.new (skeletonData)
 	end
 
 	local function localPlaySound(event)	
-		print("playSound")
+		
 		 local params = event.source.params           
          commonData.playSound( params.sound )
-         print("playSound end" )
+        
 		
 	end
 
@@ -178,7 +178,7 @@ function comments.new (skeletonData)
 	end
 
 	function self:resume()	
-		print("resume")
+		
 		--Runtime:addEventListener("enterFrame", handleFrame)
 		Runtime:addEventListener("enterFrame", handleFrame)		
 		isFirst = true
@@ -196,7 +196,7 @@ function comments.new (skeletonData)
 
 		local duration = animation.duration / deltaMulti
 		timer.performWithDelay(duration * 1000, pauseAnimation, 1)
-		print("end")
+		
 		
 		return duration 
 	end

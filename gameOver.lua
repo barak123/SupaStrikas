@@ -48,6 +48,7 @@ local levelText = nil
 local nextLevelText = nil 
 local comboText = nil 
 local comboTextS = nil
+
 local dailyRewardBlocker = nil
 local loadingBlocker = nil
 local boosterRect = nil
@@ -143,17 +144,19 @@ local function rateUsListener( event )
 
 local function logHighScore(gameData , newHighScore)
   local coinsToNotify = {}
-  coinsToNotify[1] = 500  
-  coinsToNotify[2] = 1000
-  coinsToNotify[3] = 3000  
-  coinsToNotify[4] = 6000  
-  coinsToNotify[5] = 10000
-  coinsToNotify[6] = 20000  
-  coinsToNotify[7] = 30000  
-  coinsToNotify[8] = 40000    
-  coinsToNotify[9] = 50000
+  coinsToNotify[1] = 100  
+  coinsToNotify[2] = 300
+  coinsToNotify[3] = 500  
+  coinsToNotify[4] = 1000  
+  coinsToNotify[5] = 2000
+  coinsToNotify[6] = 3000  
+  coinsToNotify[7] = 6000  
+  coinsToNotify[8] = 10000    
+  coinsToNotify[9] = 20000
+  coinsToNotify[10] = 30000
+  coinsToNotify[11] = 40000
 
-  for i=1,9 do
+  for i=1,11 do
     
 
     if gameData.highScore < coinsToNotify[i] and
@@ -177,20 +180,25 @@ end
 
 local function logGamesCount(gameData)
   local gamesToAlert = {}
-  gamesToAlert[1] = 5  
-  gamesToAlert[2] = 10
-  gamesToAlert[3] = 20  
-  gamesToAlert[4] = 30 
-  gamesToAlert[5] = 50
-  gamesToAlert[6] = 70
-  gamesToAlert[7] = 100
-  gamesToAlert[8] = 150
-  gamesToAlert[9] = 200
-  gamesToAlert[10] = 300
-  gamesToAlert[11] = 500
-  gamesToAlert[12] = 1000
+  gamesToAlert[1] = 1  
+  gamesToAlert[2] = 2
+  gamesToAlert[3] = 3  
+  gamesToAlert[4] = 4 
+  gamesToAlert[5] = 5
+  gamesToAlert[6] = 7
+  gamesToAlert[7] = 10
+  gamesToAlert[8] = 15
+  gamesToAlert[9] = 20
+  gamesToAlert[10] = 30
+  gamesToAlert[11] = 50
+  gamesToAlert[12] = 75
+  gamesToAlert[13] = 100
+  gamesToAlert[14] = 150
+  gamesToAlert[15] = 200
+  gamesToAlert[16] = 500
+  gamesToAlert[17] = 1000
 
-  for i=1,12 do
+  for i=1,17 do
     
 
     if gameData.gamesCount  == gamesToAlert[i]  then
@@ -1958,6 +1966,10 @@ function scene:create( event )
      playButton.x =  playButton.x +  (display.actualContentWidth - display.contentWidth) /2
      --playButton.alpha = 0
 
+     playButton.x =  background.x + background.contentWidth /2  + playButton.contentWidth /2 - 10
+      
+    
+
       local gradient = {
           type="gradient",
           color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
@@ -1991,7 +2003,10 @@ function scene:create( event )
       }
       showAdButton.xScale =  (display.contentWidth*0.15) / showAdButton.width
       showAdButton.yScale = showAdButton.xScale  
-      showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
+      --showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
+
+      showAdButton.x =  background.x - background.contentWidth /2 - showAdButton.contentWidth /2 + 10
+      
     
       rateUsButton = widget.newButton
       {
@@ -2572,7 +2587,10 @@ function scene:outerRefreshResults(gameResult)
 
   end 
  end, 19)
- commonData.kidoz.show( "panelView")
+ if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+          commonData.kidoz.show( "panelView")
+ end
+ 
 end
 
 

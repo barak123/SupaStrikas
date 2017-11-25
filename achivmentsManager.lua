@@ -1,3 +1,4 @@
+local commonData = require( "commonData" )
 
 local achivments = {}
 local newAchivments = {}
@@ -90,22 +91,17 @@ challenges["reacehedMeters300"].text = "Reach 300 Meters"
 challenges["kick5time"].text = "Kick the ball 5 times"
 challenges["collectCoin"].text = "Collect a coin"
 challenges["jumpObstecale"].text = "Jump over obstacle"
-
 challenges["swap6"].text = "Swap legs 6 times"
-
 challenges["perfect4"].text = "Perfect kick 4 times"
 challenges["perfect6"].text = "Perfect kick 6 times"
 challenges["scoreGoal"].text = "Score a goal"
 challenges["noJump60"].text = "Reach 60 Meters without jumping"
 challenges["runFromBully"].text = "Run away from the bully"
 challenges["maxSpeed"].text = "Reach maximum speed"
-
-
 challenges["collectSpreeCoins"].text = "Collect 4 coins in perfect spree"
 challenges["collectSpreeCoins2"].text = "Collect 6 coins in perfect spree"
 challenges["topScore350"].text = "Reach 50 meters 3 games in a row"
 challenges["topScore3100"].text = "Reach 100 meters 3 games in a row"
-
 challenges["hattrick"].text = "Score a goal 3 games in a row"
 challenges["fireGoal"].text = "Score a goal with fire ball"
 challenges["headerGoal"].text = "Score a goal with a header"
@@ -166,7 +162,7 @@ challenges["kick5time"].isUnlocked = false
 challenges["collectCoin"].isUnlocked = false
 challenges["jumpObstecale"].isUnlocked = false
 --challenges["buyPack"].isUnlocked = false
-challenges["swap6"].isUnlocked = false
+challenges["swap6"].isUnlocked =  (commonData.gameData.abVersion == 3) --false
 --challenges["changeBall"].isUnlocked = false
 challenges["perfect4"].isUnlocked = false
 challenges["perfect6"].isUnlocked = false

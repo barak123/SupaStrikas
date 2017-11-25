@@ -30,7 +30,6 @@ local M = {}
 
       seletedCategory = "gems"
     
-	
 
       local gemIdx = 1
  
@@ -59,7 +58,7 @@ local M = {}
       items.gems[gemIdx].cashCost = 3
       items.gems[gemIdx].image = "images/shop/gems/RastaMatadorPromo.png"      
       items.gems[gemIdx].id = "megaPack"       
-      items.gems[gemIdx].storeId = "com.ld.megaPack" 
+      items.gems[gemIdx].storeId = "com.ld.promoPack" 
       items.gems[gemIdx].hidden = true
       items.gems[gemIdx].specialOffer = true
 
@@ -408,7 +407,7 @@ local M = {}
       boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "purpleSmoke"
-      items.boosts[boostIdx].coinsCost = 3
+      items.boosts[boostIdx].coinsCost = 300
       items.boosts[boostIdx].gemsCost = 2
       items.boosts[boostIdx].image = "images/boostparticles/ShopImgPurpleSmoke.png"
       items.boosts[boostIdx].imgScale = 1  
@@ -420,8 +419,8 @@ local M = {}
       boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "Rainbow"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].coinsCost = 400
+      items.boosts[boostIdx].gemsCost = 3
       items.boosts[boostIdx].image = "images/boostparticles/ShopImgRGBBall.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "rgbGlow"       
@@ -433,8 +432,8 @@ local M = {}
          boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "Ice"
-      items.boosts[boostIdx].coinsCost = 3
-      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].coinsCost = 500
+      items.boosts[boostIdx].gemsCost = 4
       items.boosts[boostIdx].image = "images/boostparticles/ShopImgIcyBall.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "ice"       
@@ -442,42 +441,43 @@ local M = {}
       items.boosts[boostIdx].level = 6
 
 
+        boostIdx =  boostIdx + 1
+       items.boosts[boostIdx] = {}
+      items.boosts[boostIdx].name = "Ultra"
+      items.boosts[boostIdx].coinsCost = 600
+      items.boosts[boostIdx].gemsCost = 5
+      items.boosts[boostIdx].image = "images/boostparticles/ClassicFire.png"
+      items.boosts[boostIdx].imgScale = 1  
+      items.boosts[boostIdx].id = "ultraBall" 
+      items.boosts[boostIdx].packCategory = 4
+      items.boosts[boostIdx].level = 10
+
       
 
        boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "Electric"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].coinsCost = 700
+      items.boosts[boostIdx].gemsCost = 6
       items.boosts[boostIdx].image = "images/boostparticles/ShopImgElectric.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "electric"       
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 10
+      items.boosts[boostIdx].level = 13
 
       boostIdx =  boostIdx + 1
       items.boosts[boostIdx] = {}
       items.boosts[boostIdx].name = "Pixel"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
+      items.boosts[boostIdx].coinsCost = 900
+      items.boosts[boostIdx].gemsCost = 7
       items.boosts[boostIdx].image = "images/boostparticles/PixelFire.png"
       items.boosts[boostIdx].imgScale = 1  
       items.boosts[boostIdx].id = "pixelBall"       
       items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 13
+      items.boosts[boostIdx].level = 14
 
       
 
-        boostIdx =  boostIdx + 1
-       items.boosts[boostIdx] = {}
-      items.boosts[boostIdx].name = "Ultra"
-      items.boosts[boostIdx].coinsCost = 300
-      items.boosts[boostIdx].gemsCost = 2
-      items.boosts[boostIdx].image = "images/boostparticles/ClassicFire.png"
-      items.boosts[boostIdx].imgScale = 1  
-      items.boosts[boostIdx].id = "ultraBall" 
-      items.boosts[boostIdx].packCategory = 4
-      items.boosts[boostIdx].level = 14
    --   items.boosts[boostIdx].color = {r= g b}
 
 

@@ -201,7 +201,15 @@ function scene:show( event )
                                 string.format("%.00f" , event.params.gameData.totalScore / math.max(event.params.gameData.gamesCount, 1))    
              perfectRatioText.text = getTransaltedText("PerfectRatio") .. ": "..  
                                 string.format("%.00f" , 100 * event.params.gameData.bouncesPerfect / math.max(event.params.gameData.bounces, 1)) .. "%"       
-            backButton:setLabel(getTransaltedText("Back"))                                
+            backButton:setLabel(getTransaltedText("Back"))     
+            local max = math.max(gamesCountText.contentWidth , distanceText.contentWidth  , 
+              comboText.contentWidth ,averageScoreText.contentWidth , perfectRatioText.contentWidth)
+              gamesCountText.x = display.actualContentWidth/2 + 240 - max/2 - 5                           
+              distanceText.x = display.actualContentWidth/2 + 240 - max/2 - 5                           
+              comboText.x = display.actualContentWidth/2 + 240 - max/2 - 5                           
+              averageScoreText.x = display.actualContentWidth/2 + 240 - max/2 - 5                           
+              perfectRatioText.x = display.actualContentWidth/2 + 240 - max/2 - 5                           
+
 
       end
    end

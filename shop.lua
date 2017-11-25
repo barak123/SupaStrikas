@@ -84,7 +84,7 @@ local productList =
   "com.ld.80supagems",
   "com.ld.starterPack",
   "com.ld.shakesPack",
-  "com.ld.megaPack",  
+  "com.ld.promoPack",  
 }
             
 

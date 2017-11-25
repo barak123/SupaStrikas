@@ -51,5 +51,5 @@ BALL_X = 180
 
 END_GAME_WHEN_DEF_TOUCH = true
 SHOP_FILE = "strika.dat"--"l1.dat" -- 32		
-GAME_DATA_FILE = "supas.dat" -- "ldr.dat" --22
+GAME_DATA_FILE = "supa.dat" -- "ldr.dat" --22
 

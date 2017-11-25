@@ -720,6 +720,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			isJumping = true
 			isKicking = false
 			--skeleton.group.x = display.contentWidth * 0.25 + 10
+			return lowDuration
 		end
 
 
@@ -728,16 +729,19 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			
 			self.skeleton:setToSetupPose()
 			legAngle = -82
+			local lowDuration = 0
 			
 			if commonData.selectedSkin == "DribbleBot" then
 				self.state:setAnimationByName(0, "BotSalta", false)			
 			else	
 				self.state:setAnimationByName(0, "Jump3", false)
+				lowDuration = skeletonData:findAnimation("Jump").duration * 1000
 			end
 			
 			isJumping = true
 			isKicking = false
 			--skeleton.group.x = display.contentWidth * 0.25 + 10
+			return lowDuration
 		end
 
 		local replayHandle =nil

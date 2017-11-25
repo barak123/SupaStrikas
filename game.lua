@@ -229,6 +229,9 @@ local coinsShadowText = nil
 local trophieCountText = nil
 local trophieShadowText = nil
 local multiText = nil
+local addScoreText = nil
+local addScoreText2 = nil
+
 local coinsSpine = nil
 
 
@@ -272,15 +275,20 @@ local function buttonListener( event )
                gameStatus.preventKick = false
            end
 
-
+            local jumpDuration = 0   
             if mRandom(1) == 2 then
-              hero:saltaJump()
+              jumpDuration = hero:saltaJump()
               gameStatus.isSalta = true
               commonData.playSound( sounds.saltaSound )   
             else
-              hero:jump()
+              jumpDuration = hero:jump()
               gameStatus.isSalta = false
             end
+
+            timer.performWithDelay(jumpDuration - 500 , function ()                          
+              ob.onGround = true         
+            end , 1)
+                                            
             
             commonData.playSound( sounds.jumpSound )   
             ob.onGround = false
@@ -608,18 +616,6 @@ ballon.isFixedRotation = true
 
 
 
--- ultraBall = display.newImage("images/UltraBall.png")
--- ultraBall.name = "fire"
--- ultraBall.x = BALL_X
--- ultraBall.y = 20
-
--- ultraBall:scale(0.5,0.5)
--- ultraBall.fill.blendMode = "normal"
--- --ultraBall:setFillColor(1,168/255,90/255)
--- ultraBall:setFillColor(1,1,1)
-
--- ultraBall.isFixedRotation = true
-
 
 local body_radius = 5
 
@@ -638,6 +634,7 @@ ob.leftCtrl:scale(0.8,0.8)
 
 ob.leftCtrl.x = ob.leftCtrl.x  - (displayActualContentWidth - display.contentWidth) /2
 
+
 ob.rightCtrl = display.newImage("images/Touchpad.png")
 --ob.rightCtrl:setFillColor(1,0,0)
 --ob.rightCtrl.alpha  = 0.5
@@ -646,12 +643,26 @@ ob.rightCtrl.y = 250
 ob.rightCtrl:scale(0.8,0.8)
 ob.rightCtrl.x = ob.rightCtrl.x  + (displayActualContentWidth - display.contentWidth) /2
 
-ob.leftTimer =  display.newImage("images/TouchpadTimer.png")
+local padKickIcon =  display.newImage("images/PadKickIcon.png")
+local padJumpIcon =  display.newImage("images/PadJumpIcon.png")
+
+padKickIcon:scale(0.4,0.4)
+padJumpIcon:scale(0.4,0.4)
+
+padKickIcon.x =  ob.rightCtrl.x
+padJumpIcon.x =  ob.leftCtrl.x
+padKickIcon.y =  ob.rightCtrl.y
+padJumpIcon.y =  ob.leftCtrl.y
+
+
+
+ob.leftTimer =  display.newCircle( 0, 0, ob.rightCtrl.contentHeight/2 ) 
+-- display.newImage("images/TouchpadTimer.png")
 --ob.leftCtrl:setFillColor(1,0,0)
 --ob.leftCtrl.alpha  = 0.5
-ob.leftTimer.x = 60
+ob.leftTimer.x = 420
 ob.leftTimer.y = 250
-ob.leftTimer:scale(0.4,0.4)
+--ob.leftTimer:scale(0.4,0.4)
 
 ob.leftTimer.x = ob.leftTimer.x  - (displayActualContentWidth - display.contentWidth) /2
 
@@ -662,7 +673,8 @@ ob.rightTimer.x = 420
 ob.rightTimer.y = 250
 ob.rightTimer:scale(0.6,0.6)
 ob.rightTimer.x = ob.rightTimer.x  + (displayActualContentWidth - display.contentWidth) /2
-
+ob.leftTimer.x = ob.rightTimer.x
+ob.leftTimer.y = ob.rightTimer.y
 
 
 fire = display.newGroup()
@@ -682,6 +694,18 @@ emitter2.x = 440
 emitter2.y = 120
 
 
+ob.badKickEmitter = particleDesigner.newEmitter( "images/levelemitters/BadKickPart.json" )
+ob.goodKickEmitter = particleDesigner.newEmitter( "images/levelemitters/MedKickPart.json" )
+ob.perfectKickEmitter = particleDesigner.newEmitter( "images/levelemitters/GoodKickPart.json" )
+ob.perfectKickEmitter:scale(0.5,0.5)
+
+ob.badKickEmitter:stop()
+ob.goodKickEmitter:stop()
+ob.perfectKickEmitter:stop()
+
+ob.badKickEmitter.alpha = 0 
+ob.goodKickEmitter.alpha = 0 
+ob.perfectKickEmitter.alpha = 0 
 
 fire.isFixedRotation = true
 
@@ -1029,6 +1053,12 @@ multiText.y = ob.scoreBg.y + 8
 multiText.x = ob.scoreBg.x + 100
 multiText:setFillColor(1,206/255,0)
 
+addScoreText= display.newText("", 0, 0 , "UnitedSansRgStencil" , 22)
+
+
+addScoreText2 = display.newText("", 0, 0 , "UnitedSansRgStencil" , 22)
+addScoreText2:setFillColor(1,206/255,0)
+
 ob.scoreTextMove = display.newText("", 0, 0 , "UnitedSansRgHv" , 32)
 ob.scoreTextMove.alpha = 0
 ob.scoreTextMove:setFillColor(1,206/255,0)
@@ -1037,7 +1067,7 @@ ob.scoreTextMove:setFillColor(1,206/255,0)
 --centering itself rather than aligning itself up neatly along a fixed point
 --scoreText: sequenceData ReferencePoint(display.CenterLeftReferencePoint)
 scoreText.x = 240
-scoreText.y = 15
+scoreText.y = ob.scoreBg.y - 8
 
 ob.scoreTextMove.x = 840
 ob.scoreTextMove.y = 20
@@ -1259,7 +1289,7 @@ ob.defualtAlpha = 0
      else     
       playButton.y = 720
     end
-
+playButton.alpha=0
 
 monster.alpha = ob.defualtAlpha
 
@@ -1273,7 +1303,7 @@ collisionRect:setStrokeColor(180, 180, 180)
 collisionRect.alpha = ob.defualtAlpha
 collisionRect.name = "leg"
 
-local screenBorder  = display.newRect(240, -20 , 800, 40)
+local screenBorder  = display.newRect(240, -2000 , 800, 40)
 screenBorder:setFillColor(0, 0, 0)
 
 ob.jumpLeg = display.newRect(monster.x + 36, monster.y +30, 20,1)
@@ -1319,7 +1349,7 @@ physics.addBody( gameOverRect2, "kinematic", upperGameOverElement )
 
 
 if ob.isSimulator then
-  gameOverRect.shouldStopGame = true
+  --gameOverRect.shouldStopGame = true
 end
 
 
@@ -1718,6 +1748,7 @@ commonData.pauseGame = function (event)
                 hero:pause()
                 ob.chaser:pause()
                 ob.coach:pause()
+                collectgarbage()
                 
                 if (ob.activeMusicHdl) then
                   audio.pause(ob.activeMusicHdl)
@@ -2058,12 +2089,18 @@ sceneGroup:insert(ob.rightTimer)
 
 sceneGroup:insert(ob.leftCtrl)
 sceneGroup:insert(ob.rightCtrl)
+sceneGroup:insert(padKickIcon)
+sceneGroup:insert(padJumpIcon)
+
 
 sceneGroup:insert(rightHand.skeleton.group)
 sceneGroup:insert(leftHand.skeleton.group)
 
 sceneGroup:insert(comments.skeleton.group)
 sceneGroup:insert(hero.skeleton.group)
+sceneGroup:insert(addScoreText2)
+sceneGroup:insert(addScoreText)
+
 sceneGroup:insert(collisionRect)
 sceneGroup:insert(ob.jumpLeg)
 sceneGroup:insert(ob.shadow)
@@ -2164,9 +2201,7 @@ ob.updateScoreboard =  function(num)
          ob.scoreboard[(num -1) % 8 +1 ]:setFillColor(1,1,(10- 3*math.floor( (num-1)/8 ))/10)
        end  
 
-       if num + 1 > gameStats.combo then
-        gameStats.combo = num + 1
-       end 
+       
 end  
 
 
@@ -2395,14 +2430,54 @@ local function getSelectedFieldIndex()
 
 end 
 
+
+local function showNewTip(tipCode)
+     ob.boosterButton.alpha = 0
+        ob.kickOverImg.alpha = 0
+        ob.jumpOverImg.alpha = 0
+        ob.tipCircle.alpha = 0
+        ob.boosterHeaderText.alpha = 0
+        ob.boosterText.alpha = 0
+        ob.boosterText.text =getTransaltedText(tipCode)
+        ob.boosterMsg:init()  
+
+      timer.performWithDelay(100 , function ()                          
+         ob.notification.alpha = 1
+       end , 1)   
+
+       commonData.pauseGame()
+       pauseButton.alpha = 0
+       ob.pausedGroup.alpha = 0
+       ob.muteButton.alpha = 0              
+       ob.unMuteButton.alpha = 0
+
+             
+           
+        timer.performWithDelay(1500 , function ()                                
+          ob.tipCircle.alpha = 1
+          ob.boosterHeaderText.alpha = 1
+          ob.boosterText.alpha = 1
+        end , 1)
+        timer.performWithDelay(2500 , function ()
+          ob.boosterButton.alpha = 1                          
+        end , 1)
+end 
 function restartGame()
 
+--      showNewTip
+
+       
+        addScoreText.alpha = 0                         
+        addScoreText2.alpha = 0                         
+        
        gameStatus.forceSwap = false
-      if commonData.gameData.gamesCount < 3 or
-        (commonData.gameData.gamesCount % 5 == 0 and commonData.gameData.highScore < 2000)
-        then
-        gameStatus.forceSwap = true
-      end  
+     --  if commonData.gameData.abVersion ~= 3 then
+        if commonData.gameData.gamesCount < 3 or
+          (commonData.gameData.gamesCount % 5 == 0 and commonData.gameData.highScore < 2000)
+          then
+          gameStatus.forceSwap = true
+        end  
+      --end
 
       if (commonData.gameData.gamesCount % 20 == 0 and commonData.gameData.highScore < 2000) then
         commonData.gameData.tipCircleShown = false
@@ -2715,9 +2790,9 @@ function restartGame()
         ob.stageGroup.maskY = 160
 
       if gameStatus.forceSwap then
-          leftHand:init()          
-          leftHand:tapLeft()
-          leftHand.skeleton.group.alpha = 1  
+          rightHand:init()          
+          rightHand:tapRight()
+          rightHand.skeleton.group.alpha = 1  
       end   
       
       if(gameStatus.isTutorial) then
@@ -3337,10 +3412,10 @@ function scene:show( event )
                     
 
                     score = score + 1
-                    if ob.redRect.alpha < 0.03 then
-                      gameStatus.newScore = gameStatus.newScore  + gameStatus.speed * (gameStatus.kicksMulti +1)
-                      scoreText.text = string.format("%.00f", gameStatus.newScore) 
-                    end
+                    -- if ob.redRect.alpha < 0.03 then
+                    --   gameStatus.newScore = gameStatus.newScore  + gameStatus.speed * (gameStatus.kicksMulti +1)
+                    --   scoreText.text = string.format("%.00f", gameStatus.newScore) 
+                    -- end
                     
                     
                    end
@@ -3482,12 +3557,12 @@ function scene:show( event )
 
       gameStatus.isStaticBall = true
       
-      ob.chaser:init()
+      
       ob.chaser:stand()
 
-       ob.coach:init()
+      
       ob.coach:stand()
-       ob.bubble:init()
+      
 
       collisionRect.isSensor = false
 
@@ -3510,12 +3585,12 @@ function scene:show( event )
 
       gameStatus.isStaticBall = true
       
-      ob.chaser:init()
+      
       ob.chaser:stand()
 
-       ob.coach:init()
+      
       ob.coach:stand()
-       ob.bubble:init()
+      
 
 
 
@@ -3630,15 +3705,22 @@ function scene:show( event )
                                gameStatus.preventKick = true
 
                                leftHand:init()
-                               rightHand:init()
+
+                                if commonData.gameData.abVersion ~= 3 then
+                                 rightHand:init()
+                               end
                                
                               timer.performWithDelay(1500 , function ()                          
                                 ob.jumpOverImg.alpha = 1
                                 leftHand.skeleton.group.alpha = 1
-                               rightHand.skeleton.group.alpha = 1
-                               leftHand:tapLeft()
-                               rightHand:tapRight()
+                                leftHand:tapLeft()
 
+                                if commonData.gameData.abVersion ~= 3 then
+                                 rightHand.skeleton.group.alpha = 1
+                                 rightHand:tapRight()
+
+                               end
+                               
                               end , 1)
                               timer.performWithDelay(2500 , function ()
                                 ob.boosterButton.alpha = 1                          
@@ -3877,6 +3959,8 @@ gameStatus.isGameActive = true
                       obstecales[a].spine:pause()
                   end                      
           end
+
+          collectgarbage()
     end
 
     local function stopGame()
@@ -3957,16 +4041,16 @@ gameStatus.isGameActive = true
          --to make a small adjustment here, by adding a second variable called something like hasJumped. Set it to false normally, and turn it to
          --true once the double jump has been made. That way he is limited to 2 hops per jump.
          --Again we cycle through the blocks group and compare the x and y values of each.
-         for a = 1, blocks.numChildren, 1 do
-              if(monster.y >= blocks[a].y - 45 and blocks[a].x < monster.x + 60 and blocks[a].x > monster.x - 60) then
-                   monster.y = blocks[a].y - 46
-                   ob.onGround = true
-                   break
-              else
-                   ob.onGround = false
+         -- for a = 1, blocks.numChildren, 1 do
+         --      if(monster.y >= blocks[a].y - 45 and blocks[a].x < monster.x + 60 and blocks[a].x > monster.x - 60) then
+         --           monster.y = blocks[a].y - 46
+         --           ob.onGround = true
+         --           break
+         --      else
+         --           ob.onGround = false
 
-              end
-         end
+         --      end
+         -- end
 
 
          if (gameStatus.isGameActive and  (ballon.x < 0 - (displayActualContentWidth - display.contentWidth) /2    or  
@@ -3999,7 +4083,19 @@ gameStatus.isGameActive = true
 
         fire.x = ballon.x         
         fire.y = ballon.y 
-        -- ultraBall.x =  ballon.x 
+        ultraBall.rotation = ballon.rotation
+
+        if gameStatus.isUltraMode  and commonData.selectedBooster == "rgbGlow"   then
+            
+            ultraBall.fill.effect = "filter.hue"       
+            if not gameStatus.hueAngle  then
+              gameStatus.hueAngle = 0
+            end  
+            gameStatus.hueAngle = (gameStatus.hueAngle + 10 ) %  360
+            ultraBall.fill.effect.angle =  gameStatus.hueAngle 
+            
+
+        end
         -- ultraBall.y =  ballon.y 
 
        
@@ -4010,21 +4106,14 @@ gameStatus.isGameActive = true
            -- ob.leftCtrl:setFillColor(1,0,0)
           else
              -- update ctrl
-            local  ctrl = nil
+            
             local  tm = nil
             
-            if gameStatus.isPrevLeft  then
-              ctrl = ob.rightCtrl
+            
+            
               tm = ob.rightTimer
               ob.leftTimer.alpha = 0
-              --ob.leftCtrl:setFillColor(0,0,0)
-            else  
-              ctrl = ob.leftCtrl
-              tm = ob.leftTimer
-              ob.rightTimer.alpha = 0
-              --ob.rightCtrl:setFillColor(0,0,0)
-            end
-
+            
             --ctrl.alpha = 0.5
             local distanceFromPerfect = 180 - ballon.y --math.abs(180 - ballon.y)
             local distanceFromPerfectAbs = math.abs(180 - ballon.y)
@@ -4032,6 +4121,11 @@ gameStatus.isGameActive = true
             tm.xScale = 0.17 + distanceFromPerfect / 300
             tm.yScale = tm.xScale
             tm.alpha  = 1 - distanceFromPerfect/100
+            ob.leftTimer.alpha = tm.alpha
+            ob.leftTimer:setFillColor(2 * (distanceFromPerfectAbs)/ (75) ,  2 * (1 - (distanceFromPerfectAbs)/ (75))  , 0)
+            ob.leftTimer.xScale = 0.83 - distanceFromPerfectAbs / 100
+            ob.leftTimer.yScale = ob.leftTimer.xScale 
+
 
 
             
@@ -4236,9 +4330,12 @@ gameStatus.isGameActive = true
               end
               monster.y = monster.y - monster.accel
               monster.y = monster.y - monster.gravity
+              if(monster.y >= ob.groundLevel - 45 ) then
+                   monster.y = ob.groundLevel - 46
+                   
+              end
              
-         else
-              monster:rotate(5)
+         
          end
          --update the collisionRect to stay in front of the monster
          
@@ -4251,12 +4348,16 @@ gameStatus.isGameActive = true
        gameStatus.kickEnded = true  
        endKickHandle = nil
 
+       print("kick end")
     end       
 
    
 
     ob.touched = function ( event )
-            if commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall and gameStats.bounces < 8 then
+
+            if commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall
+              and commonData.gameData.abVersion ~= 3  and gameStats.bounces < 8 then
+              print("prevnt")
                 return
             end
             
@@ -4320,17 +4421,25 @@ gameStatus.isGameActive = true
                                          gameStatus.preventKick = false
                                      end
 
+                                   local jumpDuration = 0   
                                   if ( event.time - gameStatus.kickStart < 100) then
-                                    hero:jump()
+                                    jumpDuration = hero:jump()
                                     gameStatus.isSalta = false
                                     commonData.playSound( sounds.jumpSound )   
                                   else
-                                    hero:saltaJump()
+                                    jumpDuration = hero:saltaJump()
                                     gameStatus.isSalta = true
                                     commonData.playSound( sounds.saltaSound )   
                                   end
-                                  ob.onGround = false
+
+
+                                  ob.onGround = false                                  
                                   monster.kickTimer = 0
+
+                                  timer.performWithDelay(jumpDuration - 500 , function ()                          
+                                    ob.onGround = true         
+                                  end , 1)
+                                            
                                   
                                   
                                   collisionRect.width = 3
@@ -4349,12 +4458,56 @@ gameStatus.isGameActive = true
                       
                               gameStatus.kickStart = event.time; 
                               gameStatus.isLeftLeg = (event.x < 241)
+                              --gameStatus.isLeftLeg = false
                               
 
                               gameStatus.ignoreClick = not ob.onGround or (monster.kickTimer == 1)
 
-                              if (ob.onGround and not  gameStatus.preventKick and monster.kickTimer == 0) then  
-                                                                     
+                              if (ob.onGround and  monster.kickTimer == 0) then  
+                                       
+                                    if commonData.gameData.abVersion == 3 then
+                                       gameStatus.isAnyLeg = true
+                                      
+
+                                      if  gameStatus.isLeftLeg  then
+                                        if  not gameStatus.preventJump then
+                                        monster.accel = 19
+                                          local jumpDuration =  hero:jump()
+                                          gameStatus.isSalta = false
+                                          ob.onGround = false         
+                                          timer.performWithDelay(jumpDuration - 500 , function ()                          
+                                            ob.onGround = true         
+                                          end , 1)
+                                            
+
+
+                                          
+                                          commonData.playSound( sounds.jumpSound )  
+                                             collisionRect.width = 3
+                                         collisionRect.x=BALL_X
+                                         collisionRect.y=hero:getHead().y + 255
+                                          collisionRect.alpha= ob.defualtAlpha
+                                          
+
+                                          gameStats.jumps =  gameStats.jumps + 1
+                                          gameStatus.ignoreHeader = false 
+                                           leftHand:pause()  
+                                           
+                                           leftHand.skeleton.group.alpha = 0 
+                                            gameStatus.preventKick = false
+                                        end  
+                                      elseif not  gameStatus.preventKick then  
+
+                                          monster.kickTimer = 1
+                                          hero:startKick(gameStatus.isLeftLeg, isBadKick)
+                                            gameStatus.startY = event.yStart
+                                        gameStatus.lastY = gameStatus.startY  
+                                          rightHand:pause()  
+                                           
+                                           rightHand.skeleton.group.alpha = 0    
+
+                                      end  
+                                    elseif not  gameStatus.preventKick then                                
                                     
                                     local isBadKick = (gameStatus.isLeftLeg == gameStatus.isPrevLeft 
                                                       and not gameStatus.isAnyLeg ) 
@@ -4443,7 +4596,7 @@ gameStatus.isGameActive = true
                                       
 
                                 
-                                   
+                                   end
 
                               end
                           end  
@@ -4728,7 +4881,7 @@ gameStatus.isGameActive = true
         -- TRYING OUT PERFECT POSITION BY Y (not timing)
          
 
-         
+          local scoreByPos = 0
             
             local  kickRange = ballon.y - 180
          
@@ -4756,6 +4909,14 @@ gameStatus.isGameActive = true
                       
                       gameStats.bouncesPerfect =  gameStats.bouncesPerfect + 1
                       isPerfectKcick = true
+                      scoreByPos = 10
+
+                      ob.perfectKickEmitter:start()
+                      ob.perfectKickEmitter.alpha = 1
+
+                      ob.perfectKickEmitter.y = ballon.y
+                      ob.perfectKickEmitter.x = ballon.x 
+                      addScoreText2:setFillColor(0,1,0)
 
                       if (kickRange >= PERFECT_POSITION - PERFECT_MARGIN/2 and kickRange <= PERFECT_POSITION + PERFECT_MARGIN/2 ) then
                         ob.bubble:good()  
@@ -4766,18 +4927,39 @@ gameStatus.isGameActive = true
                      --kickPos.text = "G"
                       
                       gameStats.bouncesGood =  gameStats.bouncesGood + 1
+                      scoreByPos = 5
 
+                      ob.goodKickEmitter:start()
+                      ob.goodKickEmitter.alpha = 1
+                      ob.goodKickEmitter.y = ballon.y
+                      ob.goodKickEmitter.x = ballon.x 
+                      addScoreText2:setFillColor(1,206/255,0)
 
                   elseif (kickRange >= PERFECT_POSITION + PERFECT_MARGIN + GOOD_RANGE  ) then
                     --kickPos.text = "TL"
                     gameStatus.speed = gameStatus.speed - decSpeed/2          
                     isBadKick = true
                      gameStats.bouncesLate =  gameStats.bouncesLate + 1
+                     scoreByPos = 1
+
+                      ob.badKickEmitter:start()
+                      ob.badKickEmitter.alpha = 1
+                      ob.badKickEmitter.y = ballon.y
+                      ob.badKickEmitter.x = ballon.x 
+                      addScoreText2:setFillColor(1,0,0)
 
                   elseif (kickRange <=  PERFECT_POSITION - PERFECT_MARGIN - GOOD_RANGE   ) then       
                     --kickPos.text = "TE"
                     gameStatus.speed = gameStatus.speed - decSpeed/2
                     isBadKick = true
+                    scoreByPos = 1
+                    addScoreText2:setFillColor(1,0,0)
+
+                     ob.badKickEmitter:start()
+                      ob.badKickEmitter.alpha = 1
+                      ob.badKickEmitter.y = ballon.y
+                      ob.badKickEmitter.x = ballon.x 
+
                     if (ob.onGround) then            
 
 
@@ -4791,6 +4973,7 @@ gameStatus.isGameActive = true
                             ob.tipCircle.alpha = 0
                             ob.boosterHeaderText.alpha = 0
                             ob.boosterText.alpha = 0
+                            ob.boosterText.text =getTransaltedText("TimingTip")
                             ob.boosterMsg:init()  
 
                           timer.performWithDelay(100 , function ()                          
@@ -4808,6 +4991,7 @@ gameStatus.isGameActive = true
                                 timer.performWithDelay(1500 , function ()                                
                                   ob.tipCircle.alpha = 1
                                   ob.boosterHeaderText.alpha = 1
+
                                   ob.boosterText.alpha = 1
                                 end , 1)
                                 timer.performWithDelay(2500 , function ()
@@ -4862,7 +5046,37 @@ gameStatus.isGameActive = true
           end
         end  
 
-         if (gameStatus.forceSwap and gameStats.bounces < 8)  then 
+        local addScoreAlpha = 1.5
+
+         timer.performWithDelay(30 , function ()      
+              addScoreAlpha = addScoreAlpha - 0.1                                
+              addScoreText.alpha = addScoreAlpha
+              addScoreText2.alpha = addScoreAlpha - 0.5
+              addScoreText2.xScale = addScoreText2.xScale + 0.1  
+              addScoreText2.yScale = addScoreText2.yScale + 0.1  
+
+              
+              addScoreText.y =   addScoreText.y - 2         
+            end , 15)
+
+         addScoreText2.xScale = 1 
+         addScoreText2.yScale = 1 
+          
+        addScoreText.alpha = addScoreAlpha   
+        addScoreText2.alpha = addScoreAlpha                     
+        
+        addScoreText.text = "+" .. scoreByPos * (gameStatus.kicksMulti +1)
+        addScoreText.y = ballon.y
+        addScoreText.x = ballon.x + 50
+        addScoreText2.text = "+" .. scoreByPos * (gameStatus.kicksMulti +1)
+        addScoreText2.y = ballon.y
+        addScoreText2.x = ballon.x + 50
+        
+        gameStatus.newScore = gameStatus.newScore  + scoreByPos * (gameStatus.kicksMulti +1)
+        scoreText.text = string.format("%.00f", gameStatus.newScore) 
+
+
+         if (gameStatus.forceSwap and gameStats.bounces < 8 and commonData.gameData.abVersion ~= 3)  then 
 
            if gameStatus.isLeftLeg then
             rightHand:init()  
@@ -4895,7 +5109,10 @@ gameStatus.isGameActive = true
            gameStatus.kicksMulti = gameStatus.kicksMulti + 1           
             gameStatus.sreeCount = gameStatus.sreeCount  + 1 
              ob.updateScoreboard(gameStatus.sreeCount)
-          
+           
+           if  gameStatus.kicksMulti + 1 > gameStats.combo then
+            gameStats.combo =  gameStatus.kicksMulti + 1
+           end 
            gameStatus.shakeamount2 = 10
            
            if ( consecutivePerfects >= 20 ) then
@@ -4935,6 +5152,10 @@ gameStatus.isGameActive = true
             gameStatus.kicksMulti = 0
              gameStatus.sreeCount = gameStatus.kicksMulti 
              ob.updateScoreboard(gameStatus.sreeCount)
+
+             if isBadKick and ob.onGround then
+                gameStatus.shakeamount = 10
+             end 
           end  
 
           consecutivePerfects = 0             
