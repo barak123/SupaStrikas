@@ -16,11 +16,27 @@ local shouldLogOpens = false
 local packsButton = nil
 local playButton = nil
 local shopButton = nil 
-
+local iCloud = nil
 commonData.catalog = require("catalog")
+      local levelTextOptions23 = 
+        {         
+
+            text = "",     
+            width = 300,
+            align="right",
+            font = "UnitedSansRgHv",   
+            fontSize = 10 ,           
+            x = 240,
+            y = 100
+        }
+
+      --debugText = display.newText(levelTextOptions23) -- "",0,0, "UnitedSansRgHv" , 24)
+
 
 if ( system.getInfo("platformName") == "Android" ) then
   commonData.gpgs = require( "plugin.gpgs" )
+else
+  iCloud = require( "plugin.iCloud" )  
 end
  
 local function gpgsLoginListener( event )
@@ -42,24 +58,24 @@ end
    commonData.gpgs.init( gpgsInitListener )
  end
 
-commonData.kidoz = require( "plugin.kidoz" )
+-- commonData.kidoz = require( "plugin.kidoz" )
  
-local function adListener( event )
+-- local function adListener( event )
  
-    if ( event.phase == "init" ) then  -- Successful initialization
+--     if ( event.phase == "init" ) then  -- Successful initialization
         
-        -- Load a KIDOZ panel view ad
-        commonData.kidoz.load( "panelView", { adPosition="top" } )
+--         -- Load a KIDOZ panel view ad
+--         commonData.kidoz.load( "panelView", { adPosition="top" } )
  
-    elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
+--     elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
         
-        -- Show the ad
+--         -- Show the ad
         
-    end
-end
+--     end
+-- end
  
--- Initialize the KIDOZ plugin
-commonData.kidoz.init( adListener, { publisherID="13196", securityToken="RS408BBtfq9irLxdzygpjsxHomwskU1W" } )
+-- -- Initialize the KIDOZ plugin
+-- commonData.kidoz.init( adListener, { publisherID="13196", securityToken="RS408BBtfq9irLxdzygpjsxHomwskU1W" } )
 
 local function logAppOpens()
   local opensToAlert = {}
@@ -98,16 +114,30 @@ local function logAppOpens()
   end  
 end
 
+
+local function myUnhandledErrorListener( event )
+   commonData.analytics.logEvent( "Error", 
+      {
+         errorMessage=event.errorMessage, 
+         stackTrace=event.stackTrace
+      } 
+   )
+end
+
+
+
 local function flurryListener( event )
 
     if ( event.phase == "init" ) then  -- Successful initialization
-        --print( event.provider )
+        
         isFlurryReady = true
         commonData.analytics.logEvent( "appOpened" )
         if shouldLogOpens then
           logAppOpens()
           shouldLogOpens = false
         end  
+
+        Runtime:addEventListener("unhandledError", myUnhandledErrorListener)
     end
 end
 
@@ -122,6 +152,7 @@ if ( system.getInfo("platformName") == "Android" ) then
     flurryKey =  "J86WNYRJSSS5MMY98V2Q"
  end
 commonData.analytics.init( flurryListener, { apiKey=flurryKey , crashReportingEnabled=true })
+
 
 
 
@@ -469,8 +500,9 @@ commonData.saveTable = function (t, filename, isPostAvatar , ignoreFbStatus)
               create = true,  -- Create the snapshot if it's not found
               listener = gpgsSnapshotOpenForSaveListener
           })
----            print(filename)
- --           print(contents)
+        else
+           
+           iCloud.set( filename, encodeB64(encryptedData) )
         end
           
         return true
@@ -688,7 +720,7 @@ Runtime:addEventListener( "system", systemEvents )
             --isGetMeRequest = true
          --   gameData.packs = 5
              commonData.analytics.logEvent( "fbLikePressed" )
-             system.openURL( "https://m.facebook.com/SupaStrikasFC" )
+             system.openURL( "https://m.facebook.com/Supa-Strikas-Dash-114918519295873" )
  
          
           end
@@ -1212,16 +1244,33 @@ function scene:show( event )
                   
                   local decryptedData = cipher:decrypt (decodeB64(data) , dataFileEncKey )
                   
-                  myTable = json.decode(decryptedData);
+                  local gTable = json.decode(decryptedData);
 
                  
-                callback(myTable)
+                callback(gTable)
             end
         end
  
        if isSimulator or  system.getInfo("platformName") ~= "Android" or not commonData.gpgs.isConnected() then
         
-        callback(commonData.loadTable(filename))
+        if system.getInfo("platformName") ~= "Android" then
+            
+            local iData = iCloud.get(filename) 
+            if iData then
+               
+               local decryptedData = cipher:decrypt (decodeB64(iData) , dataFileEncKey )
+                  
+                  local iTable = json.decode(decryptedData);
+
+                 
+                callback(iTable)
+            else
+              
+              callback(commonData.loadTable(filename))
+            end  
+        else  
+          callback(commonData.loadTable(filename))
+        end
        else
         
           commonData.gpgs.snapshots.open({
@@ -1312,12 +1361,12 @@ function scene:show( event )
             commonData.gameData.selectedBooster = "fireBall"
             
             commonData.gameData.appOpened = 0  
-            commonData.gameData.abVersion = 3
+            commonData.gameData.abVersion = 4
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)
          
-        
+          
           if (not commonData.gameData.packs ) then
             commonData.gameData.packs = 0
           end

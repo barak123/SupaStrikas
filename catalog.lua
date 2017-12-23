@@ -38,7 +38,7 @@ local M = {}
       items.gems[gemIdx].cashCost = 3
       items.gems[gemIdx].image = "images/shop/gems/NorthShawIcon.png"      
       items.gems[gemIdx].id = "starterPack"       
-      items.gems[gemIdx].storeId = "com.ld.starterPack" 
+      items.gems[gemIdx].storeId = "com.ld.starterpack" 
       items.gems[gemIdx].hidden = true
       items.gems[gemIdx].specialOffer = true
       
@@ -48,7 +48,7 @@ local M = {}
       items.gems[gemIdx].cashCost = 3
       items.gems[gemIdx].image = "images/shop/gems/ShakesPromo.png"      
       items.gems[gemIdx].id = "shakesPack"       
-      items.gems[gemIdx].storeId = "com.ld.shakesPack" 
+      items.gems[gemIdx].storeId = "com.ld.shakespack" 
       items.gems[gemIdx].hidden = true
       items.gems[gemIdx].specialOffer = true
       
@@ -58,7 +58,7 @@ local M = {}
       items.gems[gemIdx].cashCost = 3
       items.gems[gemIdx].image = "images/shop/gems/RastaMatadorPromo.png"      
       items.gems[gemIdx].id = "megaPack"       
-      items.gems[gemIdx].storeId = "com.ld.promoPack" 
+      items.gems[gemIdx].storeId = "com.ld.promopack" 
       items.gems[gemIdx].hidden = true
       items.gems[gemIdx].specialOffer = true
 
@@ -111,8 +111,16 @@ local M = {}
       items.gems[gemIdx].id = "80supaGems" 
       items.gems[gemIdx].storeId = "com.ld.80supagems" 
 
+
+      gemIdx =gemIdx +  1
+      items.gems[gemIdx] = {}
+      items.gems[gemIdx].name = "REMOVE ADS"
+      items.gems[gemIdx].cashCost = 3
+      items.gems[gemIdx].image = "images/shop/RemoveAds.png"      
+      items.gems[gemIdx].id = "removeads" 
+      items.gems[gemIdx].storeId = "com.ld.removeads" 
+
       
- 
       local skinIdx = 1
  
        

@@ -1,8 +1,8 @@
 MAX_SPEED = 10
-MIN_SPEED = 5
-START_SPEED = 6 
-REFEREE_MAX_SPEED  = 6
-REFEREE_START_SPEED  = 4
+MIN_SPEED = 6
+START_SPEED = 7 
+REFEREE_MAX_SPEED  = 7
+REFEREE_START_SPEED  = 5
 REFEREE_ACCELERATION = 0.5 -- increase speed every 20 meters
 PERFECT_POSITION =  50
 PERFECT_MARGIN = 20
@@ -51,5 +51,5 @@ BALL_X = 180
 
 END_GAME_WHEN_DEF_TOUCH = true
 SHOP_FILE = "strika.dat"--"l1.dat" -- 32		
-GAME_DATA_FILE = "supa.dat" -- "ldr.dat" --22
+GAME_DATA_FILE = "supaV4.dat" -- "ldr.dat" --22
 

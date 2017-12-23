@@ -6,6 +6,7 @@ local M = {
 		electric = "images/boostparticles/UltraBallIElectric.png",
 		pixelBall = "images/boostparticles/PixelBall.png",
 		ultraBall = "images/boostparticles/ClassicFireBall.png",
+		purpleSmoke = "images/boostparticles/PurpleBall.png",
 	},
 	ultraBallsSounds = {
 		pixelBall = "sounds/PixelFireKick.mp3",

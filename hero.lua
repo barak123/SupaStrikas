@@ -720,7 +720,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			isJumping = true
 			isKicking = false
 			--skeleton.group.x = display.contentWidth * 0.25 + 10
-			return lowDuration
+			return lowDuration / 1.3
 		end
 
 
@@ -741,7 +741,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			isJumping = true
 			isKicking = false
 			--skeleton.group.x = display.contentWidth * 0.25 + 10
-			return lowDuration
+			return lowDuration / 1.3
 		end
 
 		local replayHandle =nil

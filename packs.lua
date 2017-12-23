@@ -606,7 +606,7 @@ local function handleItemPrize()
          
        end
 
-       commonData.analytics.logEvent( "openPack", {  categoryIdx= tostring( categoryIdx ) } ) 
+       
           
           if  (itemToBuy == nil or (shopItemsCount <= 10 and  commonData.shopItems[itemToBuy.id])) then
             local itemsByLevel = {}
@@ -628,6 +628,8 @@ local function handleItemPrize()
               itemToBuy = itemsByLevel[itemIdx]    
             end  
           end
+
+          commonData.analytics.logEvent( "openPack", {  categoryIdx= tostring( categoryIdx ) , item= itemToBuy.id} ) 
    --       if (cat[i].packChance) then
     --        if (prizeItemRnd <= accuSum + cat[i].packChance ) then
          
@@ -730,14 +732,16 @@ end
 
 local function rotateSpinner()
     
-    ballGlowImg.rotation = ballGlowImg.rotation + 2
+    if ballGlowImg then
+      ballGlowImg.rotation = ballGlowImg.rotation + 2
 
-    if  ballGlowImg.alpha > 0 then
-      if  ballGlowImg.alpha < 1 then
-        ballGlowImg.alpha = ballGlowImg.alpha +  0.04
+      if  ballGlowImg.alpha > 0 then
+        if  ballGlowImg.alpha < 1 then
+          ballGlowImg.alpha = ballGlowImg.alpha +  0.04
+        end
+          
+          timer.performWithDelay(50, rotateSpinner, 1)
       end
-        
-        timer.performWithDelay(50, rotateSpinner, 1)
     end
 end
 

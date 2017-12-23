@@ -24,6 +24,7 @@ local admobTime = nil
 local rateUsButton = nil
 local showAdButton =  nil
 local isGameOverActive = true
+local shouldReloadVideo = false
 
 
 local achivmetBarFull = nil
@@ -59,7 +60,7 @@ local boosterClose = nil
 
 local boosterCoinsText= nil
 local boosterCoinImg = nil
-local boosterHandImg = nil
+
 local confetti  = nil
 local notification = nil
 local notificationData = nil
@@ -75,6 +76,8 @@ local packReminder = nil
 local dailyReward = nil
 local dailyRewardGroup = nil
 local activeScreen = 1
+
+local newLevelSound = audio.loadSound( "sounds/LevelUpSound.mp3" )
 
 local xp = {
   xpBarMiddle = nil,
@@ -144,19 +147,23 @@ local function rateUsListener( event )
 
 local function logHighScore(gameData , newHighScore)
   local coinsToNotify = {}
-  coinsToNotify[1] = 100  
-  coinsToNotify[2] = 300
-  coinsToNotify[3] = 500  
-  coinsToNotify[4] = 1000  
-  coinsToNotify[5] = 2000
-  coinsToNotify[6] = 3000  
-  coinsToNotify[7] = 6000  
-  coinsToNotify[8] = 10000    
-  coinsToNotify[9] = 20000
-  coinsToNotify[10] = 30000
-  coinsToNotify[11] = 40000
+  coinsToNotify[1] = 1000  
+  coinsToNotify[2] = 2000
+  coinsToNotify[3] = 3000  
+  coinsToNotify[4] = 5000  
+  coinsToNotify[5] = 7000
+  coinsToNotify[6] = 10000  
+  coinsToNotify[7] = 15000  
+  coinsToNotify[8] = 20000    
+  coinsToNotify[9] = 30000
+  coinsToNotify[10] = 40000
+  coinsToNotify[11] = 50000
+  coinsToNotify[12] = 60000
+  coinsToNotify[13] = 80000
+  coinsToNotify[14] = 100000
+  coinsToNotify[15] = 150000
 
-  for i=1,11 do
+  for i=1,15 do
     
 
     if gameData.highScore < coinsToNotify[i] and
@@ -274,7 +281,7 @@ local function showNotification( text )
     boosterHeaderText.alpha = 0
     boosterCoinsText.alpha = 0
     boosterCoinImg.alpha = 0
-    boosterHandImg.alpha = 0   
+    
     notificationData.alpha = 0 
     shouldDisplayOkButton = true
     boosterMsg.skeleton.group.alpha = 1
@@ -294,7 +301,7 @@ local function showPrizeNotification( header , text , coins, displyOk )
     boosterHeaderText.alpha = 0
     boosterCoinsText.alpha = 0
     boosterCoinImg.alpha = 0
-    boosterHandImg.alpha = 0 
+    
     notificationData.alpha = 0 
     
     shouldDisplayOkButton = displyOk
@@ -364,14 +371,25 @@ local admob = require( "plugin.admob" )
  
 -- AdMob listener function
 local function adListener( event )
- 
+    --printTable(event)
+
     if ( event.phase == "init" ) then  -- Successful initialization
-        admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-        admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+        if ( system.getInfo( "platformName" ) == "Android" ) then
+          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+          admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+        else
+          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+          --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
+          admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+          
+        end
 
     elseif ( event.phase == "displayed" ) then  -- Successful initialization    
+        if ( system.getInfo( "platformName" ) == "Android" ) then
          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-        admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+        else
+           admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )          
+        end
         playButton.alpha = 1
         
         if not isGameOverActive  then
@@ -380,14 +398,18 @@ local function adListener( event )
         end
   
     elseif ( event.phase == "reward" ) then  -- Successful initialization
-        adBonus(event)      
-        
+        adBonus(event)   
+        shouldReloadVideo = true
     end
 end
  
 -- Initialize the AdMob plugin
-admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640", testMode=true } )
 
+if ( system.getInfo( "platformName" ) == "Android" ) then
+  admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640"  } ) -- , testMode=true
+else
+  admob.init( adListener, { appId="ca-app-pub-3507083359749399~7795398690" } )
+end  
 
 
 local superawesome = require( "plugin.superawesome" )
@@ -406,7 +428,7 @@ local function adListener( event )
 end
  
 -- Initialize the SuperAwesome plugin
-superawesome.init( adListener, { testMode=false } )
+superawesome.init( adListener )
  
 -- Sometime later, check if the ad is loaded
 
@@ -466,7 +488,7 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
       local function goToShopListener( event )
           
           if ( "ended" == event.phase ) then
-            commonData.playSound( selectMenuSound ) 
+            commonData.buttonSound()
             
             commonData.analytics.logEvent( "Claim promotion"  , { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
                                                 highScore= tostring(  commonData.gameData.highScore) ,
@@ -715,8 +737,8 @@ local function showGameOver( gameResult , isFirstLoad)
         -- end      
 
 
-             local memUsed = (collectgarbage("count"))
-             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
+             -- local memUsed = (collectgarbage("count"))
+             -- local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            
         
             --print( string.format("%.00f", texUsed) .. " / " .. memUsed)
@@ -760,34 +782,57 @@ local function showGameOver( gameResult , isFirstLoad)
         gmCnt = 1
        end 
        local showAdRnd =  gmCnt % 5 
+
+         if (gmCnt > 70 ) then
+          showAdRnd =  gmCnt % 3
+         end 
                
          if not  admob.isLoaded( "interstitial" ) then
-            admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-        
+            if ( system.getInfo( "platformName" ) == "Android" ) then
+             admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+            else
+               admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+            end
          end
 
+         
+
+         
          if not  admob.isLoaded( "rewardedVideo" ) then
-            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+            if ( system.getInfo( "platformName" ) == "Android" ) then
+             admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+            else
+              --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )              
+              admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+            end
          end
 
          if not  superawesome.isLoaded( "video" ) then
             superawesome.load( "video", { placementId=myPlacementID } )
          end
 
-         if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
-          commonData.kidoz.show( "panelView")      
-        end
+         if  admob.isLoaded( "rewardedVideo" ) or  superawesome.isLoaded( "video" )  then
+              showAdButton.alpha = 1
+          else
+             showAdButton.alpha = 0
+          end    
+        --  if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+        --   commonData.kidoz.show( "panelView")      
+        -- end
 
-       if (gmCnt == 12) then
-          showPromotion( gameResult , isFirstLoad , "starterPack")     
-       elseif (gmCnt> 1 and  gmCnt % 121 == 1)  then   
-          showPromotion( gameResult , isFirstLoad , "shakesPack")     
-       elseif (gmCnt> 80 and  gmCnt % 121 == 70)   then  
-          showPromotion( gameResult , isFirstLoad , "megaPack")       
-       end 
+
+        if ( system.getInfo( "platformName" ) == "Android" ) then
+           if (gmCnt == 12) then
+              showPromotion( gameResult , isFirstLoad , "starterPack")     
+           elseif (gmCnt> 1 and  gmCnt % 121 == 1)  then   
+              showPromotion( gameResult , isFirstLoad , "shakesPack")     
+           elseif (gmCnt> 80 and  gmCnt % 121 == 70)   then  
+              showPromotion( gameResult , isFirstLoad , "megaPack")       
+           end 
+         end
        
        
-       if (commonData.gameData.gamesCount > 30  and --not  commonData.gameData.madePurchase and 
+       if (commonData.gameData.gamesCount > 20  and not  commonData.gameData.madePurchase and 
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
                                        -- show the advert.
            
@@ -952,14 +997,16 @@ local function showGameOver( gameResult , isFirstLoad)
               commonData.gpgs.leaderboards.submit( {leaderboardId=highestComboId, score=tonumber(gameResult.combo) } )
               
             else
+
+              local highScoreIos = "com.ld.highscore"
                 commonData.gameNetwork.request( "setHighScore",
               {
-                 localPlayerScore = { category=myCategory, value=tonumber(gameResult.gameScore) },
+                 localPlayerScore = { category=highScoreIos, value=tonumber(gameResult.gameScore) },
                  listener = postScoreSubmit
               } )
 
 
-                 local highestComboId = "CgkI_YzqptgFEAIQBw"
+                 local highestComboId = "com.ld.highestcombo"
                  commonData.gameNetwork.request( "setHighScore",
               {
                  localPlayerScore = { category=highestComboId, value=tonumber(gameResult.combo) },
@@ -1090,6 +1137,7 @@ local function showGameOver( gameResult , isFirstLoad)
               newLevelText.newLevel.text = newLevel
       
               newLevelGroup.alpha = 1
+              commonData.playSound(newLevelSound) 
 
              
               if commonData.catalog.itemsByLevel[newLevel] then
@@ -1101,6 +1149,13 @@ local function showGameOver( gameResult , isFirstLoad)
                        img.x = 70 * newItemsIdx
                        img.xScale = 60 / img.contentWidth   
                        img.yScale = img.xScale
+                       local imgBkg = display.newImage("images/ItemBracket.png") 
+                       imgBkg.y = 225 
+                       imgBkg.x = 70 * newItemsIdx
+                       imgBkg.xScale = 65 / imgBkg.contentWidth   
+                       imgBkg.yScale = imgBkg.xScale
+
+                       newItemsGroup:insert(imgBkg)   
                        newItemsGroup:insert(img)   
                    end    
                 end
@@ -1260,7 +1315,7 @@ local function showGameOver( gameResult , isFirstLoad)
                             commonData.gameData.daysInARow = 0
                             coinsDailyReward = nil
                           end  
-                        
+                          
                           commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
                           timer.performWithDelay(300, 
@@ -1275,14 +1330,24 @@ local function showGameOver( gameResult , isFirstLoad)
                       return true
                  end
 
+                 local gradient = {
+                      type="gradient",
+                      color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+                  }
+
                   local dailyOkBtn = widget.newButton
                   {
                       x = 240,
                       y = 280,
                       id = "boosterButton",
-                      defaultFile = "images/OKUp.png",
-                      overFile = "images/OKDown.png",
-                      onEvent = dailyOkBtnListener
+                      defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+                      overFile = "BlueSet/End/EGMainMenuDown.png",
+                      onEvent = dailyOkBtnListener,
+                      label = getTransaltedText("OK"),
+                      labelAlign = "center",
+                      font = "UnitedSansRgHv",  
+                      fontSize = 40 ,           
+                      labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }                                
                   }
                  dailyOkBtn.xScale =  (display.actualContentWidth*0.3) / dailyOkBtn.width
                   dailyOkBtn.yScale = dailyOkBtn.xScale  
@@ -1433,7 +1498,7 @@ local function showGameOver( gameResult , isFirstLoad)
           
 
                
-           elseif (commonData.gameData.gamesCount > 100 and isHighScore and not commonData.gameData.rateUsShown  ) then   
+           elseif (commonData.gameData.gamesCount > 50 and isHighScore and not commonData.gameData.rateUsShown   ) then   
            
               local rateImg = display.newImage("images/Rate.png")
               rateImg:scale(0.7,0.7)
@@ -1482,15 +1547,16 @@ local function showGameOver( gameResult , isFirstLoad)
              end
 
             local sameLegBounces = gameResult.bounces - gameResult.bouncesPerfect - gameResult.bouncesGood - gameResult.bouncesEarly - gameResult.bouncesLate
-            print(tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces))         
+            -- print(tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces))         
+            -- print(tostring(gameResult.bouncesLeft) .. "/" .. tostring(gameResult.bouncesRight))         
                   
             commonData.analytics.logEvent( "finishGame" .. version , { gamesCount= tostring( commonData.gameData.gamesCount) ,  
                                                 gameScore= tostring( gameResult.gameScore) , 
                                                 highScore= tostring(  commonData.gameData.highScore) ,
                                                 pgbsj = tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood) 
                                                  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces) ..  "/" .. tostring(gameResult.jumps) ,
-                                                reason= tostring(gameResult.finishReason)  } )
-
+                                                reason= tostring(gameResult.finishReason) ,
+                                                leftRight = tostring(gameResult.bouncesLeft) .. "/" .. tostring(gameResult.bouncesRight)   } )
             
             if (commonData.gameData.packs > 0) then
               openPkgButton.alpha = 0
@@ -1503,8 +1569,7 @@ local function showGameOver( gameResult , isFirstLoad)
 
             highScoreText.text = commonData.comma_value(commonData.gameData.highScore)
             highScoreShadowText.text = commonData.comma_value(commonData.gameData.highScore)
-            --parse:logEvent( "Share", { ["score"] = gameResult.gameScore } )
-
+            
             -- unlock new achivments
 
             
@@ -1595,25 +1660,33 @@ function scene:create( event )
      newLevelBackground2.x = 240
      newLevelBackground2.y = 160 
      
-    
-      
+      local newLevelBackground3 =  display.newImage("images/LevelUpShwing.png")
+       newLevelBackground3.xScale =  (display.actualContentWidth*0.75) / newLevelBackground3.contentWidth
+     newLevelBackground3.yScale =  newLevelBackground3.xScale
+     newLevelBackground3.x = 240
+     newLevelBackground3.y = 160 
+        
 
-      newLevelText.levelUp = display.newText({text = "LEVEL UP!", font = "UnitedSansRgHv", fontSize = 25 }  )
+      newLevelText.levelUp = display.newText({text = getTransaltedText("levelUp"), font = "UnitedSansRgHv", fontSize = 25 }  )
       
-      newLevelText.newLevel = display.newText({text = "5",font = "UnitedSansRgHv", fontSize = 45}  )
+      newLevelText.newLevel = display.newText({text = "5",font = "UnitedSansRgHv", fontSize = 35}  )
       newLevelText.newLevel.text = "5"
       newLevelText.newLevel:setFillColor(1,206/255,0)
 
-      newLevelText.newItems = display.newText({text = "You can use now the following items:", font = "UnitedItalicRgHv", fontSize = 15}  )
+      
+      newLevelText.newItems = display.newText({text = getTransaltedText("levelNewItems") , font = "UnitedItalicRgHv", fontSize = 15}  )
       
       newLevelText.levelUp.x = 240
       newLevelText.levelUp.y = newLevelBackground2.y - newLevelBackground2.contentHeight/2  +  newLevelText.levelUp.contentHeight /2  + 3
 
       newLevelText.newLevel.x = 240
-      newLevelText.newLevel.y = 130
+      newLevelText.newLevel.y = 135
 
       newLevelText.newItems.x = 240
       newLevelText.newItems.y = 170
+
+      newLevelBackground3.y = newLevelText.newItems.y - newLevelBackground3.contentHeight/2 + 12
+      newLevelText.newLevel.y = newLevelBackground3.y + 7
       
 
       local function newLevelOkBtnListener( event )
@@ -1655,6 +1728,8 @@ function scene:create( event )
       
      newLevelGroup:insert(newLevelBackground)
      newLevelGroup:insert(newLevelBackground2)
+     newLevelGroup:insert(newLevelBackground3)
+     
      newLevelGroup:insert(newLevelText.levelUp)
      newLevelGroup:insert(newLevelText.newLevel)
      newLevelGroup:insert(newLevelText.newItems)
@@ -1717,7 +1792,7 @@ function scene:create( event )
           sceneGroup.alpha = 0
           isGameOverActive = false
           parent:outerRestartGame()
-          commonData.kidoz.hide( "panelView")
+          --commonData.kidoz.hide( "panelView")
           
 
        
@@ -1854,7 +1929,7 @@ function scene:create( event )
                       native.showPopup( "social",
                       {
                           service = serviceName,
-                          message = "Supa Strikas!",
+                          message = "Supa Strikas Dash!",
                           listener = listener,
                           image = 
                           {
@@ -1881,7 +1956,7 @@ function scene:create( event )
        
        local options = {params = {gameData = commonData.gameData}}
        composer.gotoScene( "packs" , options )
-     
+
     end 
 
     local function packsListener( event )
@@ -1889,7 +1964,7 @@ function scene:create( event )
           if ( "ended" == event.phase ) then
             
             commonData.buttonSound()
-
+ 
             local options = {params = {gameData = commonData.gameData}}
             composer.gotoScene( "packs" , options )
           end  
@@ -1919,7 +1994,7 @@ function scene:create( event )
                   commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
                 if (not isSimulator)  then
                   local isSpwLoaded =  superawesome.isLoaded( myPlacementID )
-                  local isAdmobLoaded =  admob.isLoaded( "interstitial" )
+                  local isAdmobLoaded =  admob.isLoaded( "rewardedVideo" )
 
                     if isAdLoaded and not isAdmobLoaded then
                         superawesome.show( myPlacementID )
@@ -1931,12 +2006,12 @@ function scene:create( event )
                         else
                           superawesome.show( myPlacementID )
                         end     
+                    else
+                        admob.show("rewardedVideo")
                     end
 
-     
                     showAdButton.alpha = 0
-                     
-              
+                    
                 else
                     showAdButton.alpha = 0
                     adBonus(event)
@@ -2008,19 +2083,42 @@ function scene:create( event )
       showAdButton.x =  background.x - background.contentWidth /2 - showAdButton.contentWidth /2 + 10
       
     
+    boosterClose= widget.newButton
+      {
+          x = 170,
+          y = 290,
+          id = "boosterButton",
+          defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+          overFile = "BlueSet/End/EGMainMenuDown.png",
+          onEvent = boosterButtonListener,
+          label = getTransaltedText("Cancel"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     boosterClose.xScale =  (display.actualContentWidth*0.3) / boosterClose.width
+     boosterClose.yScale = boosterClose.xScale 
+
+
       rateUsButton = widget.newButton
       {
-          x = 240,
-          y = 265,
+          x = 330,
+          y = 290,
           id = "rateUsButton",
           defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
           overFile = buttonsSet .. "/End/EGMainMenuDown.png",
-          onEvent = rateUsListener
+          onEvent = rateUsListener,
+          label = getTransaltedText("OK"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
-      rateUsButton.xScale =  (display.contentWidth*0.25) / rateUsButton.width
+      rateUsButton.xScale =  (display.actualContentWidth*0.3) / rateUsButton.width
       rateUsButton.yScale = rateUsButton.xScale  
-      rateUsButton.x =  rateUsButton.x - (display.actualContentWidth - display.contentWidth) /2
-
+      rateUsButton.x = 170 + rateUsButton.contentWidth/2
+      boosterClose.x = 170 -boosterClose.contentWidth/2
       
 
       rateUsButton.alpha = 0
@@ -2098,20 +2196,8 @@ function scene:create( event )
      boosterButton.xScale =  (display.actualContentWidth*0.2) / boosterButton.width
       boosterButton.yScale = boosterButton.xScale  
 
-  
-    boosterClose = widget.newButton
-      {
-          x = 40,
-          y = 43,
-          id = "boosterClose",
-          defaultFile = "images/X.png",
-          overFile = "images/XDown.png",
-          onEvent = boosterButtonListener
-      }
-
-      boosterClose.xScale =  (display.contentWidth*0.07) / boosterClose.width
-      boosterClose.yScale = boosterClose.xScale  
     
+
 
     scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 70)
     scoreText.x = 230
@@ -2290,12 +2376,7 @@ function scene:create( event )
     boosterCoinImg.y = 120
     boosterCoinImg:scale(0.5,0.5)
 
-    boosterHandImg  = display.newImage("Tutorialhand/TutorialHand.png")
-    boosterHandImg.x = 180
-    boosterHandImg.y = 120
-    boosterHandImg:scale(0.4,0.4)
-
-  
+    
     
     local function changeScreenListener( event )
      if ( "ended" == event.phase ) then
@@ -2390,7 +2471,7 @@ function scene:create( event )
     xp.xpEmiter.x = xp.xpBarEnd.x 
     xp.xpEmiter.y = 240
 
-    --boosterHandImg:scale(0.4,0.4)
+  
 
     nextLevelText.x = xp.xpBarBG.x + xp.xpBarBG.contentWidth / 2 + 15
     levelText.x =  xp.xpBarBG.x - xp.xpBarBG.contentWidth / 2  - 15
@@ -2468,7 +2549,7 @@ function scene:create( event )
      notificationData:insert(boosterHeaderText)     
      notificationData:insert(boosterCoinsText)     
      notificationData:insert(boosterCoinImg)   
-     notificationData:insert(boosterHandImg) 
+     
      notificationData:insert(rateUsButton) 
      
          
@@ -2518,6 +2599,7 @@ function scene:show( event )
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
         promotionGroup.alpha =0 
+        xp.xpEmiter:start()
 
       parent = event.parent
        local isSimulator = (system.getInfo("environment") == "simulator");
@@ -2550,11 +2632,23 @@ function scene:hide( event )
 
    if ( phase == "will" ) then
       boosterMsg:pause()
-      commonData.kidoz.hide( "panelView")
+      --commonData.kidoz.hide( "panelView")
+      xp.xpEmiter:stop()
       -- Called when the scene is on screen (but is about to go off screen).
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.
 --        parent:outerRestartGame()
+      if shouldReloadVideo then
+        if ( system.getInfo( "platformName" ) == "Android" ) then  
+            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+        else    
+            --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
+            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+            
+        end
+
+        shouldReloadVideo = false
+      end  
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
    end
@@ -2587,9 +2681,9 @@ function scene:outerRefreshResults(gameResult)
 
   end 
  end, 19)
- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
-          commonData.kidoz.show( "panelView")
- end
+ -- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+ --          commonData.kidoz.show( "panelView")
+ -- end
  
 end
 

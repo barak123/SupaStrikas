@@ -1,4 +1,5 @@
 settings = {
+     
      orientation = {
           default = "landscapeRight",
           content = "landscapeRight",
@@ -22,6 +23,7 @@ settings = {
      --code, but if you don't have it referenced here it
      --will not work
      iphone = {
+          iCloud = true,   
           xcassets = "Images.xcassets",  
           plist = {
                 UIAppFonts = {
@@ -45,7 +47,7 @@ settings = {
 
 	plugins =
 	{
-		
+		 
 		 ["plugin.gpgs"] =
         {
             publisherId = "com.coronalabs",
@@ -55,6 +57,11 @@ settings = {
         {
             publisherId = "com.coronalabs",
             supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
+        },
+        ["plugin.iCloud"] =
+        {
+            publisherId = "com.coronalabs",
+             supportedPlatforms = { iphone=true , ["iphone-sim"]=true },
         },
          ["plugin.admob"] =
         {
@@ -95,10 +102,10 @@ settings = {
         {
             publisherId = "com.coronalabs"
         },  
-    ["plugin.kidoz"] =
-    {
-        publisherId = "com.coronalabs"
-    },      
+   -- ["plugin.kidoz"] =
+    --{
+     --   publisherId = "com.coronalabs"
+    --},      
 		
 	},
 }

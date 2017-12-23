@@ -11,6 +11,9 @@ else
   store = require("store")   
 end
 
+
+
+
 local moshe= "moshe"
 
 
@@ -26,7 +29,8 @@ local scrollTo = false
 local outerScrollTo = false
 local coinsCount = 1
 local gemsCount = 1
-      
+local productsLoaded = false      
+
 
 local seletedCategory = nil
 local buyButton = nil
@@ -44,7 +48,6 @@ local selectedItemIdx = 1
 local prevItem = nil
 local heroSpine =  nil
 local hero = nil
-local currentProductList = nil
 
 local  buyWithCoinsText = nil
 
@@ -82,9 +85,10 @@ local productList =
   "com.ld.20supagems",
   "com.ld.40supagems",
   "com.ld.80supagems",
-  "com.ld.starterPack",
-  "com.ld.shakesPack",
-  "com.ld.promoPack",  
+  "com.ld.removeads",
+  "com.ld.starterpack",
+  "com.ld.shakespack",
+  "com.ld.promopack",  
 }
             
 
@@ -795,7 +799,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           categories:insert(button1)
 
           local defaultCat = 1
-          if not store.isActive then
+          if not productsLoaded then
                 defaultCat = 2           
           end
 
@@ -986,8 +990,11 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
        local function useButtonListener( event )
           
           if ( "ended" == event.phase ) then
-             commonData.buttonSound()
-            setSelectedItems()
+
+             if commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] then
+               commonData.buttonSound()
+               setSelectedItems()
+            end
           end
 
           return true
@@ -1193,6 +1200,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
         
        end
 
+  
        local function makeStorePurchase(productId)
 
             if ( system.getInfo("platformName") == "Android" ) then
@@ -1211,9 +1219,12 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
            
              if (catItems[selectedItemIdx] and                  
                   catItems[selectedItemIdx].storeId) then
+                    -- commonData.catalog.items.gems[9].hidden = true
+                    -- commonData.shopItems["removeads"] = true
+                    -- commonData.saveTable(commonData.shopItems , SHOP_FILE)
 
-                   commonData.analytics.logEvent( "buyWithCashPressed", {  item = tostring(  catItems[selectedItemIdx].id ) } ) 
-
+         
+                  -- commonData.analytics.logEvent( "buyWithCashPressed", {  item = tostring(  catItems[selectedItemIdx].id ) } ) 
 
                   if store.isActive == false then
                     -- native.showAlert("Store is not available, please try again later", {"OK"})
@@ -1221,6 +1232,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
                   elseif store.canMakePurchases == false then
                     -- native.showAlert("Store purchases are not available, please try again later", {"OK"})
                     --  print("Store purchases are not available, please try again later")
+                    commonData.analytics.logEvent( "cannot make purchases" ) 
                   else
             --        print("Ka-ching! Purchasing " .. tostring(productId))
 
@@ -1229,7 +1241,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
                     -- else  
                     --   makeStorePurchase( "com.ld.dribble.test.ball" )
                     -- end
-
+                    commonData.analytics.logEvent( "try to purchase", {  item = tostring( catItems[selectedItemIdx].storeId ) } ) 
                     makeStorePurchase( catItems[selectedItemIdx].storeId )
                   end                  
              end
@@ -1443,31 +1455,10 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       
       
 
-        local function printTable( t, label, level )
-        if label then print( label ) end
-        level = level or 1
-
-        if t then
-          for k,v in pairs( t ) do
-            local prefix = ""
-            for i=1,level do
-              prefix = prefix .. "\t"
-            end
-
-            print( prefix .. "[" .. tostring(k) .. "] = " .. tostring(v) )
-            if type( v ) == "table" then
-              print( prefix .. "{" )
-              printTable( v, nil, level + 1 )
-              print( prefix .. "}" )
-            end
-          end
-        end
-      end
-
 
        
       
-        if store.isActive then
+        if productsLoaded then
            seletedCategory = "gems"
         else     
            seletedCategory = "skins"
@@ -1568,6 +1559,72 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
    
      
 end
+  
+    local function trim1(s)
+        return (s:gsub("^%s*(.-)%s*$", "%1"))
+      end
+
+
+     local function productCallback( event )
+
+
+
+        for i = 1,#event.products do
+            -- print( event.products[i].title )
+            -- print( event.products[i].description )
+            -- print( event.products[i].price )
+            -- print( event.products[i].localizedPrice )
+            -- print( event.products[i].productIdentifier )
+
+            
+
+            for key,cat in pairs(commonData.catalog.items) do
+              for idx=1,#cat do
+                
+                if (cat[idx].storeId and cat[idx].storeId  == event.products[i].productIdentifier) then
+--                      print ("items matched")
+                  cat[idx].cashCost = trim1(event.products[i].localizedPrice)
+                end  
+              end
+            end    
+        end
+
+--          print( "Showing invalid products:", #event.invalidProducts )
+        for i = 1,#event.invalidProducts do
+            --printTable( event.invalidProducts[i] )            
+        end        
+
+        productsLoaded = true
+        local currentSceneName = composer.getSceneName( "current" )
+         if ( currentSceneName == "shop" and areYouSurePopup.alpha == 0 ) then
+          openCategory()
+        end
+    end
+
+
+  local isProductLoaded = false
+    local productsReloadCount  = 5
+    
+    local function loadProducts()
+      if not isProductLoaded then
+        
+        if (store.isActive and store.canLoadProducts ) then
+          print("try to load products")
+          isProductLoaded = true 
+          store.loadProducts( productList, productCallback )
+          
+        -- else
+        --   print("cannot load products")
+        --   if (productsReloadCount > 0 ) then
+        --     productsReloadCount = productsReloadCount -1
+        --     timer.performWithDelay(2000 , loadProducts , 1)              
+        --   end
+        end
+      end
+
+      return store.isActive and store.canLoadProducts
+    end
+
 
 -- "scene:show()"
 function scene:show( event )
@@ -1583,6 +1640,8 @@ function scene:show( event )
       
       commonData.shopSkin = commonData.selectedSkin 
       commonData.shopBall = commonData.selectedBall 
+      loadProducts()
+
        
 
       hero:reload()
@@ -1594,6 +1653,8 @@ function scene:show( event )
       cancelBuyButton:setLabel(getTransaltedText("Cancel"))
       backButton:setLabel(getTransaltedText("Back"))
 
+      commonData.catalog.items.gems[9].hidden = (commonData.shopItems["removeads"] or  system.getInfo("platformName") ~= "Android" ) 
+      
 
       local prevScene = composer.getSceneName( "previous" )
       if prevScene == "game" then
@@ -1632,6 +1693,8 @@ function scene:hide( event )
       -- Example: stop timers, stop animation, stop audio, etc.
         hero:pause()
         Runtime:removeEventListener("enterFrame", boutiqueFrame)
+        areYouSurePopup.alpha = 0
+        setSlidesLocked(false)
 
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
@@ -1652,61 +1715,8 @@ end
 function scene:initStore( )
     
      
-     local function trim1(s)
-        return (s:gsub("^%s*(.-)%s*$", "%1"))
-      end
-
-     local function productCallback( event )
-            --print( "Showing valid products:", #event.products )
-            for i = 1,#event.products do
-                -- print( event.products[i].title )
-                -- print( event.products[i].description )
-                -- print( event.products[i].price )
-                -- print( event.products[i].localizedPrice )
-                -- print( event.products[i].productIdentifier )
-
-
-                for key,cat in pairs(commonData.catalog.items) do
-                  for idx=1,#cat do
-                  
-                    if (cat[idx].storeId and cat[idx].storeId  == event.products[i].productIdentifier) then
---                      print ("items matched")
-                      cat[idx].cashCost = trim1(event.products[i].localizedPrice)
-                    end  
-                  end
-                end    
-            end
-
-  --          print( "Showing invalid products:", #event.invalidProducts )
-            for i = 1,#event.invalidProducts do
-                --printTable( event.invalidProducts[i] )
-            end        
-        end
      
-
-     local isProductLoaded = false
-        local productsReloadCount  = 5
-        
-        local function loadProducts()
-          if not isProductLoaded then
-            
-            if (store.isActive and store.canLoadProducts ) then
-              --print("try to load products")
-              store.loadProducts( productList, productCallback )
-              isProductLoaded = true 
-            else
-              --print("cannot load products")
-              if (productsReloadCount > 0 ) then
-                productsReloadCount = productsReloadCount -1
-                timer.performWithDelay(2000 , loadProducts , 1)              
-              end
-            end
-          end
-
-          return store.isActive and store.canLoadProducts
-        end
-        
-
+  
       local function transactionCallback( event )
         local infoString
 
@@ -1715,6 +1725,11 @@ function scene:initStore( )
         -- print("state: " .. tostring(event.transaction.state))
         -- print("errorType: " .. tostring(event.transaction.errorType))
         -- print("errorString: " .. tostring(event.transaction.errorString))
+        -- print("errorString: " .. tostring(event.transaction.isError))
+
+        --printTable(event)
+
+        local catItems = commonData.catalog.getActiveItems(seletedCategory) 
 
         if ( event.name == "init" ) then
         --  print("call load products")          
@@ -1727,7 +1742,7 @@ function scene:initStore( )
           -- print("signature: " .. tostring(event.transaction.signature))
       
 
-          local catItems = commonData.catalog.getActiveItems(seletedCategory) 
+          
 
           if  catItems[selectedItemIdx].specialOffer then
             if catItems[selectedItemIdx].id == "starterPack" then
@@ -1743,10 +1758,16 @@ function scene:initStore( )
               commonData.shopItems["ElMatador"] = true
               commonData.shopItems["Rasta"] = true
               commonData.gameData.gems = commonData.gameData.gems + 5
+            elseif  catItems[selectedItemIdx].id == "removeads" then  
+              commonData.catalog.items.gems[9].hidden = true
+              commonData.shopItems["removeads"] = true
             end  
 
           else  
             commonData.gameData.gems = commonData.gameData.gems + catItems[selectedItemIdx].gemsCount
+            if ( system.getInfo("platformName") == "Android" ) then
+            store.consumePurchase( catItems[selectedItemIdx].storeId )
+            end
           end
 
           commonData.gameData.madePurchase = true
@@ -1761,9 +1782,7 @@ function scene:initStore( )
           setSlidesLocked(false)  
 
 
-          if ( system.getInfo("platformName") == "Android" ) then
-            store.consumePurchase( catItems[selectedItemIdx].storeId )
-          end
+          
           
           commonData.analytics.logEvent( "itemPurchased", {  item = tostring( catItems[selectedItemIdx].id ) } ) 
 
@@ -1791,11 +1810,21 @@ function scene:initStore( )
         elseif event.transaction.state == "cancelled" then
           -- infoString = "Transaction cancelled by user."
           -- print(infoString)
-         
+         commonData.analytics.logEvent( "buyWithCashCanceled", {  item = tostring( catItems[selectedItemIdx].id ) , 
+                                        errorString = tostring(event.transaction.errorString) } ) 
         elseif event.transaction.state == "failed" then        
           -- infoString = "Transaction failed, type: " .. 
           --   tostring(event.transaction.errorType) .. " " .. tostring(event.transaction.errorString)
           -- print(infoString)
+
+
+          if event.transaction.isError then
+            commonData.analytics.logEvent( "buyWithCashError", {  item = tostring( catItems[selectedItemIdx].id ) , 
+                                          errorString =  tostring(event.transaction.errorString)} ) 
+          else
+            commonData.analytics.logEvent( "buyWithCashFailed", {  item = tostring( catItems[selectedItemIdx].id ) , 
+                                          errorString =  tostring(event.transaction.errorString)} ) 
+          end  
           
         else
           infoString = "Unknown event"
@@ -1808,11 +1837,22 @@ function scene:initStore( )
         store.finishTransaction( event.transaction )
       end
 
-      print("call init")
-        store.init(transactionCallback)
 
-        timer.performWithDelay ( 1000, loadProducts )
-        moshe= "david"
+
+      if ( system.getInfo("platformName") == "Android" ) then
+          store.init("google", transactionCallback)
+      else
+          if store.availableStores.apple then            
+            store.init("apple", transactionCallback)
+          --  print("Using Apple's in-app purchase system.")
+            
+          else
+            --print("In-app purchases is not supported on this system/device.")
+          end  
+      end
+
+
+      timer.performWithDelay ( 4000, loadProducts )
         
 end
 
