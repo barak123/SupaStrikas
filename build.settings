@@ -58,6 +58,10 @@ settings = {
             publisherId = "com.coronalabs",
             supportedPlatforms = { iphone=true, ["iphone-sim"]=true },
         },
+         --["plugin.fbAudienceNetwork"] =
+        --{
+          --  publisherId = "com.coronalabs"
+        --},
         ["plugin.iCloud"] =
         {
             publisherId = "com.coronalabs",
@@ -67,10 +71,10 @@ settings = {
         {
             publisherId = "com.coronalabs"
         },
-    ["plugin.superawesome"] =
-    {
-        publisherId = "com.coronalabs"
-    },
+    --["plugin.superawesome"] =
+    --{
+      --  publisherId = "com.coronalabs"
+    --},
 	   --key is the name passed to the Lua "require()"
 	--   ["CoronaProvider.gameNetwork.google"] =
 	 --  {

@@ -39,12 +39,127 @@ else
   iCloud = require( "plugin.iCloud" )  
 end
  
+
+ --local clouds = nil
+local function printTable( t, label, level )
+  if label then print( label ) end
+  level = level or 1
+
+  if t then
+    for k,v in pairs( t ) do
+      local prefix = ""
+      for i=1,level do
+        prefix = prefix .. "\t"
+      end
+
+      print( prefix .. "[" .. tostring(k) .. "] = " .. tostring(v) )
+      if type( v ) == "table" then
+        print( prefix .. "{" )
+        printTable( v, nil, level + 1 )
+        print( prefix .. "}" )
+      end
+    end
+  end
+end
+
+commonData.leaderboard = {}
+commonData.reloadLeaderboard =  function(callback)
+    
+     if system.getInfo("environment") == "simulator" then  
+        commonData.gpgsConnected = true              
+        print("simulate leaderboard")
+        --commonData.leaderboard.single = {{player={name="barak",id="123"}}}
+        commonData.leaderboard.top = {{player={name="barak",id="123"},formattedRank="11",formattedScore="50,000",rank=1},
+                                      {player={name="moshe",id="124"},formattedRank="12",formattedScore="40,000",rank=12},
+                                      {player={name="moshe2",id="125"},formattedRank="13",formattedScore="30,000",rank=13},
+                                      {player={name="moshe3",id="126"},formattedRank="14",formattedScore="20,000",rank=14},
+                                      {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",rank=15},
+                                      {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",rank=16}  
+                                    }
+         commonData.leaderboard.centered = {{player={name="barak",id="123"},formattedRank="1",formattedScore="50,000"},
+                                      {player={name="moshe",id="124"},formattedRank="2",formattedScore="40,000"},
+                                      {player={name="moshe2",id="124"},formattedRank="3",formattedScore="30,000"},
+                                      {player={name="moshe3",id="124"},formattedRank="4",formattedScore="20,000"},
+                                      {player={name="moshe4",id="124"},formattedRank="5",formattedScore="10,000"},
+                                      {player={name="moshe5",id="124"},formattedRank="6",formattedScore="5,000"}  
+                                    }   
+                                                            
+         if  callback then
+                        callback()
+         end                                                            
+    else   
+        local myCategory = "CgkI_YzqptgFEAIQAA"
+        local isTop = false
+        local isCentered = true
+
+        -- commonData.gpgs.leaderboards.loadScores( {
+        --             leaderboardId = myCategory,
+        --             position = "centered",
+        --             friendsOnly = false,
+        --             limit = 3,
+        --             timeSpan = "daily",
+        --             reload = true,
+        --             listener = function(event1)
+
+        --                   print("--------centered----------")
+        --                   printTable(event1)
+        --                   commonData.leaderboard.centered = event1.scores
+        --                   isCentered = true
+        --                   if isTop and callback then
+        --                     callback()
+        --                   end  
+        --                 end
+
+        --           } )       
+       commonData.gpgs.leaderboards.loadScores( {
+                    leaderboardId = myCategory,                    
+                    friendsOnly = false,
+                    limit = 5,
+                    timeSpan = "daily",
+                    reload = true,
+                    listener = function(event2)
+                          print("--------top----------")
+                        --  printTable(event2)
+                          commonData.leaderboard.top = event2.scores
+                           
+                          isTop = true
+                          if isCentered and callback then
+                            callback()
+                          end  
+                        end
+
+                  } )        
+        commonData.gpgs.leaderboards.loadScores( {
+                    leaderboardId = myCategory,
+                    position = "single",
+                    friendsOnly = false,
+                    limit = 1,
+                    timeSpan = "daily",
+                    reload = false,
+                    listener = function(event3)                         
+                          commonData.leaderboard.single = event3.scores
+                          
+                      end
+
+                  } ) 
+  
+    end    
+    
+
+end
+
+
 local function gpgsLoginListener( event )
+    
     
 
     if commonData.loadAfterLogin then
       commonData.loadAfterLogin()
     end 
+
+    commonData.reloadLeaderboard()
+    commonData.gpgsConnected = true
+
 end
  
 local function gpgsInitListener( event )
@@ -228,27 +343,6 @@ commonData.globalHighScore = 0
 local cipher = openssl.get_cipher ( "aes-256-cbc" )
 local dataFileEncKey = "t0m y@m kun8"
 
---local clouds = nil
-local function printTable( t, label, level )
-  if label then print( label ) end
-  level = level or 1
-
-  if t then
-    for k,v in pairs( t ) do
-      local prefix = ""
-      for i=1,level do
-        prefix = prefix .. "\t"
-      end
-
-      print( prefix .. "[" .. tostring(k) .. "] = " .. tostring(v) )
-      if type( v ) == "table" then
-        print( prefix .. "{" )
-        printTable( v, nil, level + 1 )
-        print( prefix .. "}" )
-      end
-    end
-  end
-end
 
 function encodeB64(data)
   local len = data:len()
@@ -282,9 +376,16 @@ end
 local function loadGameScene()
   
       if (commonData.gameData) then  
-        local options = {params = {gameData = commonData.gameData, isTutorial=false}}
-              
-        local results = composer.loadScene( "game", false, options )
+         
+          
+          local options = {params = {gameData = commonData.gameData, isTutorial=false}}
+                
+          local results = composer.loadScene( "game", false, options )
+       
+         -- timer.performWithDelay(100, function ()
+         --  collectgarbage()   
+         -- end, 1)
+
       end
      
       
@@ -310,6 +411,8 @@ end
 
 
 
+
+
 local prevMem = 0
  local memUsed = 0 
 -- "scene:create()"
@@ -323,14 +426,18 @@ commonData.selectedBall = "NormalBall"
 commonData.selectedField = "Stadium"
 commonData.selectedBooster = "fireBall"
 
- -- timer.performWithDelay(1000 , 
- --      function (  )
- --            prevMem = memUsed
- --             memUsed = (collectgarbage("count"))            
- --             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
- --           print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
-        
- --      end, -1)
+if system.getInfo("environment") == "simulator" then  
+ timer.performWithDelay(1000 , 
+      function (  )
+             prevMem = memUsed
+             memUsed = (collectgarbage("count"))            
+             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
+           print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
+
+          
+      end, -1)
+end 
+
 
 commonData.shopSkin = commonData.selectedSkin 
 commonData.shopBall = commonData.selectedBall 
@@ -626,6 +733,7 @@ Runtime:addEventListener( "system", systemEvents )
       local function buttonListener( event )
           
           if ( "ended" == event.phase ) then
+          collectgarbage()   
             commonData.playSound( selectMenuSound ) 
             local isTutorial = (event.target.id == "tutorialButton") or isFirstGame
 
@@ -1361,7 +1469,7 @@ function scene:show( event )
             commonData.gameData.selectedBooster = "fireBall"
             
             commonData.gameData.appOpened = 0  
-            commonData.gameData.abVersion = 4
+            commonData.gameData.abVersion = 4 + math.random(2)
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)

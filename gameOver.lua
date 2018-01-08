@@ -9,35 +9,32 @@ require( "menu" )
 require( "achivmentsManager" )
 require "translation"
 
-
-
-local json = require("json")
-local heroSpine =  require ("hero")
 local isSimulator = "simulator" == system.getInfo( "environment" )
-      
+--local fbAudienceNetwork = require( "plugin.fbAudienceNetwork" )      
 local scene = composer.newScene()
 local playButton = nil
 local background = nil
 local newLevelBackground = nil
 local skipAdmob = false
+
 local admobTime = nil
 local rateUsButton = nil
-local showAdButton =  nil
+
 local isGameOverActive = true
 local shouldReloadVideo = false
 
 
 local achivmetBarFull = nil
 local achivmetBar = nil
-local highScoreShadowText = nil
+
+
 local parent = nil
 local scoreText  = nil
 local scoreTextS  = nil
 local openPkgButton = nil
 local openPkgButton2 = nil
  
- local highScoreText = nil
-
+ 
 local boosterMsgSpine =  nil
 local boosterMsg = nil
 
@@ -67,6 +64,8 @@ local notificationData = nil
 local scoreBox = nil
 local chalengesData = nil
 local chalengesBox = nil
+local leadersData = nil
+local leadersBox = nil
 local gameOverGroup = nil
 local newLevelGroup = nil
 local promotionGroup = nil
@@ -76,6 +75,8 @@ local packReminder = nil
 local dailyReward = nil
 local dailyRewardGroup = nil
 local activeScreen = 1
+
+
 
 local newLevelSound = audio.loadSound( "sounds/LevelUpSound.mp3" )
 
@@ -94,6 +95,9 @@ local newLevelText = {
 }
 
 local promotionElements = {}
+
+local ob = {}
+
 
 
 ---------------------------------------------------------------------------------
@@ -229,6 +233,109 @@ local function logGamesCount(gameData)
   end  
 end
 
+  
+  local function startSpinner()
+     ob.spinner.rotation = 0 
+     ob.spinner.alpha = 1
+
+    ob.spinnerHandle = timer.performWithDelay(10,function ()
+        if ob and ob.spinner and ob.spinner.rotation then
+         ob.spinner.rotation = ob.spinner.rotation +10
+       end
+    end,-1)
+  end 
+
+  local function stopSpinner()
+      if (ob.spinnerHandle) then
+       timer.cancel( ob.spinnerHandle )
+       ob.spinnerHandle = nil
+     end 
+     ob.spinner.alpha = 0
+
+  end 
+
+local function getLeaderEod()
+
+   local  t1 = os.date( '!*t' )
+      
+   local now =  os.time( t1 ) 
+   
+    t1.hour = 7
+    t1.min = 0
+    t1.sec = 0
+    
+    
+    local eod =  os.time( t1 ) -- +  60 * 60 * 24  
+
+    if eod < now then
+      eod =  eod +  60 * 60 * 24  
+    end
+
+    return eod
+end
+
+local function timeCount()
+
+   local  t1 = os.date( '!*t' )
+      
+   local now =  os.time( t1 ) 
+   
+    t1.hour = 7
+    t1.min = 0
+    t1.sec = 0
+    
+    
+    local eod =  os.time( t1 ) -- +  60 * 60 * 24  
+
+    if eod < now then
+      eod =  eod +  60 * 60 * 24  
+    end
+
+
+    local diff = os.difftime(eod , now )
+
+    local nSeconds = diff
+    if nSeconds == 0 then
+
+        return "00:00:00"
+    else
+      local nHours = string.format("%02.f", math.floor(nSeconds/3600));
+      local nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+      local nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+      
+      return  nHours..":"..nMins..":"..nSecs
+
+  end
+end
+
+ 
+  
+     
+
+  local function startClock()
+         ob.leaderCounter.text = timeCount()
+     
+    ob.clockHandle = timer.performWithDelay(1000,function ()
+       local  t = os.date( '!*t' )
+  
+       
+        ob.leaderCounter.text = timeCount()
+        --  t.hour = 0
+        -- t.min = 0
+        -- t.sec = 0
+        
+        -- local todayStart =  os.time( t ) 
+
+    end,-1)
+  end 
+
+  local function stopClock()
+      if (ob.clockHandle) then
+       timer.cancel( ob.clockHandle )
+       ob.clockHandle = nil
+     end 
+     
+  end 
 
 
 local shouldDisplayOkButton = true
@@ -322,8 +429,9 @@ end
 
 
 local function adBonus( event )
-        showAdButton.alpha = 0
+        --showAdButton.alpha = 0
         
+    
         playButton.alpha = 1
         commonData.gameData.coins = commonData.gameData.coins + 20     
         commonData.gameData.adsPressed = commonData.gameData.adsPressed + 1   
@@ -342,8 +450,22 @@ local function adBonus( event )
 
           unlockAchivment("MoneyMachine", true) 
         end
+end
+
+local function leaderReward(score )
+
+        parent:outerTrophieReward(70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
+
+        commonData.gameData.packs = commonData.gameData.packs + 1
+
+        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+        commonData.analytics.logEvent( "leaderReward", {  gameScore= tostring( score ) } ) 
+
+        
 
 end
+
 
 
 local function printTable( t, label, level )
@@ -396,7 +518,15 @@ local function adListener( event )
           commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
           skipAdmob = true
         end
-  
+    elseif ( event.phase == "clicked" ) then  -- Successful initialization    
+        local typ = ""
+        if event.type then
+          typ = event.type
+         end 
+
+        commonData.analytics.logEvent( "admob " ..typ .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                 } )           
     elseif ( event.phase == "reward" ) then  -- Successful initialization
         adBonus(event)   
         shouldReloadVideo = true
@@ -412,23 +542,46 @@ else
 end  
 
 
-local superawesome = require( "plugin.superawesome" )
+-- local function fbAdListener( event )
+  
+--    printTable(event)
+--     if ( event.phase == "init" ) then  -- Successful initialization
+       
+--         isFbInit = true
+
+--         if ( system.getInfo( "platformName" ) == "Android" ) then
+--           --fbAudienceNetwork.load( "banner", { placementId="168970027167519_168982013832987", bannerSize="BANNER_HEIGHT_50" } )
+--           fbAudienceNetwork.load( "interstitial", { placementId="168970027167519_168980823833106" } )
+ 
+--         else
+--            fbAudienceNetwork.load( "banner", { placementId="168970027167519_168982417166280", bannerSize="BANNER_HEIGHT_50" } )
+--            fbAudienceNetwork.load( "interstitial", { placementId="168970027167519_168982357166286" } )
+ 
+--         end  
+         
+--     end
+-- end
+ 
+-- -- Initialize the Facebook Audience Network
+-- fbAudienceNetwork.init( fbAdListener )
+
+--local superawesome = require( "plugin.superawesome" )
  
 -- Pre-declare a placement ID
-local myPlacementID = "34643"
+-- local myPlacementID = "34643"
  
-local function adListener( event )
+-- local function adListener( event )
  
-    if ( event.phase == "init" ) then  -- Successful initialization
-        -- Load a banner ad
-        superawesome.load( "video", { placementId=myPlacementID } )
-    elseif ( event.phase == "playbackEnded" ) then  -- Successful initialization
-        adBonus(event)
-    end
-end
+--     if ( event.phase == "init" ) then  -- Successful initialization
+--         -- Load a banner ad
+--         superawesome.load( "video", { placementId=myPlacementID } )
+--     elseif ( event.phase == "playbackEnded" ) then  -- Successful initialization
+--         adBonus(event)
+--     end
+-- end
  
--- Initialize the SuperAwesome plugin
-superawesome.init( adListener )
+-- -- Initialize the SuperAwesome plugin
+-- superawesome.init( adListener )
  
 -- Sometime later, check if the ad is loaded
 
@@ -453,11 +606,16 @@ local function showActiveScreen()
       if activeScreen == 1 then        
         scoreBox.alpha = 1 
         chalengesBox.alpha = 0              
+        leadersBox.alpha = 0
         
-      else  
+      elseif activeScreen == 0 then          
         scoreBox.alpha = 0 
         chalengesBox.alpha = 1
-        
+        leadersBox.alpha = 0
+      else  
+        leadersBox.alpha = 1
+        scoreBox.alpha = 0 
+        chalengesBox.alpha = 0
       end  
     end  
 
@@ -533,7 +691,7 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
       local promotoionClaimBtn = widget.newButton
       {
           x = 330,
-          y = 290,
+          y = 280,
           id = "boosterButton",
           defaultFile =  "BlueSet/End/EGMainMenuUp.png",
           overFile = "BlueSet/End/EGMainMenuDown.png",
@@ -550,7 +708,7 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
       local promotoionCancelBtn = widget.newButton
       {
           x = 170,
-          y = 290,
+          y = 280,
           id = "boosterButton",
           defaultFile =  "BlueSet/End/EGMainMenuUp.png",
           overFile = "BlueSet/End/EGMainMenuDown.png",
@@ -627,8 +785,8 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
     promotionElements.promoShadow5:setFillColor(0,0,0)
     
     
-    promotionElements.promoText6 = display.newText({text="ONLY TODAY" , x = 240, y = 250, font = "UnitedSansRgHv", fontSize = 40,align = "center"})
-    promotionElements.promoShadow6 = display.newText({ text="ONLY TODAY" ,  x = 240, y = 250, font = "UnitedSansRgHv", fontSize = 41,align = "center"}) 
+    promotionElements.promoText6 = display.newText({text="ONLY TODAY" , x = 240, y = 245, font = "UnitedSansRgHv", fontSize = 40,align = "center"})
+    promotionElements.promoShadow6 = display.newText({ text="ONLY TODAY" ,  x = 240, y = 245, font = "UnitedSansRgHv", fontSize = 41,align = "center"}) 
     
     promotionElements.promoText6:setFillColor(gradient)
     promotionElements.promoShadow6:setFillColor(0,0,0)
@@ -723,7 +881,7 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
 end  
 
 local function showGameOver( gameResult , isFirstLoad)
-
+        startClock()
         isGameOverActive = true
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
@@ -731,7 +889,7 @@ local function showGameOver( gameResult , isFirstLoad)
         dailyRewardGroup.alpha =0 
 
         -- if math.random(2) == 1 then
-             showAdButton.alpha = 1
+             --showAdButton.alpha = 1
         -- else
         --     showAdButton.alpha = 0
         -- end      
@@ -781,7 +939,7 @@ local function showGameOver( gameResult , isFirstLoad)
        if (gmCnt == 0) then
         gmCnt = 1
        end 
-       local showAdRnd =  gmCnt % 5 
+       local showAdRnd =  gmCnt % 4
 
          if (gmCnt > 70 ) then
           showAdRnd =  gmCnt % 3
@@ -795,7 +953,19 @@ local function showGameOver( gameResult , isFirstLoad)
             end
          end
 
-         
+
+         -- if ( system.getInfo( "platformName" ) == "Android" ) then
+         --   if ( isFbInit and not fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" ) ) then            
+         --    fbAudienceNetwork.load( "interstitial", { placementId="168970027167519_168980823833106" } )
+         --   end
+          
+
+         --  else
+         --   if ( isFbInit and not fbAudienceNetwork.isLoaded( "168970027167519_168982357166286" ) ) then            
+         --    fbAudienceNetwork.load( "interstitial", { placementId="168970027167519_168982357166286" } )
+         --   end          
+         --  end  
+          
 
          
          if not  admob.isLoaded( "rewardedVideo" ) then
@@ -807,22 +977,55 @@ local function showGameOver( gameResult , isFirstLoad)
             end
          end
 
-         if not  superawesome.isLoaded( "video" ) then
-            superawesome.load( "video", { placementId=myPlacementID } )
-         end
+         -- if not  superawesome.isLoaded( "video" ) then
+         --    superawesome.load( "video", { placementId=myPlacementID } )
+         -- end
 
-         if  admob.isLoaded( "rewardedVideo" ) or  superawesome.isLoaded( "video" )  then
-              showAdButton.alpha = 1
+         if  admob.isLoaded( "rewardedVideo" ) or  (system.getInfo("environment") == "simulator") then
+             -- showAdButton.alpha = 1
+              ob.watchAd.skeleton.group.alpha = 1
+              ob.watchAdRect.alpha = 0.01
+              ob.watchAd:init()
+              ob.watchAd:drop()
+              
           else
-             showAdButton.alpha = 0
+             --showAdButton.alpha = 0
+             ob.watchAd.skeleton.group.alpha = 0
+             ob.watchAdRect.alpha = 0
+             ob.watchAd:pause()
           end    
-        --  if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
-        --   commonData.kidoz.show( "panelView")      
-        -- end
+
+         local gamesForBanner = 30  
+         if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
+              gamesForBanner = 5
+         end
+           
+         if (commonData.gameData.gamesCount > gamesForBanner  and not  commonData.gameData.madePurchase) then -- and  not  commonData.gameData.madePurchase
+            --commonData.kidoz.show( "panelView")     
+            --fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
+
+            -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168982013832987" )  then
+            --   fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
+            -- else
+            --    admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
+
+              if admob.isLoaded( "banner" ) then
+                admob.show( "banner" )
+              else  
+                -- if (isFbInit and  system.getInfo( "platformName" ) == "Android" ) then
+                
+                --  fbAudienceNetwork.load( "banner", { placementId="168970027167519_168982013832987", bannerSize="BANNER_HEIGHT_50" } )
+                -- else
+                --    admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+                -- end
+              end 
+          -- end
+        
+        end
 
 
-        if ( system.getInfo( "platformName" ) == "Android" ) then
-           if (gmCnt == 12) then
+        if ( system.getInfo( "platformName" ) == "Android" or  system.getInfo("environment") == "simulator") then
+           if (gmCnt == 12 ) then
               showPromotion( gameResult , isFirstLoad , "starterPack")     
            elseif (gmCnt> 1 and  gmCnt % 121 == 1)  then   
               showPromotion( gameResult , isFirstLoad , "shakesPack")     
@@ -831,12 +1034,28 @@ local function showGameOver( gameResult , isFirstLoad)
            end 
          end
        
+       --showAdRnd = 1
        
        if (commonData.gameData.gamesCount > 20  and not  commonData.gameData.madePurchase and 
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
                                        -- show the advert.
-           
-                admob.show("interstitial") 
+                
+                
+
+                -- --local isFbLoaded =fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" ) 
+                -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" )  then
+                --   fbAudienceNetwork.show( "interstitial", { placementId="168970027167519_168980823833106" } )
+                -- else
+                   admob.show("interstitial") 
+                -- end 
+
+                -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" )  then
+                --   fbAudienceNetwork.show( "interstitial", { placementId="168970027167519_168980823833106" } )
+                -- end
+                  
+
+
+                
                 playButton.alpha = 0
                 admobTime = system.getTimer() 
                 timer.performWithDelay(3000,function ()
@@ -857,21 +1076,8 @@ local function showGameOver( gameResult , isFirstLoad)
             local endGameScore = gameResult.gameScore
             scoreText.text = commonData.comma_value(endGameScore)
             scoreTextS.text = commonData.comma_value(endGameScore)
-            
-            --commonData.kidoz.show( "rewardedVideo" )
-            local function buildChallengesPart()
 
-                  if not chalengesData or not chalengesData.numChildren then
-                    return
-                  end  
-
-                    for j = 1, chalengesData.numChildren do                       
-                        
-                          chalengesData[1]:removeSelf()          
-                        
-                    end
-                  
-                   local challengeTextOptions = 
+              local challengeTextOptions = 
                   {
                       --parent = textGroup,
                       text = "",     
@@ -894,6 +1100,21 @@ local function showGameOver( gameResult , isFirstLoad)
                       fontSize = 15,
                       align = "right"  --new alignment parameter
                   }  
+            
+            --commonData.kidoz.show( "rewardedVideo" )
+            local function buildChallengesPart()
+
+                  if not chalengesData or not chalengesData.numChildren then
+                    return
+                  end  
+
+                    for j = 1, chalengesData.numChildren do                       
+                        
+                          chalengesData[1]:removeSelf()          
+                        
+                    end
+                  
+                 
 
                   local challeges = getChalenges()
                    
@@ -962,6 +1183,7 @@ local function showGameOver( gameResult , isFirstLoad)
               
                timer.performWithDelay(1,buildChallengesPart,1)     
 
+
                if #newChallenges > 0 then
                  for i=1,#newChallenges do
                 
@@ -978,20 +1200,178 @@ local function showGameOver( gameResult , isFirstLoad)
 
             
             rateUsButton.alpha =0
+
+            -------------------*********************----------------------------
+            local function buildLeadersPart() 
+                 
+                  if not leadersData or not leadersData.numChildren or not commonData.gpgsConnected then
+                    return
+                  end  
+                 
+                  for j = 1, leadersData.numChildren do                       
+                      
+                        leadersData[1]:removeSelf()          
+                  end
+
+                  local isLocalInTop = false
+                  local isLeaderInclude = false
+                  
+                  -- check if local player in top
+                  if commonData.leaderboard.top then
+
+                      if commonData.leaderboard.single then
+                        for i = 1, #commonData.leaderboard.top do                       
+                          
+                          if commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
+                            if commonData.leaderboard.top[i].rank == 1 then
+
+                              local rewardDate = getLeaderEod()
+
+                               if not commonData.gameData.leaderRewardDate or 
+                                  commonData.gameData.leaderRewardDate < rewardDate then
+
+                                 commonData.gameData.leaderRewardDate = rewardDate
+                                 
+                                 leaderReward(commonData.leaderboard.top[i].score)                                 
+
+                                  if commonData.gpgsConnected then
+                                        activeScreen = 3
+                                        showActiveScreen()                                   
+                                  end    
+
+                              end
+                              
+                            end
+                          end
+                        end
+                      end
+
+                      if #commonData.leaderboard.top >0 then
+                          if commonData.leaderboard.top[1].rank == 1 then
+                            isLeaderInclude = true
+                          end 
+                      end 
+
+                        local playerToDraw = 5
+                        --if not isLeaderInclude then
+                          
+                      --  end  
+
+                        
+                        for i = 1, playerToDraw do                       
+                          
+                                  local challegesText
+                                  if commonData.leaderboard.single and  commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
+                                    challegesText = display.newText({text = "", x = 420,y = 20,font = "UnitedSansRgBk",  fontSize = 15,
+                                        align = "left"  --new alignment parameter
+                                    }  )
+                                  else  
+                                    challegesText = display.newText({text = "", x = 420,y = 20,font = "UnitedSansRgMd",  fontSize = 15,
+                                        align = "left"  --new alignment parameter
+                                    }  )
+                                  end
+                                   
+                                  local challegesCoinsText = display.newText(challengeCoinsTextOptions)
+
+
+                                  local challegesCoin = display.newImage("TrophieReward/Trophie.png")
+                                  --local bullet = nil
+
+                                  
+
+                                  if commonData.leaderboard.top[i].rank == 1 then
+                                  --      challegesText:setFillColor(19/256,236/256,254/256)
+                                    challegesCoinsText:setFillColor(1,206/255,0)
+                                    challegesText:setFillColor(1,206/255,0)
+                                    bullet = display.newImage("images/ChallengeBulletComplete.png")
+
+                                  else
+                                    -- challegesCoinsText:setFillColor(1,1,1)
+                                    -- challegesText:setFillColor(1,1,1)
+                                    challegesCoinsText:setFillColor(255/255,241/255,208/255)
+                                    challegesText:setFillColor(255/255,241/255,208/255)
+                                    bullet = display.newImage("images/ChallengeBullet.png")
+                                    challegesCoin.alpha = 0
+                                                      
+                                  end
+
+                                  local row = i +1
+                                  challegesCoin.alpha = 0
+
+                                  -- if not isLeaderInclude then
+                                  --   row = i +1
+                                  -- end  
+
+                                  bullet:scale(0.5,0.5)
+                                  bullet.y = 95 + row* 22
+                                  bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 35
+                                  challegesText.text = commonData.leaderboard.top[i].formattedRank ..". " ..  commonData.leaderboard.top[i].player.name 
+                                  challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+                                  challegesText.y = 95 + row* 22
+                                  bullet.alpha = 0
+                                  
+                                  challegesCoinsText.y = 95 + row* 22
+                                  challegesCoinsText.text = commonData.leaderboard.top[i].formattedScore
+
+                                  challegesCoin:scale(0.08,0.08)
+                                  challegesCoin.x = 240 + background.contentWidth/2 -  challegesCoin.contentWidth/2 - 35
+                                  challegesCoin.y = 95 + row* 22
+
+                                  challegesCoinsText.x = challegesCoin.x - challegesCoin.contentWidth/2  - challegesCoinsText.contentWidth/2 - 10
+                                  
+                                  if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
+                                    challegesText.xScale  =  (background.contentWidth*0.5) / challegesText.contentWidth
+                                    challegesText.yScale  = challegesText.xScale 
+                                    challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+                                  end
+
+                                  leadersData:insert(bullet)
+                                  leadersData:insert(challegesCoin)
+                                  leadersData:insert(challegesCoinsText)
+                                  leadersData:insert(challegesText)  
+                                    
+                        end
+                      end
+
+             end
+            -------------------*********************----------------------------
             
             local function postScoreSubmit( event )
                
                --whatever code you need following a score submission...                
+
+               
                return true
             end 
-                    --for GameCenter, default to the leaderboard name from iTunes Connect
-            local myCategory = ""
+
+              --for GameCenter, default to the leaderboard name from iTunes Connect
+            local myCategory = "CgkI_YzqptgFEAIQAA"
+
+          
+
+              local function updateLeaderboard(event)
+
+              print("load scores")
+              
+              commonData.reloadLeaderboard(function(event)
+                      local currentSceneName = composer.getSceneName( "current" )
+                
+                      if ( currentSceneName== "game" ) then
+                             buildLeadersPart()
+                             stopSpinner()
+                      end
+                 
+                        
+                      end)               
+            end 
+                  
 
             if ( system.getInfo( "platformName" ) == "Android" ) then
                --for GPGS, reset "myCategory" to the string provided from the leaderboard setup in Google
-               myCategory = "CgkI_YzqptgFEAIQAA"
-               commonData.gpgs.leaderboards.submit( {leaderboardId=myCategory, score=tonumber(gameResult.gameScore) } )
-
+               
+               commonData.gpgs.leaderboards.submit( {leaderboardId=myCategory, 
+                    score=tonumber(gameResult.gameScore), tag=commonData.selectedSkin , listener= updateLeaderboard} )
+               startSpinner()
               -- submit highest combo
               local highestComboId = "CgkI_YzqptgFEAIQBw"
               commonData.gpgs.leaderboards.submit( {leaderboardId=highestComboId, score=tonumber(gameResult.combo) } )
@@ -1022,7 +1402,18 @@ local function showGameOver( gameResult , isFirstLoad)
             --    listener = postScoreSubmit
             -- } )
             
+             if system.getInfo("environment") == "simulator" then 
 
+                print("try to reload")               
+                startSpinner()
+                timer.performWithDelay(5000,stopSpinner,1)     
+                commonData.reloadLeaderboard(function(event)
+                        buildLeadersPart()
+                      end)               
+              else  
+                timer.performWithDelay(1,buildLeadersPart,1)     
+              end
+              
             local isHighScore = gameResult.gameScore > commonData.gameData.highScore
 
             if confetti then
@@ -1567,8 +1958,8 @@ local function showGameOver( gameResult , isFirstLoad)
             end
 
 
-            highScoreText.text = commonData.comma_value(commonData.gameData.highScore)
-            highScoreShadowText.text = commonData.comma_value(commonData.gameData.highScore)
+            ob.highScoreText.text = commonData.comma_value(commonData.gameData.highScore)
+            ob.highScoreShadowText.text = commonData.comma_value(commonData.gameData.highScore)
             
             -- unlock new achivments
 
@@ -1598,16 +1989,20 @@ local function showGameOver( gameResult , isFirstLoad)
               activeScreen = 1
             
             elseif #newChallenges > 0 then
-              activeScreen = 2
+              activeScreen = 0
 
             
             else
-              activeScreen = math.random(2)
-            
+               if commonData.gpgsConnected then
+                activeScreen = math.random(3)
+               else
+                activeScreen = math.random(2)
+               end 
             end    
 
             showActiveScreen()
 
+            collectgarbage()
 
       end    
 end
@@ -1624,6 +2019,9 @@ function scene:create( event )
      scoreBox = display.newGroup()
      chalengesBox = display.newGroup()
      chalengesData = display.newGroup()
+     leadersBox = display.newGroup()
+     leadersData = display.newGroup()
+
 
      gameOverGroup = display.newGroup()
      newLevelGroup = display.newGroup()
@@ -1688,6 +2086,10 @@ function scene:create( event )
       newLevelBackground3.y = newLevelText.newItems.y - newLevelBackground3.contentHeight/2 + 12
       newLevelText.newLevel.y = newLevelBackground3.y + 7
       
+      ob.spinner = display.newImage("images/LoadingSpinner.png") 
+      ob.spinner.alpha = 0
+      ob.spinner.x= 240
+      ob.spinner.y= 180
 
       local function newLevelOkBtnListener( event )
           
@@ -1711,7 +2113,7 @@ function scene:create( event )
       local newLevelOkBtn = widget.newButton
       {
           x = 240,
-          y = 290,
+          y = 280,
           id = "boosterButton",
           defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
           overFile = buttonsSet .. "/End/EGMainMenuDown.png",
@@ -1750,6 +2152,15 @@ function scene:create( event )
      
      chalengesTable.x = 240
      chalengesTable.y = 160
+
+      local leadersTable = display.newImage("images/ChallengeScreenTable.png")
+
+
+      leadersTable.xScale =  (display.actualContentWidth*0.5) / leadersTable.contentWidth
+      leadersTable.yScale =  leadersTable.xScale
+     
+     leadersTable.x = 240
+     leadersTable.y = 160
 
 
       boosterMsgSpine =  require ("boosterMsg")
@@ -1793,6 +2204,28 @@ function scene:create( event )
           isGameOverActive = false
           parent:outerRestartGame()
           --commonData.kidoz.hide( "panelView")
+
+                admob.hide()
+                stopClock()
+                stopSpinner()
+                ob.watchAd:pause()
+
+              local gamesForBanner = 30  
+              if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
+                  gamesForBanner = 5
+              end
+
+              
+
+              if (commonData.gameData.gamesCount > gamesForBanner and  not  commonData.gameData.madePurchase ) then -- and  not  commonData.gameData.madePurchase
+                    --commonData.kidoz.show( "panelView")     
+                      if ( system.getInfo( "platformName" ) == "Android" ) then
+                       admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
+                      else
+                         admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+                      end            
+              end
+
           
 
        
@@ -1989,40 +2422,38 @@ function scene:create( event )
        end
 
         local function showAdListener( event )
+          print(event.phase)
             if ( "ended" == event.phase ) then
                   local isSimulator = (system.getInfo("environment") == "simulator");
                   commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
                 if (not isSimulator)  then
-                  local isSpwLoaded =  superawesome.isLoaded( myPlacementID )
-                  local isAdmobLoaded =  admob.isLoaded( "rewardedVideo" )
+                    
+                   admob.show("rewardedVideo")
 
-                    if isAdLoaded and not isAdmobLoaded then
-                        superawesome.show( myPlacementID )
-                    elseif not isAdLoaded and isAdmobLoaded then
-                        admob.show("rewardedVideo")
-                    elseif isAdLoaded and isAdmobLoaded then
-                        if math.random(10) < 8 then
-                          admob.show("rewardedVideo") 
-                        else
-                          superawesome.show( myPlacementID )
-                        end     
-                    else
-                        admob.show("rewardedVideo")
-                    end
-
-                    showAdButton.alpha = 0
+                    --showAdButton.alpha = 0
+                    
                     
                 else
-                    showAdButton.alpha = 0
+                    --showAdButton.alpha = 0
+                    
                     adBonus(event)
-                  
+                  ob.watchAd:open()
                 end
+
+                 ob.watchAd.skeleton.group.alpha = 0
+                 ob.watchAdRect.alpha = 0
+                 ob.watchAd:pause()
+           elseif ( "began" == event.phase ) then   
+            ob.watchAd:open()  
            end 
          return true
        end
 
       
-
+       local function boosterRectListener( event )   
+        
+          return true
+     end
 
         
       -- Create the widget
@@ -2067,26 +2498,42 @@ function scene:create( event )
       menuButton.xScale =  (display.actualContentWidth* 0.28) / menuButton.width
       menuButton.yScale =   menuButton.xScale  -- (display.actualContentHeight* 0.1) / menuButton.height
       
-       showAdButton = widget.newButton
-      {
-          x = 70,
-          y = 180,
-          id = "showAdButton",
-          defaultFile = buttonsSet .. "/End/WatchAdUp.png",
-          overFile = buttonsSet .. "/End/WatchAdDown.png",
-          onEvent = showAdListener
-      }
-      showAdButton.xScale =  (display.contentWidth*0.15) / showAdButton.width
-      showAdButton.yScale = showAdButton.xScale  
-      --showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
 
-      showAdButton.x =  background.x - background.contentWidth /2 - showAdButton.contentWidth /2 + 10
+      local watchAdSpine =  require ("watchAd")
+      ob.watchAd = watchAdSpine.new(0.35, true)
+      
+      ob.watchAd.skeleton.group.x = 70
+      ob.watchAd.skeleton.group.y = 180
+
+      --  local showAdButton = widget.newButton
+      -- {
+      --     x = 70,
+      --     y = 180,
+      --     id = "showAdButton",
+      --     defaultFile = buttonsSet .. "/End/WatchAdUp.png",
+      --     overFile = buttonsSet .. "/End/WatchAdDown.png",
+      --     onEvent = showAdListener
+      -- }
+      -- showAdButton.xScale =  (display.contentWidth*0.15) / showAdButton.width
+      -- showAdButton.yScale = showAdButton.xScale  
+      -- --showAdButton.x =  showAdButton.x - (display.actualContentWidth - display.contentWidth) /2
+
+      -- showAdButton.x =  background.x - background.contentWidth /2 - (display.contentWidth*0.15)/2 + 10
+      ob.watchAd.skeleton.group.x =  background.x - background.contentWidth /2 - (display.contentWidth*0.15)/2 + 10
+      ob.watchAdRect = display.newRect(70, 180, display.contentWidth*0.15,display.contentWidth*0.15)
+      ob.watchAdRect.x  = ob.watchAd.skeleton.group.x
+      ob.watchAdRect:setFillColor(1, 0, 0)
+      ob.watchAdRect.alpha = 0.01
+      ob.watchAdRect:addEventListener("touch", showAdListener )
+
+
+
       
     
     boosterClose= widget.newButton
       {
           x = 170,
-          y = 290,
+          y = 280,
           id = "boosterButton",
           defaultFile =  "BlueSet/End/EGMainMenuUp.png",
           overFile = "BlueSet/End/EGMainMenuDown.png",
@@ -2104,7 +2551,7 @@ function scene:create( event )
       rateUsButton = widget.newButton
       {
           x = 330,
-          y = 290,
+          y = 280,
           id = "rateUsButton",
           defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
           overFile = buttonsSet .. "/End/EGMainMenuDown.png",
@@ -2194,9 +2641,7 @@ function scene:create( event )
           onEvent = boosterButtonListener
       }
      boosterButton.xScale =  (display.actualContentWidth*0.2) / boosterButton.width
-      boosterButton.yScale = boosterButton.xScale  
-
-    
+     boosterButton.yScale = boosterButton.xScale  
 
 
     scoreText = display.newText("", 0, 0 , "UnitedSansRgHv" , 70)
@@ -2280,22 +2725,26 @@ function scene:create( event )
     highScoreTitleShadow.text = getTransaltedText("Highscore") 
 
     
-    highScoreText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
-    highScoreShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
-    highScoreText.y = 40
-    highScoreShadowText.y = highScoreText.y + 2
-    highScoreShadowText:setFillColor(69/255,69/255,69/255)
+    ob.highScoreText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+    ob.highScoreShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+    ob.highScoreText.y = 40
+    ob.highScoreShadowText.y = ob.highScoreText.y + 2
+    ob.highScoreShadowText:setFillColor(69/255,69/255,69/255)
 
     local titleWidth = math.max(highScoreTitle.contentWidth , 100)
     highScoreTitle.x =  470 - titleWidth/2  + (display.actualContentWidth - display.contentWidth)/2  
     highScoreTitleShadow.x = highScoreTitle.x 
-    highScoreText.x = highScoreTitle.x
-    highScoreShadowText.x = highScoreTitle.x
+    ob.highScoreText.x = highScoreTitle.x
+    ob.highScoreShadowText.x = highScoreTitle.x
 
 
     local blackRect = display.newRect(240, 160, 600,400)
     blackRect:setFillColor(0, 0, 0)
     blackRect.alpha = 0.4
+
+    blackRect.xScale = display.actualContentWidth / blackRect.contentWidth 
+    blackRect.yScale = display.actualContentHeight  / blackRect.contentHeight
+
 
 
 
@@ -2309,6 +2758,8 @@ function scene:create( event )
     boosterRect.alpha = 0.7
     boosterRect:addEventListener("touch", boosterRectListener )
 
+    boosterRect.xScale = display.actualContentWidth / boosterRect.contentWidth 
+    boosterRect.yScale = display.actualContentHeight  / boosterRect.contentHeight
     
     dailyRewardBlocker = display.newRect(240, 160, 700,400)
     dailyRewardBlocker:setFillColor(0, 0, 0)
@@ -2382,9 +2833,18 @@ function scene:create( event )
      if ( "ended" == event.phase ) then
       commonData.buttonSound()
       
-      activeScreen = activeScreen + 1
+      if event.target.id ==  "rightArrow" then
+        activeScreen = activeScreen + 1
+      else
+        activeScreen = activeScreen - 1
+      end 
       
-      activeScreen = activeScreen % 2
+      if commonData.gpgsConnected then
+         activeScreen = activeScreen % 3
+     else
+         activeScreen = activeScreen % 2
+     end 
+      
 
       showActiveScreen()
       
@@ -2440,6 +2900,22 @@ function scene:create( event )
     chalengesTable.isConstant = true
     challengesText.isConstant = true
 
+    local leadersText = display.newText(boosterHeaderTextOptions)
+    leadersText:setFillColor(255/255,241/255,208/255)
+    leadersText.x = 240
+    
+    leadersText.y = 160 - background.contentHeight/2 + leadersText.contentHeight/2 + 3
+    leadersText.text = "Daily Leaders"
+
+    if  leadersText.contentWidth > 150 then
+        leadersText.xScale  =  150  / leadersText.contentWidth
+        leadersText.yScale  = leadersText.xScale 
+        --challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+    end
+
+    leadersTable.isConstant = true
+    leadersText.isConstant = true 
+
     local scoreScreenText = display.newText(boosterHeaderTextOptions)
     scoreScreenText:setFillColor(255/255,241/255,208/255)
     scoreScreenText.x = 240
@@ -2471,7 +2947,39 @@ function scene:create( event )
     xp.xpEmiter.x = xp.xpBarEnd.x 
     xp.xpEmiter.y = 240
 
-  
+    local textOptions = 
+    {
+                      --parent = textGroup,
+                      text = "",     
+                      x = 420,
+                      y = 20,
+                    --  width = 300,     --required for multi-line and alignment
+                      font = "UnitedSansRgHv",   
+                      fontSize = 15,
+                      align = "left"  --new alignment parameter
+                  }
+    local winText = display.newText(textOptions)
+    winText.x = 200 
+    winText.y = 117
+    winText.text = "#1 WINS "
+    winText:setFillColor(1,206/255,0)
+    
+    playerToDraw  = 5
+    local tropieIcon = display.newImage("TrophieReward/Trophie.png")
+    tropieIcon:scale(0.08,0.08)
+    
+    tropieIcon.y = 117
+    tropieIcon.x  = winText.x + winText.contentWidth/2 + tropieIcon.contentWidth/2 + 5
+
+
+
+    ob.leaderCounter = display.newText(textOptions)
+    ob.leaderCounter.x = 350 
+    ob.leaderCounter.y = 117
+    ob.leaderCounter.text = ""
+    ob.leaderCounter:setFillColor(255/255,241/255,208/255)
+    
+
 
     nextLevelText.x = xp.xpBarBG.x + xp.xpBarBG.contentWidth / 2 + 15
     levelText.x =  xp.xpBarBG.x - xp.xpBarBG.contentWidth / 2  - 15
@@ -2483,6 +2991,15 @@ function scene:create( event )
     chalengesBox:insert(chalengesTable)
     chalengesBox:insert(challengesText)
     chalengesBox:insert(chalengesData)
+
+    leadersBox:insert(leadersTable)
+    leadersBox:insert(leadersText)
+    leadersBox:insert(leadersData)
+    leadersBox:insert(winText)
+    leadersBox:insert(tropieIcon)
+    leadersBox:insert(ob.leaderCounter)
+    
+    leadersBox:insert(ob.spinner)
        
      gameOverGroup:insert(blackRect)
 
@@ -2509,14 +3026,16 @@ function scene:create( event )
      gameOverGroup:insert(highScoreTitleShadow)     
      gameOverGroup:insert(highScoreTitle)     
      
-     gameOverGroup:insert(highScoreShadowText)     
-     gameOverGroup:insert(highScoreText)   
+     gameOverGroup:insert(ob.highScoreShadowText)     
+     gameOverGroup:insert(ob.highScoreText)   
 
      
 
      
      gameOverGroup:insert(scoreBox)     
-     gameOverGroup:insert(chalengesBox)     
+     gameOverGroup:insert(chalengesBox)   
+     gameOverGroup:insert(leadersBox)   
+       
      gameOverGroup:insert(confetti)   
 
      gameOverGroup:insert(rightArrowButton)   
@@ -2526,10 +3045,14 @@ function scene:create( event )
        
      scoreBox.alpha = 1
      chalengesBox.alpha = 0
+     leadersBox.alpha = 0
      
      
      gameOverGroup:insert(playButton)
-     gameOverGroup:insert(showAdButton)
+     --gameOverGroup:insert(showAdButton)
+     gameOverGroup:insert(ob.watchAdRect)
+     gameOverGroup:insert(ob.watchAd.skeleton.group)
+     
      
      gameOverGroup:insert(shareButton)
      gameOverGroup:insert(openPkgButton)
@@ -2633,7 +3156,11 @@ function scene:hide( event )
    if ( phase == "will" ) then
       boosterMsg:pause()
       --commonData.kidoz.hide( "panelView")
+      admob.hide()
+      stopSpinner()
+      stopClock()
       xp.xpEmiter:stop()
+      ob.watchAd:pause()
       -- Called when the scene is on screen (but is about to go off screen).
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.

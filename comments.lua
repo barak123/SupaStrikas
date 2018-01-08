@@ -24,6 +24,10 @@ function comments.new (skeletonData)
 	self.rewards[2] = {}
 	self.rewards[3] = {}
 	self.rewards[4] = {}
+	self.rewards[5] = {}
+	self.rewards[6] = {}
+
+	
 	-- self.rewards[5] = {}
 	-- self.rewards[6] = {}
 
@@ -31,6 +35,8 @@ function comments.new (skeletonData)
 	self.rewards[2].animation = "Superb"
 	self.rewards[3].animation = "Wow"
 	self.rewards[4].animation = "Nice"
+	self.rewards[5].animation = "Wow"
+	self.rewards[6].animation = "Nice"
 	-- self.rewards[5].animation = "Superb"
 	-- self.rewards[6].animation = "Wow"
 
@@ -39,6 +45,8 @@ function comments.new (skeletonData)
 	self.rewards[2].sound = audio.loadSound( "sounds/OutterSpace.mp3")
 	self.rewards[3].sound = audio.loadSound( "sounds/Unbelievable.mp3" )
 	self.rewards[4].sound = audio.loadSound( "sounds/OhMy.mp3" )
+	self.rewards[5].sound = audio.loadSound( "sounds/WowBrenda.mp3" )
+	self.rewards[6].sound = audio.loadSound( "sounds/GameOnBrenda.mp3" )
 
 
 	-- self.rewards[5].sound = audio.loadSound( "Comments/Superb 2.mp3" )	
@@ -147,10 +155,10 @@ function comments.new (skeletonData)
 	local lastReward = nil
 	function self:showReward(soundOnly)	
 		--Runtime:addEventListener("enterFrame", handleFrame)
-		local rnd = math.random(4)
+		local rnd = math.random(6)
 
 		if (rnd == lastReward) then
-			rnd = rnd % 4 + 1 
+			rnd = rnd % 6 + 1 
 		end
 
 		lastReward = rnd

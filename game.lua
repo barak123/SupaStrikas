@@ -162,7 +162,7 @@ local ob = {
   kickOverImg = nil,
   redRect = nil,
   redRectAlpha = nil,
-  stageGroup = nil,
+  
   scoreTextMove = nil,
   scoreBg = nil, 
   
@@ -676,17 +676,6 @@ ob.middleTimer.y = 250
 
 
 
--- ob.leftTimer2 =  display.newCircle( 0, 0, ob.rightCtrl.contentHeight/2 ) 
--- ob.leftTimer2.x = 60
--- ob.leftTimer2.y = 250
--- ob.leftTimer2.x = ob.leftTimer.x  - (displayActualContentWidth - display.contentWidth) /2
--- ob.rightTimer2 = display.newImage("images/TouchpadTimer.png")
--- ob.rightTimer2.x = 60
--- ob.rightTimer2.y = 250
--- ob.rightTimer2:scale(0.6,0.6)
--- ob.rightTimer2.x = ob.rightTimer2.x  - (displayActualContentWidth - display.contentWidth) /2
--- ob.leftTimer2.x = ob.rightTimer2.x
--- ob.leftTimer2.y = ob.rightTimer2.y
 
 
 fire = display.newGroup()
@@ -724,20 +713,6 @@ fire.isFixedRotation = true
 
 gameStatus.ignoreClick = false
 gameStatus.isLeftLeg = false
-
-
-ob.stageGroup = display.newGroup()
-ob.stageGroup.alpha = 1
-ob.stageGroup.isGroup = true
-ob.stageGroup.backgroundStage="GAME"
-
-local mask = graphics.newMask( "images/whitemask.png" )
-
-ob.stageGroup:setMask( mask )
-
-ob.stageGroup.maskX = 240
-ob.stageGroup.maskY = 160
-
 
  ultraWave = display.newRect(240, 160, 800,600)
  ultraWave:setFillColor(0, 0, 0)
@@ -792,29 +767,6 @@ local backgroundData = {
    {path="images/EagleField/Stadium.png" , speedFactor = 15 , y  = 130 , scale = 0.8, level = 5  },
     {path="images/EagleField/Goal.png" , speedFactor = 10 , y  = 183 , scale = 1 , level = 5 , top = 195},
    
-   --{displayGroup = ultraWave} , 
-  
-  --{path="images/Houses/HousesFar.png" , speedFactor = 20 , y  = 130 , scale = 0.3, alpha = 0.4 , isFirstStage = true },  
-  --{path="images/GrassBG Tile.png" , speedFactor = 10 , y  = 190 , scale = 1.4 , isFirstStage = true},
-  --{path="images/100mBG.png" , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 90 , endPos = 130 , isShowOnce = true },
-  
-  --{displayGroup = houses , backgroundStage="GAME" , isFirstStage = true } , --  , startPos = 0 , endPos = 37
-  -- {path="images/BrokenWall.png" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" , startPos = 40 , endPos = 3120},   --  speedFactor = 1.5
-  -- {path="images/BrokenWallTransission.png" , speedFactor = 1 , y  = 210 , scale = 0.37 ,  isShowOnce = true ,
-  --          backgroundStage="GAME" , startPos = 40 , endPos = 50},   --  speedFactor = 1.5
-  -- {path="images/background.png" , speedFactor = 1 , y  = 160 , scale = 1 , isfull = true , startPos = 96 , endPos = 30, showAndRotate = true},
-  -- {path="images/bgfar1.png" , speedFactor = 1 , y  = 80 , scale = 1.3, startPos = 96 , endPos = 30, showAndRotate = true },  
-  -- {path="images/Houses/HousesFar.png" , speedFactor = 1 , y  = 130 , scale = 0.3, alpha = 0.4 , startPos = 96 , endPos = 30, showAndRotate = true },  
-  -- {path="images/GrassBG Tile.png" , speedFactor = 1 , y  = 190 ,  alpha = 1, scale = 1.4 , startPos = 96 , endPos = 30, showAndRotate = true},
-  
-  
-  --{path="images/WallBright.jpg" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" ,isFirstStage = true },   --  speedFactor = 1.5  startPos = 0 , endPos = 30
-  -- {path="images/Beach/Water.png" ,  backgroundStage="GAME"  , speedFactor = 20 , y  = 150 , scale = 0.7, alpha = 1 , startPos = 97 , endPos = 1200, showAndRotate = true },  
-  -- {path="images/GrassBG Tile.png" , backgroundStage="GAME"  ,  speedFactor = 10 , y  = 190 , scale = 1.4  ,startPos = 197 , endPos = 1830 , showAndRotate = true},
-  -- {path="images/100mBG.png" , backgroundStage="GAME"  , speedFactor = 10 , y  = 175 , scale = 0.6 , startPos = 197 , endPos = 1830 , showAndRotate = true },
-  -- {path="images/BrokenWall.png" , speedFactor = 1 , y  = 210 , scale = 0.37 , backgroundStage="GAME" , startPos = 197 , endPos = 3120,showAndRotate = true},   --  speedFactor = 1.5
-  
-  --{path="images/FenceTile.png" , speedFactor = 1 , y  = 210 , scale = 0.45 , backgroundStage="TUTORIAL"  , isFirstStage = true  },  
   
 }
 
@@ -868,9 +820,7 @@ local function buildBackground(disGroup, data)
                   v.displayGroup.endPos = v.endPos
                   v.displayGroup.level = v.level
 
-                  if v.isFirstStage then
-                  ob.stageGroup:insert(v.displayGroup)
-                 end 
+                  
               else  
                 local yScale = v.scale
                 if v.scaleY then
@@ -923,10 +873,7 @@ local function buildBackground(disGroup, data)
                img.isEraser  = v.isEraser
                img.groupCount = 1
                
-               if v.isFirstStage then
-                ob.stageGroup:insert(img)
-               end 
-             
+               
                if (v.speedFactor and not v.isShowOnce) then
                 local img2 = display.newImage(v.path)
 
@@ -962,10 +909,7 @@ local function buildBackground(disGroup, data)
                 disGroup:insert(img2)
 
 
-                  if v.isFirstStage then
-                   ob.stageGroup:insert(img2)
-                 end 
-
+                  
                 if (img.contentWidth < displayActualContentWidth) then
                   local additionalCount = math.floor(displayActualContentWidth/img.contentWidth) + 1
                  
@@ -1002,9 +946,7 @@ local function buildBackground(disGroup, data)
                     disGroup:insert(img3)
 
 
-                    if v.isFirstStage then
-                     ob.stageGroup:insert(img3)
-                    end 
+                    
                   end
                   
                 end
@@ -1370,7 +1312,7 @@ physics.addBody( gameOverRect2, "kinematic", upperGameOverElement )
 
 
 if ob.isSimulator then
-  --gameOverRect.shouldStopGame = true
+  gameOverRect.shouldStopGame = true
 end
 
 
@@ -1426,22 +1368,6 @@ monster.alpha = ob.defualtAlpha
  obstecales = display.newGroup()
 ob.obstecaleSpines = display.newGroup()
 
---smallDefender  = display.newSprite(spriteSheetDef, sequenceDataDef);
---smallDefender:scale(0.5,0.5)
--- local smallDefender = display.newRect(500, 900 , 60,50)
--- smallDefender.strokeWidth = 1
--- smallDefender:setFillColor(140, 140, 140)
--- smallDefender:setStrokeColor(180, 180, 180)
--- smallDefender.alpha = ob.defualtAlpha
--- smallDefender.isDog = true
--- --smallDefender.alpha = 0 
--- smallDefender.spine = dogSpineAn.new()
-
-
--- --medDefender  = display.newSprite(spriteSheetDef, sequenceDataDef);
--- obstecales:insert(smallDefender)
--- ob.obstecaleSpines:insert(smallDefender.spine.skeleton.group)
--- physics.addBody( obstecales[1], "kinematic" , defenderBodyElement )
 
 local arsSpineAn = require "ars"
 
@@ -1671,10 +1597,6 @@ if commonData.selectedSkin == "DribbleBot" then
 end
 
 
-
-
-
-  
 
 sounds.jumpSound = audio.loadSound( "Kid_Jump.mp3" )
 sounds.saltaSound = audio.loadSound( "sounds/FlipWhoosh.mp3" )
@@ -2022,7 +1944,7 @@ Runtime:addEventListener( "system", onSystemEvent )
 --the screen if we want. The earlier it is put into the group the
 --further back it will go
 sceneGroup:insert(backgrounds)
-sceneGroup:insert(ob.stageGroup)
+
 sceneGroup:insert(blocks)
 
 sceneGroup:insert(ob.foregrounds)
@@ -2521,7 +2443,7 @@ function restartGame()
         
        gameStatus.forceSwap = false
        gameStatus.newbieHelp = false
-     --  if commonData.gameData.abVersion ~= 3 then
+     
         if commonData.gameData.gamesCount < 3 then
           gameStatus.forceSwap = true
         end  
@@ -2733,35 +2655,7 @@ function restartGame()
           end
     end
 
-     for a = 1,  ob.stageGroup.numChildren, 1 do
 
-          if (  ob.stageGroup[a].backgroundStage ) then
-            if (gameStatus.isTutorial) then
-                if ( ob.stageGroup[a].backgroundStage == "TUTORIAL") then
-                   ob.stageGroup[a].alpha=  ob.stageGroup[a].originalAlpha 
-                else
-                   ob.stageGroup[a].alpha=0
-                end
-            else
-              if ( ob.stageGroup[a].backgroundStage == "GAME") then
-                   ob.stageGroup[a].alpha=  ob.stageGroup[a].originalAlpha 
-              else
-                 ob.stageGroup[a].alpha=0
-              end
-            end
-          end
-
-          if (not  ob.stageGroup[a].isGroup) then
-             ob.stageGroup[a].x =   ob.stageGroup[a].constWidth * ( ob.stageGroup[a].internalIdx + 0.5)
-
-            -- adjust actual content width
-             ob.stageGroup[a].x =  ob.stageGroup[a].x  - (displayActualContentWidth - display.contentWidth) /2
-          end
-
-          if ( ob.stageGroup[a].startPos and  ob.stageGroup[a].startPos > 0 ) then
-               ob.stageGroup[a].alpha = 0
-          end
-    end
 
     for a = 1, ob.foregrounds.numChildren, 1 do
 
@@ -2844,9 +2738,7 @@ function restartGame()
       ob.leftCtrl:setFillColor(1,1,1)
       ob.rightCtrl:setFillColor(1,1,1)
       --ob.leftCtrl:setFillColor(0,0,0)
-      ob.stageGroup.maskX = 240
-        ob.stageGroup.maskY = 160
-
+      
       if gameStatus.forceSwap then
           leftHand:init()          
           leftHand:tapLeft()
@@ -3714,14 +3606,14 @@ function scene:show( event )
                   (goal[i]):translate(gameStatus.speed * -1, 0)
                 end
 
-                if(ob.goalNet.x < -240) then
+                if(ob.goalNet.x < -260) then
                   goal.isAlive = false
 
                 end
               else  
                 
                 (obstecales[a]):translate(gameStatus.speed * -1, 0)
-                if(obstecales[a].x < -120) then
+                if(obstecales[a].x < -140) then
                     obstecales[a].x = 900
                     obstecales[a].y = 500
                     obstecales[a].isAlive = false
@@ -3787,21 +3679,18 @@ function scene:show( event )
 
                                leftHand:init()
 
-                                if commonData.gameData.abVersion ~= 3 then
-                                 rightHand:init()
-                               end
+                               rightHand:init()
+                               
                                
                               timer.performWithDelay(1500 , function ()                          
                                 ob.jumpOverImg.alpha = 1
                                 leftHand.skeleton.group.alpha = 1
                                 leftHand:tapLeft()
 
-                                if commonData.gameData.abVersion ~= 3 then
+                                
                                  rightHand.skeleton.group.alpha = 1
                                  rightHand:tapRight()
 
-                               end
-                               
                               end , 1)
                               timer.performWithDelay(2500 , function ()
                                 ob.boosterButton.alpha = 1                          
@@ -3885,7 +3774,7 @@ function scene:show( event )
                 (coins[a]):translate(gameStatus.speed * -1, 0)
                 coinsSpine[a].x =  coins[a].x
 
-                if(coins[a].x < -80) then
+                if(coins[a].x < -100) then
                     coins[a].x = 900
                     coins[a].y = 500
                     coins[a].isAlive = false
@@ -4033,8 +3922,7 @@ function scene:show( event )
            end 
 
           
-          moveElements(backgrounds)         
-          moveElements(ob.stageGroup)  
+          moveElements(backgrounds)                   
           moveElements(ob.foregrounds)        
 
     end
@@ -4087,7 +3975,6 @@ gameStatus.isGameActive = true
                   end                      
           end
 
-          collectgarbage()
     end
 
     local function stopGame()
@@ -4119,7 +4006,9 @@ gameStatus.isGameActive = true
           reportChallenge("marathon")
          end 
 
-         ob.stopGameElements()   
+         if ob.stopGameElements then
+          ob.stopGameElements()   
+         end
 
         local currentSceneName = composer.getSceneName( "current" )
         
@@ -4490,7 +4379,7 @@ gameStatus.isGameActive = true
     ob.touched = function ( event )
 
             if commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall
-              and commonData.gameData.abVersion ~= 3  and gameStats.bounces < 3 then
+              and  gameStats.bounces < 3 then
               
                 return
             end
@@ -4599,49 +4488,7 @@ gameStatus.isGameActive = true
 
                               if (ob.onGround and  monster.kickTimer == 0) then  
                                        
-                                    if commonData.gameData.abVersion == 3 then
-                                       gameStatus.isAnyLeg = true
-                                      
-
-                                      if  gameStatus.isLeftLeg  then
-                                        if  not gameStatus.preventJump then
-                                        monster.accel = 19
-                                          local jumpDuration =  hero:jump()
-                                          gameStatus.isSalta = false
-                                          ob.onGround = false         
-                                          timer.performWithDelay(jumpDuration - 300  , function ()                          
-                                            ob.onGround = true         
-                                          end , 1)
-                                            
-
-
-                                          
-                                          commonData.playSound( sounds.jumpSound )  
-                                             collisionRect.width = 3
-                                         collisionRect.x=BALL_X
-                                         collisionRect.y=hero:getHead().y + 255
-                                          collisionRect.alpha= ob.defualtAlpha
-                                          
-
-                                          gameStats.jumps =  gameStats.jumps + 1
-                                          gameStatus.ignoreHeader = false 
-                                           leftHand:pause()  
-                                           
-                                           leftHand.skeleton.group.alpha = 0 
-                                            gameStatus.preventKick = false
-                                        end  
-                                      elseif not  gameStatus.preventKick then  
-
-                                          monster.kickTimer = 1
-                                          hero:startKick(gameStatus.isLeftLeg, isBadKick)
-                                            gameStatus.startY = event.yStart
-                                        gameStatus.lastY = gameStatus.startY  
-                                          rightHand:pause()  
-                                           
-                                           rightHand.skeleton.group.alpha = 0    
-
-                                      end  
-                                    elseif not  gameStatus.preventKick then                                
+                                    if not  gameStatus.preventKick then                                
                                     
                                     -- local isBadKick = (gameStatus.isLeftLeg == gameStatus.isPrevLeft 
                                     --                   and not gameStatus.isAnyLeg ) 
@@ -4649,7 +4496,7 @@ gameStatus.isGameActive = true
                                     gameStatus.isAnyLeg = true
         
                                       
-                                      if  gameStatus.forceSwap and commonData.gameData.abVersion == 4   and 
+                                      if  gameStatus.forceSwap and 
                                         ((commonData.gameData.gamesCount == 0 and gameStats.bounces < 3) ) and
                                         ((rightHand.skeleton.group.alpha == 1  and gameStatus.isLeftLeg) or
                                         (leftHand.skeleton.group.alpha == 1 and not gameStatus.isLeftLeg)) then
@@ -4862,44 +4709,9 @@ gameStatus.isGameActive = true
             fire.x = BALL_X
             --ultraBall.x = BALL_X
             
-              -- if (commonData.selectedSkin == "Rolando") then
-              --   commonData.playSound(sounds.CristianoGoalSound)
-              -- elseif (commonData.selectedSkin == "Nessi") then
-              --    commonData.playSound(sounds.MessiGoalSound)
-              -- elseif (commonData.selectedSkin == "Zlatan") then
-              --    commonData.playSound(sounds.ZlatanGoalSound)
-              -- elseif (commonData.selectedSkin == "Neymar") then  
-              --   commonData.playSound(sounds.neymarGoalSound)
-              -- elseif (commonData.selectedSkin == "Rooney") then  
-              --   commonData.playSound(sounds.rooneyGoalSound)
-              -- elseif (commonData.selectedSkin == "Steph") then  
-              --   commonData.playSound(sounds.stephGoalSound)
-              -- elseif (commonData.selectedSkin == "PewDiePie") then  
-              --   commonData.playSound(sounds.PewdsGoalSound)  
-              -- elseif (commonData.selectedSkin == "Zombie") then  
-              --   commonData.playSound(sounds.goalBrainzSound)                
-              -- end  
       end
 
     
-      ob.finishInstrunct = function ()
-        ob.chaser.skeleton.group.alpha = 1
-        
-        gameStatus.isGameActive = true
-        kickToStart.alpha = 1
-        hero:reload()
-        hero:init()
-        hero:cancelKick()
-        hero:stand(true)
-        scoreText.text = "0"
-        
-        if (ballSkin) then
-          ballSkin.alpha = 1
-        else
-          ballon.alpha = 1  
-        end             
-      end 
-
     local function kickBall()
 
       -- ignore kick if ball going up
@@ -5222,7 +5034,7 @@ gameStatus.isGameActive = true
         gameStatus.newScore = gameStatus.newScore  + scoreByPos * (gameStatus.kicksMulti +1)
         scoreText.text = string.format("%.00f", gameStatus.newScore) 
       
-         if (gameStatus.forceSwap and gameStats.bounces < 3 and commonData.gameData.abVersion ~= 3 )  then 
+         if (gameStatus.forceSwap and gameStats.bounces < 3  )  then 
 
            if gameStatus.isLeftLeg then
             rightHand:init()  
@@ -5752,8 +5564,8 @@ gameStatus.isGameActive = true
 
 
 
-             local memUsed = (collectgarbage("count"))
-             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
+             -- local memUsed = (collectgarbage("count"))
+             -- local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            
             
             
@@ -5811,7 +5623,7 @@ function scene:hide( event )
     
    if ( phase == "will" ) then
 
-       if  gameStatus.isGameActive then
+       if  gameStatus.isGameActive and ob.stopGameElements then
         ob.stopGameElements()
        end
     
@@ -5856,6 +5668,23 @@ function scene:outerCoinsReward(coinsToAdd , x , y)
 
   end  
 end
+
+
+function scene:outerTrophieReward( x , y)
+    --code to resume game
+ 
+      ob.rewards[3]:init()
+      ob.rewards[3].skeleton.group.x = x
+      ob.rewards[3].skeleton.group.y = y
+
+      trophieShadowText.text = commonData.gameData.packs .. " +1"
+      trophieCountText.text =  commonData.gameData.packs .. " +1"
+
+      commonData.playSound(sounds.trophieGoalSound)
+             
+
+end
+
 
 
 function scene:outerRestartGame()
