@@ -6,7 +6,7 @@ local spine = require "spine-corona.spine"
 local chaser = {}
 local json = spine.SkeletonJson.new()
 json.scale = 0.35
-local skeletonData = json:readSkeletonDataFile("Hero.json")
+local skeletonData = json:readSkeletonDataFile("ars.json")
 
 chaser.skeleton = {}
 chaser.skeleton = spine.Skeleton.new(skeletonData)

@@ -298,10 +298,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				headObj = newPart
 		--		local physics = require("physics")
 			--	physics.addBody( newPart, "static", borderBodyElement )
-			elseif string.ends(attachment.name , "LegBackBottom") then
-				leftBottomObj  = newPart	
-			elseif string.ends(attachment.name , "LegBackTop") then
-				leftTopObj  = newPart	
+			
 			elseif string.ends(attachment.name , "LegFrontBottom") or string.ends(attachment.name , "LegFrontBotom") then				
 				rightBottomObj  = newPart	
 			elseif string.ends(attachment.name , "LegFrontTop") then
@@ -340,11 +337,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 		
 		stateData:setMix("Walk", "Jump", 0)
 		stateData:setMix("Jump", "Walk", 0)
-		stateData:setMix("FallShpagatRight", "Walk", 0)
-		stateData:setMix("Walk", "FallShpagatRight", 0)
-
-		 stateData:setMix("DribbleLoopLow", "DribbleLoopMed", 0)
-		 stateData:setMix("DribbleLoopMed", "DribbleLoopHigh", 0)
 		
 		--state:addAnimationByName(0, "run", true, 0)
 
@@ -484,26 +476,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			isPaused = false
 		end
 
-		function self:fall()
-			isFalling = true
-			legAngle = -82
-			isKicking = false
-			self.skeleton:setToSetupPose()
-			isFirstFrame = true
-
-			left_leg.data.rotation=leftOriginalRot
-			right_leg.data.rotation=rightOriginalRot	
-			
-			if (isLeftLeg) then
-				self.state:setAnimationByName(0, "FallShpagatLeft", false)	
-			else
-				self.state:setAnimationByName(0, "FallShpagatRight", false)	
-				
-			end
-			self.state:apply(self.skeleton)
-			self.skeleton:updateWorldTransform()
-			--print("                        fall")
-		end
 
 		function self:fallObstecale()
 			isFalling = true
@@ -519,11 +491,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			else
 				self.state:setAnimationByName(0, "FallRollOver2", false)	
 			end
-			
-			if commonData.selectedSkin == "DribbleBot" then				
-				self.state:setAnimationByName(0, "BotRoll", false)	
-			end	
-			
 			
 			
 			self.state:apply(self.skeleton)
@@ -561,11 +528,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			end
 			
 			
-
-			if commonData.selectedSkin == "DribbleBot" then				
-				self.state:setAnimationByName(0, "BotBummer", false)	
-			end
-
 			self.state:apply(self.skeleton)
 			self.skeleton:updateWorldTransform()
 			walkTime = 0
@@ -735,7 +697,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				self.state:setAnimationByName(0, "BotSalta", false)			
 			else	
 				self.state:setAnimationByName(0, "Jump3", false)
-				lowDuration = skeletonData:findAnimation("Jump").duration * 1000
+				lowDuration = skeletonData:findAnimation("Jump3").duration * 1000
 			end
 			
 			isJumping = true
@@ -768,9 +730,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				skinToDisplay = commonData.selectedSkin
 			end	
 
-			if skinToDisplay == "DribbleBot" and not self.isShop then
-				animationName = "BotIdel"
-			end	
 
 			--print(right_leg.data.rotation)
 			self.state:setAnimationByName(0, animationName, false)
@@ -826,102 +785,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			
 		end
 
-		local loopTimers = {}
-
-		function self:dribbleLoop(finishCallbak, kickCallback)
-			
-		--	self.skeleton:setToSetupPose()
-			isFirstFrame = true
-			replayHandle = nil
-			
-
-			for i,slotData in ipairs(self.skeleton.slots) do
-				if slotData.attachment and slotData.attachment.name then
-				
-					if string.ends(slotData.attachment.name , "Ball001") then
-				
-
-						local image = self.skeleton.images[slotData]	
-
-						if image then						
-							display.remove(image)
-							self.skeleton.images[slotData] = display.newImage("balls/" .. commonData.selectedBall .. ".png")
-						end
-					end
-				end
-
-			end
-			forceShowBall = true
-			
-			
-			local lowDuration = skeletonData:findAnimation("DribbleLoopLow").duration * 1000 * 3 
-			local medDuration = skeletonData:findAnimation("DribbleLoopMed").duration * 1000 * 3 
-			local highDuration = skeletonData:findAnimation("DribbleLoopHigh").duration * 1000 * 3
-			self.state:setAnimationByName(0, "DribbleLoopLow", true )
-			-- self.state:setAnimationByName(0, "DribbleLoopMed", false ,  lowDuration )
-			-- self.state:setAnimationByName(0, "DribbleLoopHigh", false ,  lowDuration  + medDuration)
-
-			
-			local kickType = "perfect"
-			walkSpeed = 5
-			
-			loopTimers[1] =  timer.performWithDelay( lowDuration / 6  , function ()
-		 		if kickCallback and not isPaused  and forceShowBall then
-		 			kickCallback(kickType)
-		 		end	
-			
-		 	end, 6)
-		 				
-
-		 	loopTimers[2] = timer.performWithDelay( lowDuration  , function ()
-		 		isFirstFrame = true
-		 		if not isPaused   and forceShowBall then
-			 		self.state:setAnimationByName(0, "DribbleLoopMed", true)	
-			 		kickType = "good"
-			 		
-			 		loopTimers[5] =  timer.performWithDelay( medDuration / 6  , function ()	
-				 		if kickCallback and not isPaused and forceShowBall  then
-				 			kickCallback(kickType)
-				 		end			
-			 		end, 6)
-			 	end
-		 	
-		 	end, 1)
-		 	
-			loopTimers[3] = timer.performWithDelay(medDuration +  lowDuration , function ()
-				isFirstFrame = true
-				if not isPaused and forceShowBall  then
-			 		self.state:setAnimationByName(0, "DribbleLoopHigh", true)	
-
-			 		kickType = "bad"
-
-			 		loopTimers[6] = timer.performWithDelay( highDuration / 6  , function ()
-				 		if kickCallback and not isPaused and forceShowBall  then
-				 			kickCallback(kickType)
-				 		end	
-				
-			 		end, 5)
-			 	end
-
-		 	end, 1)
-
-		 	loopTimers[4] = timer.performWithDelay(medDuration +  lowDuration + highDuration , function ()
-		 		
-		 		if finishCallbak and not isPaused and forceShowBall  then
-
-		 			finishCallbak()
-		 			loopTimers = {}
-		 		end	
-		 		self:hideBall()
-		 	end, 1)
-		 	
-			--self.state:setAnimationByName(0, "DribbleLoopMed", false)
-			--self.state:setAnimationByName(0, "DribbleLoopHigh", true)
-		--	self:hideBall()						
-		end
-
-		
-
 		function self:hideBall()			
 			
 			for i,slotData in ipairs(self.skeleton.slots) do
@@ -943,16 +806,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			forceShowBall = false
 		end
 
-		function self:cancelDribbleLoop()		
-			for i,loopTimer in ipairs(loopTimers) do
-				
-				if (loopTimer) then
-		         timer.cancel( loopTimer )
-		        end 
-			end	
-
-			self:hideBall()
-		end
 
 
 		function self:getSkeleton()
@@ -997,30 +850,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			--	self.state:setAnimationByName(0, "DribbleHop", false)
 			end
 
-		
-
-			-- if pIsLeftLeg then
-
-			-- 		leftBottomObj.fill.effect = "filter.brightness"
-			-- 		leftBottomObj.fill.effect.intensity = 0.8
-
-			-- 		leftTopObj.fill.effect = "filter.brightness"
-			-- 		leftTopObj.fill.effect.intensity = 0.8
-
-			-- 		leftLeg1:setColor (2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0,1)
-			-- 		leftLeg2:setColor (2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0,1)
-			-- 	else	
-			-- 		rightBottomObj.fill.effect = "filter.brightness"
-			-- 		rightBottomObj.fill.effect.intensity = 0.8
-
-			-- 		rightTopObj.fill.effect = "filter.brightness"
-			-- 		rightTopObj.fill.effect.intensity = 0.8
-
-			-- 		rightLeg1:setColor (2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0,1)
-			-- 		rightLeg2:setColor (2 * (distanceFromPerfect)/ (75) ,  2 * (1 - (distanceFromPerfect)/ (75))  , 0,1)
-			-- 	end	
-
-			
 
 			legAngle = newAngle
 			isLeftLeg = pIsLeftLeg

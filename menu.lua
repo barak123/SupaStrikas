@@ -118,8 +118,7 @@ commonData.reloadLeaderboard =  function(callback)
                     timeSpan = "daily",
                     reload = true,
                     listener = function(event2)
-                          print("--------top----------")
-                        --  printTable(event2)
+                          
                           commonData.leaderboard.top = event2.scores
                            
                           isTop = true
@@ -271,38 +270,39 @@ commonData.analytics.init( flurryListener, { apiKey=flurryKey , crashReportingEn
 
 
 
+              -- if system.getInfo("environment") == "simulator" then  
+              -- local mt = getmetatable(_G)
+              -- if mt == nil then
+              --   mt = {}
+              --   setmetatable(_G, mt)
+              -- end
 
--- local mt = getmetatable(_G)
--- if mt == nil then
---   mt = {}
---   setmetatable(_G, mt)
--- end
+              -- __STRICT = true
+              -- mt.__declared = {}
 
--- __STRICT = true
--- mt.__declared = {}
+              -- mt.__newindex = function (t, n, v)
+              --   if __STRICT and not mt.__declared[n] then
+              --     local w = debug.getinfo(2, "S").what
+              --     if w ~= "main" and w ~= "C" then
+              --       error("assign to undeclared variable '"..n.."'", 2)
+              --     end
+              --     mt.__declared[n] = true
+              --   end
+              --   rawset(t, n, v)
+              -- end
+                
+              -- mt.__index = function (t, n)
+              --   if not mt.__declared[n] and debug.getinfo(2, "S").what ~= "C" then
+              --     error("variable '"..n.."' is not declared", 2)
+              --   end
+              --   return rawget(t, n)
+              -- end
 
--- mt.__newindex = function (t, n, v)
---   if __STRICT and not mt.__declared[n] then
---     local w = debug.getinfo(2, "S").what
---     if w ~= "main" and w ~= "C" then
---       error("assign to undeclared variable '"..n.."'", 2)
---     end
---     mt.__declared[n] = true
---   end
---   rawset(t, n, v)
--- end
-  
--- mt.__index = function (t, n)
---   if not mt.__declared[n] and debug.getinfo(2, "S").what ~= "C" then
---     error("variable '"..n.."' is not declared", 2)
---   end
---   return rawget(t, n)
--- end
+              -- function global(...)
+              --    for _, v in ipairs{...} do mt.__declared[v] = true end
+              -- end
 
--- function global(...)
---    for _, v in ipairs{...} do mt.__declared[v] = true end
--- end
-
+              -- end
 -- combre = require( "plugin.combre" )
 
 -- -- Initialize Commercial Break
@@ -329,6 +329,7 @@ commonData.isMute = false
 if system.getInfo("environment") == "simulator" then
 --  commonData.isMute = true
   isSimulator = true
+  
 end  
 
 local muteButton = nil
@@ -433,6 +434,7 @@ if system.getInfo("environment") == "simulator" then
              memUsed = (collectgarbage("count"))            
              local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
+           collectgarbage("step")
 
           
       end, -1)

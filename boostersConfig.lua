@@ -30,8 +30,7 @@ local M = {
 			startColorVarianceBlue= 0,
 			rotatePerSecondVariance= 153.95,
 			particleLifespan= 0.05,
-			minRadius= 0,
-			configName= fire,
+			minRadius= 0,			
 			tangentialAcceleration= 5.74,
 			rotationStart= 0,
 			startColorVarianceGreen= 0,
@@ -88,8 +87,7 @@ local M = {
 			startColorVarianceBlue= 0,
 			rotatePerSecondVariance= 153.95,
 			particleLifespan= 1.05,
-			minRadius= 0,
-			configName= fire,
+			minRadius= 0,	
 			tangentialAcceleration= 0,
 			rotationStart= 0,
 			startColorVarianceGreen= 0,
@@ -147,7 +145,7 @@ local M = {
 			rotatePerSecondVariance= 153.95,
 			particleLifespan= 1.05,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 0,
 			startColorVarianceGreen= 0,
@@ -205,7 +203,7 @@ local M = {
 			rotatePerSecondVariance= 153.95,
 			particleLifespan= 1.05,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 0,
 			startColorVarianceGreen= 0,
@@ -263,7 +261,7 @@ local M = {
 			rotatePerSecondVariance= 153.95,
 			particleLifespan= 0.05,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 5.74,
 			rotationStart= 0,
 			startColorVarianceGreen= 0,
@@ -323,7 +321,7 @@ local M = {
 		rotatePerSecondVariance= 0,
 		particleLifespan= 0.25,
 		minRadius= 0,
-		configName= fire,
+		
 		tangentialAcceleration= -34,
 		rotationStart= -61,
 		startColorVarianceGreen= 0,
@@ -380,7 +378,7 @@ local M = {
 			rotatePerSecondVariance= 0,
 			particleLifespan= 0.7,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 183,
 			startColorVarianceGreen= 0,
@@ -436,7 +434,7 @@ local M = {
 			rotatePerSecondVariance= 0,
 			particleLifespan= 0.5,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 183,
 			startColorVarianceGreen= 0,
@@ -491,7 +489,7 @@ local M = {
 			rotatePerSecondVariance= 0,
 			particleLifespan= 0.64,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 183,
 			startColorVarianceGreen= 0,
@@ -738,7 +736,7 @@ smokeBall = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 2,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 452,
 	startColorVarianceGreen= 0,
@@ -792,7 +790,7 @@ smokeBall = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 1.2,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 720,
 	startColorVarianceGreen= 0,
@@ -846,7 +844,7 @@ smokeBall = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 1.5,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 224,
 	rotationStart= 0,
 	startColorVarianceGreen= 0.15,
@@ -900,7 +898,7 @@ smokeBall = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 0.5,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 0,
 	startColorVarianceGreen= 0.15,
@@ -959,7 +957,7 @@ smokeBall = {
 			rotatePerSecondVariance= 0,
 			particleLifespan= 1.6,
 			minRadius= 0,
-			configName= fire,
+			
 			tangentialAcceleration= 0,
 			rotationStart= 0,
 			startColorVarianceGreen= 0.44,
@@ -1016,7 +1014,7 @@ smokeBall = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 1.1,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 700,
 	rotationStart= 0,
 	startColorVarianceGreen= 0,
@@ -1073,7 +1071,7 @@ rgbGlow = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 1,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 0,
 	startColorVarianceGreen= 1,
@@ -1132,7 +1130,7 @@ ice = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 0.3,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 85,
 	startColorVarianceGreen= 0,
@@ -1188,7 +1186,7 @@ ice = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 1,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 129,
 	rotationStart= 12,
 	startColorVarianceGreen= 0,
@@ -1245,7 +1243,7 @@ ice = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 0.1,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 12,
 	startColorVarianceGreen= 0,
@@ -1301,7 +1299,7 @@ ice = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 0.36,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 793,
 	startColorVarianceGreen= 0,
@@ -1356,7 +1354,7 @@ ice = {
 	rotatePerSecondVariance= 0,
 	particleLifespan= 0.1,
 	minRadius= 0,
-	configName= fire,
+	
 	tangentialAcceleration= 0,
 	rotationStart= 159,
 	startColorVarianceGreen= 0,

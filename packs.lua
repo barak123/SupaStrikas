@@ -732,7 +732,7 @@ end
 
 local function rotateSpinner()
     
-    if ballGlowImg then
+    if ballGlowImg and ballGlowImg.rotation then
       ballGlowImg.rotation = ballGlowImg.rotation + 2
 
       if  ballGlowImg.alpha > 0 then

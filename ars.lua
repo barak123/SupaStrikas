@@ -9,32 +9,32 @@ local kidTypes = {}
 local  skinIdx = 1
 
 kidTypes[1] = {}
-kidTypes[1].json = "Hero.json"
+kidTypes[1].json = "ars.json"
 kidTypes[1].skin = "BadGuy01"
 kidTypes[1].scale = 0.4
 kidTypes[1].anim = "EnemyCrouch"
 
 kidTypes[2] = {}
-kidTypes[2].json = "Hero.json"
+kidTypes[2].json = "ars.json"
 kidTypes[2].skin = "BadGuy03"
 kidTypes[2].scale = 0.4
 kidTypes[2].anim = "EnemyCrouch2"
 
 kidTypes[3] = {}
-kidTypes[3].json = "Hero.json"
+kidTypes[3].json = "ars.json"
 kidTypes[3].skin = "BadGuy01"
 kidTypes[3].scale = 0.35
 kidTypes[3].anim = "EnemyStand"
 
 kidTypes[4] = {}
-kidTypes[4].json = "Hero.json"
+kidTypes[4].json = "ars.json"
 kidTypes[4].skin = "BadGuy03"
 kidTypes[4].scale = 0.4
 kidTypes[4].anim = "EnemySlide"
 
 
 kidTypes[5] = {}
-kidTypes[5].json = "Hero.json"
+kidTypes[5].json = "ars.json"
 kidTypes[5].skin = "BadGuy02"
 kidTypes[5].scale = 0.4
 kidTypes[5].anim = "EnemyTall"
@@ -150,6 +150,7 @@ function ars.new (kidType)
 		self.state:update(delta )
 		self.state:apply(self.skeleton)
 		self.skeleton:updateWorldTransform()
+
 	end
 
 

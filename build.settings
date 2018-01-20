@@ -1,5 +1,9 @@
 settings = {
      
+    --  build =
+    --{
+      --  neverStripDebugInfo = true,
+    --},
      orientation = {
           default = "landscapeRight",
           content = "landscapeRight",
@@ -70,6 +74,10 @@ settings = {
          ["plugin.admob"] =
         {
             publisherId = "com.coronalabs"
+        },
+         ["plugin.startapp"] =
+        {
+            publisherId = "com.startapp"
         },
     --["plugin.superawesome"] =
     --{

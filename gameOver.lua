@@ -19,6 +19,7 @@ local skipAdmob = false
 
 local admobTime = nil
 local rateUsButton = nil
+local isFirstLoad = true
 
 local isGameOverActive = true
 local shouldReloadVideo = false
@@ -97,7 +98,7 @@ local newLevelText = {
 local promotionElements = {}
 
 local ob = {}
-
+ob.isTestMode = false
 
 
 ---------------------------------------------------------------------------------
@@ -250,7 +251,10 @@ end
        timer.cancel( ob.spinnerHandle )
        ob.spinnerHandle = nil
      end 
-     ob.spinner.alpha = 0
+
+      if ob and ob.spinner  then
+       ob.spinner.alpha = 0
+     end
 
   end 
 
@@ -318,8 +322,10 @@ end
     ob.clockHandle = timer.performWithDelay(1000,function ()
        local  t = os.date( '!*t' )
   
-       
-        ob.leaderCounter.text = timeCount()
+        
+         if ob and ob.leaderCounter  then
+          ob.leaderCounter.text = timeCount()
+        end
         --  t.hour = 0
         -- t.min = 0
         -- t.sec = 0
@@ -440,7 +446,7 @@ local function adBonus( event )
 
 
         logCoins(commonData.gameData , 20)
-        commonData.analytics.logEvent( "endWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
+        commonData.analytics.logEvent( "endWatchAd" ) 
 
         parent:outerCoinsReward(20 ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
 
@@ -536,11 +542,44 @@ end
 -- Initialize the AdMob plugin
 
 if ( system.getInfo( "platformName" ) == "Android" ) then
-  admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640"  } ) -- , testMode=true
+  admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640" , testMode=ob.isTestMode } ) -- , testMode=true
 else
   admob.init( adListener, { appId="ca-app-pub-3507083359749399~7795398690" } )
 end  
 
+
+local startapp = require( "plugin.startapp" )
+ 
+-- StartApp listener function
+local function startappListener( event )
+
+    if ob.isTestMode then
+      printTable(event)
+    end  
+ 
+    if ( event.phase == "init" ) then  -- Successful initialization        
+        startapp.load( "interstitial" )
+        startapp.load( "rewardedVideo" )
+    elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
+        
+    elseif ( event.phase == "failed" ) then  -- The ad failed to load
+        
+    elseif ( event.phase == "displayed" ) then  -- The ad was displayed/played
+        
+    elseif ( event.phase == "hidden" ) then  -- The ad was closed/hidden
+        
+    elseif ( event.phase == "clicked" ) then  -- The ad was clicked/tapped
+       commonData.analytics.logEvent( "admob " .. event.type  .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+                                                highScore= tostring(  commonData.gameData.highScore) ,
+                                                 } )            
+    elseif ( event.phase == "reward" ) then  -- Rewarded video ad playback completed
+        adBonus(event)
+    end
+
+end
+ 
+-- Initialize the StartApp plugin
+startapp.init( startappListener, { appId="200931196", enableReturnAds = true } )
 
 -- local function fbAdListener( event )
   
@@ -603,6 +642,8 @@ local function pairsByHighScore (t)
     end
 
 local function showActiveScreen()
+
+
       if activeScreen == 1 then        
         scoreBox.alpha = 1 
         chalengesBox.alpha = 0              
@@ -619,7 +660,7 @@ local function showActiveScreen()
       end  
     end  
 
-local function showPromotion( gameResult , isFirstLoad , currentPromo)
+local function showPromotion( gameResult , currentPromo)
 
      
          local promotionBackground =  display.newImage("images/BGDotted.jpg")
@@ -880,7 +921,12 @@ local function showPromotion( gameResult , isFirstLoad , currentPromo)
     
 end  
 
-local function showGameOver( gameResult , isFirstLoad)
+local function showGameOver( gameResult)
+
+        
+        if ob.isTestMode then
+            commonData.gameData.madePurchase = false
+        end
         startClock()
         isGameOverActive = true
         gameOverGroup.alpha =0 
@@ -905,7 +951,7 @@ local function showGameOver( gameResult , isFirstLoad)
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
         
-
+        
        if ( not commonData.gameData) then 
           commonData.gameData = loadTable(GAME_DATA_FILE)
 
@@ -939,12 +985,13 @@ local function showGameOver( gameResult , isFirstLoad)
        if (gmCnt == 0) then
         gmCnt = 1
        end 
-       local showAdRnd =  gmCnt % 4
+       local showAdRnd =  gmCnt % 5
 
          if (gmCnt > 70 ) then
           showAdRnd =  gmCnt % 3
          end 
                
+         
          if not  admob.isLoaded( "interstitial" ) then
             if ( system.getInfo( "platformName" ) == "Android" ) then
              admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
@@ -952,6 +999,12 @@ local function showGameOver( gameResult , isFirstLoad)
                admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
             end
          end
+
+
+         if not  startapp.isLoaded( "interstitial" ) then
+            startapp.load( "interstitial" )
+         end
+
 
 
          -- if ( system.getInfo( "platformName" ) == "Android" ) then
@@ -968,6 +1021,7 @@ local function showGameOver( gameResult , isFirstLoad)
           
 
          
+         
          if not  admob.isLoaded( "rewardedVideo" ) then
             if ( system.getInfo( "platformName" ) == "Android" ) then
              admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
@@ -981,7 +1035,14 @@ local function showGameOver( gameResult , isFirstLoad)
          --    superawesome.load( "video", { placementId=myPlacementID } )
          -- end
 
-         if  admob.isLoaded( "rewardedVideo" ) or  (system.getInfo("environment") == "simulator") then
+
+         if not  startapp.isLoaded( "rewardedVideo" ) then
+            startapp.load( "rewardedVideo" )
+         end
+          
+
+         if  admob.isLoaded( "rewardedVideo" ) or  startapp.isLoaded( "rewardedVideo" ) or
+            (system.getInfo("environment") == "simulator") then
              -- showAdButton.alpha = 1
               ob.watchAd.skeleton.group.alpha = 1
               ob.watchAdRect.alpha = 0.01
@@ -995,49 +1056,52 @@ local function showGameOver( gameResult , isFirstLoad)
              ob.watchAd:pause()
           end    
 
-         local gamesForBanner = 30  
-         if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
-              gamesForBanner = 5
-         end
+          
+        --  local gamesForBanner = 30  
+        --  if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
+        --       gamesForBanner = 5
+        --  end
            
-         if (commonData.gameData.gamesCount > gamesForBanner  and not  commonData.gameData.madePurchase) then -- and  not  commonData.gameData.madePurchase
-            --commonData.kidoz.show( "panelView")     
-            --fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
+        --  if (commonData.gameData.gamesCount > gamesForBanner  and not  commonData.gameData.madePurchase) then -- and  not  commonData.gameData.madePurchase
+        --     --commonData.kidoz.show( "panelView")     
+        --     --fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
 
-            -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168982013832987" )  then
-            --   fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
-            -- else
-            --    admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
+        --     -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168982013832987" )  then
+        --     --   fbAudienceNetwork.show( "banner", { placementId="168970027167519_168982013832987" } )
+        --     -- else
+        --     --    admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
 
-              if admob.isLoaded( "banner" ) then
-                admob.show( "banner" )
-              else  
-                -- if (isFbInit and  system.getInfo( "platformName" ) == "Android" ) then
+        --       if admob.isLoaded( "banner" ) then
+        --         admob.show( "banner" )
+        --       else  
+        --         -- if (isFbInit and  system.getInfo( "platformName" ) == "Android" ) then
                 
-                --  fbAudienceNetwork.load( "banner", { placementId="168970027167519_168982013832987", bannerSize="BANNER_HEIGHT_50" } )
-                -- else
-                --    admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
-                -- end
-              end 
-          -- end
+        --         --  fbAudienceNetwork.load( "banner", { placementId="168970027167519_168982013832987", bannerSize="BANNER_HEIGHT_50" } )
+        --         -- else
+        --         --    admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+        --         -- end
+        --       end 
+        --   -- end
         
-        end
+        -- end
 
 
         if ( system.getInfo( "platformName" ) == "Android" or  system.getInfo("environment") == "simulator") then
            if (gmCnt == 12 ) then
-              showPromotion( gameResult , isFirstLoad , "starterPack")     
+              showPromotion( gameResult ,  "starterPack")     
+              showAdRnd = 2
            elseif (gmCnt> 1 and  gmCnt % 121 == 1)  then   
-              showPromotion( gameResult , isFirstLoad , "shakesPack")     
+              showPromotion( gameResult ,  "shakesPack")     
+              showAdRnd = 2
            elseif (gmCnt> 80 and  gmCnt % 121 == 70)   then  
-              showPromotion( gameResult , isFirstLoad , "megaPack")       
+              showPromotion( gameResult ,  "megaPack")                  
+              showAdRnd = 2
            end 
          end
        
-       --showAdRnd = 1
-       
-       if (commonData.gameData.gamesCount > 20  and not  commonData.gameData.madePurchase and 
-            (commonData.gameData.adsPressed / gmCnt) < 0.2  and showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
+       if (commonData.gameData.gamesCount > 20  and not  commonData.gameData.madePurchase and
+            (commonData.gameData.adsPressed / gmCnt) < 0.2  and 
+            showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
                                        -- show the advert.
                 
                 
@@ -1046,7 +1110,19 @@ local function showGameOver( gameResult , isFirstLoad)
                 -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" )  then
                 --   fbAudienceNetwork.show( "interstitial", { placementId="168970027167519_168980823833106" } )
                 -- else
-                   admob.show("interstitial") 
+                
+                 
+                if startapp.isLoaded( "interstitial" ) then
+
+                    timer.performWithDelay(10,function ()
+                      startapp.show( "interstitial" )
+                    end,1)
+                    
+                else
+                  admob.show("interstitial") 
+                end
+
+                   
                 -- end 
 
                 -- if isFbInit and  fbAudienceNetwork.isLoaded( "168970027167519_168980823833106" )  then
@@ -1058,7 +1134,7 @@ local function showGameOver( gameResult , isFirstLoad)
                 
                 playButton.alpha = 0
                 admobTime = system.getTimer() 
-                timer.performWithDelay(3000,function ()
+                timer.performWithDelay(100,function ()
                   playButton.alpha = 1
                 end,1)
            
@@ -1179,25 +1255,23 @@ local function showGameOver( gameResult , isFirstLoad)
              
              
              local newChallenges = getNewUnlockedChalenges()
-             if (isFirstLoad  or #newChallenges > 0) then
               
-               timer.performWithDelay(1,buildChallengesPart,1)     
+             timer.performWithDelay(1,buildChallengesPart,1)     
 
 
-               if #newChallenges > 0 then
-                 for i=1,#newChallenges do
-                
-                  commonData.analytics.logEvent( "newChallenge", { name= tostring( newChallenges[i].text),
-                    gamesCount= tostring( commonData.gameData.gamesCount) ,  
-                    highScore= tostring(  commonData.gameData.highScore)
-                      } )
-                                                
+             if #newChallenges > 0 then
+               for i=1,#newChallenges do
+              
+                commonData.analytics.logEvent( "newChallenge", { name= tostring( newChallenges[i].text),
+                  gamesCount= tostring( commonData.gameData.gamesCount) ,  
+                  highScore= tostring(  commonData.gameData.highScore)
+                    } )
+                                              
 
-                 end
                end
-
              end
 
+           
             
             rateUsButton.alpha =0
 
@@ -1219,28 +1293,31 @@ local function showGameOver( gameResult , isFirstLoad)
                   -- check if local player in top
                   if commonData.leaderboard.top then
 
-                      if commonData.leaderboard.single then
+                      if commonData.leaderboard.single and #commonData.leaderboard.single > 0 and 
+                         commonData.leaderboard.single[1] and  commonData.leaderboard.single[1].player then
+
                         for i = 1, #commonData.leaderboard.top do                       
-                          
-                          if commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
-                            if commonData.leaderboard.top[i].rank == 1 then
+                          if commonData.leaderboard.top[i] and commonData.leaderboard.top[i].player then 
+                            if commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
+                                if commonData.leaderboard.top[i].rank == 1 then
 
-                              local rewardDate = getLeaderEod()
+                                    local rewardDate = getLeaderEod()
 
-                               if not commonData.gameData.leaderRewardDate or 
-                                  commonData.gameData.leaderRewardDate < rewardDate then
+                                     if not commonData.gameData.leaderRewardDate or 
+                                        commonData.gameData.leaderRewardDate < rewardDate then
 
-                                 commonData.gameData.leaderRewardDate = rewardDate
-                                 
-                                 leaderReward(commonData.leaderboard.top[i].score)                                 
+                                       commonData.gameData.leaderRewardDate = rewardDate
+                                       
+                                       leaderReward(commonData.leaderboard.top[i].score)                                 
 
-                                  if commonData.gpgsConnected then
-                                        activeScreen = 3
-                                        showActiveScreen()                                   
-                                  end    
+                                        if commonData.gpgsConnected then
+                                              activeScreen = 2
+                                              showActiveScreen()                                   
+                                        end    
 
-                              end
-                              
+                                    end
+                                  
+                                end
                             end
                           end
                         end
@@ -1252,16 +1329,13 @@ local function showGameOver( gameResult , isFirstLoad)
                           end 
                       end 
 
-                        local playerToDraw = 5
-                        --if not isLeaderInclude then
-                          
-                      --  end  
-
                         
-                        for i = 1, playerToDraw do                       
+                        for i = 1, #commonData.leaderboard.top do                       
                           
                                   local challegesText
-                                  if commonData.leaderboard.single and  commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
+                                  if commonData.leaderboard.single and #commonData.leaderboard.single > 0 and 
+                                    commonData.leaderboard.single[1] and  commonData.leaderboard.single[1].player 
+                                    and  commonData.leaderboard.top[i].player.id == commonData.leaderboard.single[1].player.id then
                                     challegesText = display.newText({text = "", x = 420,y = 20,font = "UnitedSansRgBk",  fontSize = 15,
                                         align = "left"  --new alignment parameter
                                     }  )
@@ -1275,22 +1349,18 @@ local function showGameOver( gameResult , isFirstLoad)
 
 
                                   local challegesCoin = display.newImage("TrophieReward/Trophie.png")
-                                  --local bullet = nil
-
                                   
 
                                   if commonData.leaderboard.top[i].rank == 1 then
                                   --      challegesText:setFillColor(19/256,236/256,254/256)
                                     challegesCoinsText:setFillColor(1,206/255,0)
                                     challegesText:setFillColor(1,206/255,0)
-                                    bullet = display.newImage("images/ChallengeBulletComplete.png")
-
+                                  
                                   else
                                     -- challegesCoinsText:setFillColor(1,1,1)
                                     -- challegesText:setFillColor(1,1,1)
                                     challegesCoinsText:setFillColor(255/255,241/255,208/255)
                                     challegesText:setFillColor(255/255,241/255,208/255)
-                                    bullet = display.newImage("images/ChallengeBullet.png")
                                     challegesCoin.alpha = 0
                                                       
                                   end
@@ -1302,13 +1372,9 @@ local function showGameOver( gameResult , isFirstLoad)
                                   --   row = i +1
                                   -- end  
 
-                                  bullet:scale(0.5,0.5)
-                                  bullet.y = 95 + row* 22
-                                  bullet.x = 240 - background.contentWidth/2 + bullet.contentWidth/2 + 35
                                   challegesText.text = commonData.leaderboard.top[i].formattedRank ..". " ..  commonData.leaderboard.top[i].player.name 
-                                  challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+                                  challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 40
                                   challegesText.y = 95 + row* 22
-                                  bullet.alpha = 0
                                   
                                   challegesCoinsText.y = 95 + row* 22
                                   challegesCoinsText.text = commonData.leaderboard.top[i].formattedScore
@@ -1322,10 +1388,10 @@ local function showGameOver( gameResult , isFirstLoad)
                                   if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
                                     challegesText.xScale  =  (background.contentWidth*0.5) / challegesText.contentWidth
                                     challegesText.yScale  = challegesText.xScale 
-                                    challegesText.x = bullet.x + bullet.contentWidth/2  + challegesText.contentWidth/2 + 15
+                                    challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 40
                                   end
 
-                                  leadersData:insert(bullet)
+                                  
                                   leadersData:insert(challegesCoin)
                                   leadersData:insert(challegesCoinsText)
                                   leadersData:insert(challegesText)  
@@ -1349,9 +1415,8 @@ local function showGameOver( gameResult , isFirstLoad)
 
           
 
-              local function updateLeaderboard(event)
+            local function updateLeaderboard(event)
 
-              print("load scores")
               
               commonData.reloadLeaderboard(function(event)
                       local currentSceneName = composer.getSceneName( "current" )
@@ -1403,8 +1468,7 @@ local function showGameOver( gameResult , isFirstLoad)
             -- } )
             
              if system.getInfo("environment") == "simulator" then 
-
-                print("try to reload")               
+                
                 startSpinner()
                 timer.performWithDelay(5000,stopSpinner,1)     
                 commonData.reloadLeaderboard(function(event)
@@ -1416,7 +1480,7 @@ local function showGameOver( gameResult , isFirstLoad)
               
             local isHighScore = gameResult.gameScore > commonData.gameData.highScore
 
-            if confetti then
+            if confetti  and confetti.numChildren then
               for j = 1, confetti.numChildren do
                  if (confetti[1]) then
                   confetti[1]:removeSelf()
@@ -1605,7 +1669,7 @@ local function showGameOver( gameResult , isFirstLoad)
               commonData.gameData.fisrtGameTime = todayStart
             end
             
-            if  commonData.gameData.lastGameTime  and  (commonData.gameData.lastGameTime < todayStart or --1==1 or
+            if  commonData.gameData.lastGameTime  and  (commonData.gameData.lastGameTime < todayStart or -- 1==1 or
               (commonData.gameData.gamesCount == 10 and commonData.gameData.fisrtGameTime == todayStart)) then
 
 
@@ -1729,7 +1793,7 @@ local function showGameOver( gameResult , isFirstLoad)
                   local dailyOkBtn = widget.newButton
                   {
                       x = 240,
-                      y = 280,
+                      y = 270,
                       id = "boosterButton",
                       defaultFile =  "BlueSet/End/EGMainMenuUp.png",
                       overFile = "BlueSet/End/EGMainMenuDown.png",
@@ -1938,8 +2002,6 @@ local function showGameOver( gameResult , isFirstLoad)
              end
 
             local sameLegBounces = gameResult.bounces - gameResult.bouncesPerfect - gameResult.bouncesGood - gameResult.bouncesEarly - gameResult.bouncesLate
-            -- print(tostring(gameResult.bouncesPerfect) .. "/" .. tostring(gameResult.bouncesGood)  .. "/" .. tostring(gameResult.bouncesEarly) .. "/" .. tostring(sameLegBounces))         
-            -- print(tostring(gameResult.bouncesLeft) .. "/" .. tostring(gameResult.bouncesRight))         
                   
             commonData.analytics.logEvent( "finishGame" .. version , { gamesCount= tostring( commonData.gameData.gamesCount) ,  
                                                 gameScore= tostring( gameResult.gameScore) , 
@@ -1985,19 +2047,25 @@ local function showGameOver( gameResult , isFirstLoad)
             end
             
 
+
             if isHighScore or isFirstLoad then
               activeScreen = 1
+              
             
             elseif #newChallenges > 0 then
               activeScreen = 0
-
+              
             
             else
                if commonData.gpgsConnected then
                 activeScreen = math.random(3)
                else
                 activeScreen = math.random(2)
-               end 
+               end  
+
+               activeScreen = activeScreen - 1
+
+              
             end    
 
             showActiveScreen()
@@ -2012,6 +2080,7 @@ function scene:create( event )
    local sceneGroup = self.view
 
       local  buttonsSet = nil
+     
      
      confetti  = display.newGroup()
      notification = display.newGroup()
@@ -2199,32 +2268,32 @@ function scene:create( event )
 
          
           --composer.gotoScene( "game" , options )
-          --composer.hideOverlay(true, "fade", 400 )
-          sceneGroup.alpha = 0
+          composer.hideOverlay(true, "fade", 400 )
+          --sceneGroup.alpha = 0
           isGameOverActive = false
           parent:outerRestartGame()
           --commonData.kidoz.hide( "panelView")
 
-                admob.hide()
+                --admob.hide()
                 stopClock()
                 stopSpinner()
                 ob.watchAd:pause()
 
-              local gamesForBanner = 30  
-              if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
-                  gamesForBanner = 5
-              end
+              -- local gamesForBanner = 5 -- 30  
+              -- if  commonData.gameData.abVersion and  commonData.gameData.abVersion == 5 then
+              --     gamesForBanner = 5
+              -- end
 
               
 
-              if (commonData.gameData.gamesCount > gamesForBanner and  not  commonData.gameData.madePurchase ) then -- and  not  commonData.gameData.madePurchase
-                    --commonData.kidoz.show( "panelView")     
-                      if ( system.getInfo( "platformName" ) == "Android" ) then
-                       admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
-                      else
-                         admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
-                      end            
-              end
+              -- if (commonData.gameData.gamesCount > gamesForBanner and  not  commonData.gameData.madePurchase ) then -- and  not  commonData.gameData.madePurchase
+              --       --commonData.kidoz.show( "panelView")     
+              --         if ( system.getInfo( "platformName" ) == "Android" ) then
+              --          admob.load( "banner", { adUnitId="ca-app-pub-3507083359749399/4231004264", childSafe=true } )
+              --         else
+              --            admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+              --         end            
+              -- end
 
           
 
@@ -2385,19 +2454,12 @@ function scene:create( event )
        end -- native share listener
   
 
-    local function goToPacks()
-       
-       local options = {params = {gameData = commonData.gameData}}
-       composer.gotoScene( "packs" , options )
-
-    end 
-
     local function packsListener( event )
           
           if ( "ended" == event.phase ) then
             
             commonData.buttonSound()
- 
+          
             local options = {params = {gameData = commonData.gameData}}
             composer.gotoScene( "packs" , options )
           end  
@@ -2422,14 +2484,17 @@ function scene:create( event )
        end
 
         local function showAdListener( event )
-          print(event.phase)
+          
             if ( "ended" == event.phase ) then
                   local isSimulator = (system.getInfo("environment") == "simulator");
-                  commonData.analytics.logEvent( "startWatchAd", {  prizeCategory= tostring( rewardIndex ) } ) 
+                  commonData.analytics.logEvent( "startWatchAd") 
                 if (not isSimulator)  then
-                    
-                   admob.show("rewardedVideo")
-
+                   
+                   if startapp.isLoaded( "rewardedVideo" ) then
+                      startapp.show( "rewardedVideo" )
+                   else
+                      admob.show("rewardedVideo")
+                   end
                     --showAdButton.alpha = 0
                     
                     
@@ -2707,7 +2772,7 @@ function scene:create( event )
         --parent = textGroup,
         text = "",     
         x = 420,
-        y = 20,
+        y = 30,
         --width = 130,     --required for multi-line and alignment
         font = "UnitedSansRgHv",   
         fontSize = 20,
@@ -2727,7 +2792,7 @@ function scene:create( event )
     
     ob.highScoreText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
     ob.highScoreShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
-    ob.highScoreText.y = 40
+    ob.highScoreText.y = 50
     ob.highScoreShadowText.y = ob.highScoreText.y + 2
     ob.highScoreShadowText:setFillColor(69/255,69/255,69/255)
 
@@ -2738,7 +2803,7 @@ function scene:create( event )
     ob.highScoreShadowText.x = highScoreTitle.x
 
 
-    local blackRect = display.newRect(240, 160, 600,400)
+    local blackRect = display.newRect(240, 170, 600,400)
     blackRect:setFillColor(0, 0, 0)
     blackRect.alpha = 0.4
 
@@ -2964,7 +3029,7 @@ function scene:create( event )
     winText.text = "#1 WINS "
     winText:setFillColor(1,206/255,0)
     
-    playerToDraw  = 5
+    
     local tropieIcon = display.newImage("TrophieReward/Trophie.png")
     tropieIcon:scale(0.08,0.08)
     
@@ -3096,6 +3161,8 @@ function scene:create( event )
      sceneGroup:insert(dailyRewardGroup) 
      sceneGroup:insert(promotionGroup) 
 
+     gameOverGroup.y = gameOverGroup.y - 10
+
 
      
      
@@ -3115,11 +3182,13 @@ function scene:show( event )
    local sceneGroup = self.view
    local phase = event.phase
 
+   
+
    if ( phase == "will" ) then
       -- Called when the scene is still off screen (but is about to come on screen).
       -- loadingBlocker.alpha = 0.01
       -- playButton.alpha = 0
-        gameOverGroup.alpha =0 
+        gameOverGroup.alpha =1 
         newLevelGroup.alpha =0 
         promotionGroup.alpha =0 
         xp.xpEmiter:start()
@@ -3156,7 +3225,7 @@ function scene:hide( event )
    if ( phase == "will" ) then
       boosterMsg:pause()
       --commonData.kidoz.hide( "panelView")
-      admob.hide()
+      --admob.hide()
       stopSpinner()
       stopClock()
       xp.xpEmiter:stop()
@@ -3174,8 +3243,11 @@ function scene:hide( event )
             
         end
 
-        shouldReloadVideo = false
+        shouldReloadVideo = false        
       end  
+
+      isFirstLoad = false
+      
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
    end
@@ -3193,26 +3265,26 @@ end
 
 
 
-function scene:outerRefreshResults(gameResult)
-    --code to resume game
- showGameOver(gameResult, false)
- local sceneGroup = self.view
+-- function scene:outerRefreshResults(gameResult)
+--     --code to resume game
+--  showGameOver(gameResult, false)
+--  local sceneGroup = self.view
 
- sceneGroup.alpha = 0.05
- local screenAlpha  = 0.05
- timer.performWithDelay(5,function()
+--  sceneGroup.alpha = 0.05
+--  local screenAlpha  = 0.05
+--  timer.performWithDelay(5,function()
 
-  if sceneGroup and sceneGroup.alpha and sceneGroup.alpha > 0 then
-   screenAlpha = screenAlpha + 0.05
-   sceneGroup.alpha = screenAlpha
+--   if sceneGroup and sceneGroup.alpha and sceneGroup.alpha > 0 then
+--    screenAlpha = screenAlpha + 0.05
+--    sceneGroup.alpha = screenAlpha
 
-  end 
- end, 19)
- -- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
- --          commonData.kidoz.show( "panelView")
- -- end
+--   end 
+--  end, 19)
+--  -- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+--  --          commonData.kidoz.show( "panelView")
+--  -- end
  
-end
+-- end
 
 
 ---------------------------------------------------------------------------------

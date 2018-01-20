@@ -44,6 +44,8 @@ local areYouSureBackground = nil
 local areYouSurePopup = nil
 local coinsCountText = nil
 local coinsShadowText = nil
+local gemsShadowText = nil
+local gemsCountText = nil
 local selectedItemIdx = 1
 local prevItem = nil
 local heroSpine =  nil
@@ -176,7 +178,7 @@ local function openCategory()
        Runtime:removeEventListener("enterFrame", boutiqueFrame)
         if (icons) then
           for i = 1, #icons do
-             if  icons[i] then
+             if  icons[i] and icons[i].numChildren then
                for j = 1, icons[i].numChildren do
                  if (icons[i][1]) then
                   icons[i][1]:removeSelf()
