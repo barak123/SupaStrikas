@@ -1,12 +1,145 @@
 -- translations.lua
 local commonData = require( "commonData" ) 
 local dictionary =
-{	 
+{	
+
+
+["Skills"] =
+		{
+			["en"] = "Skills",
+			["he"] = "יכולות",			
+			["it"] = "Skills",			
+			["es"] = "Skills",
+			["de"] = "Skills",
+			["fr"] = "Skills",
+			["ar"] = "Skills",	
+			["ru"] = "Skills",			
+			["pl"] = "Skills",
+			["pt"] = "Skills",
+			["tr"] = "Skills",
+		},	 
+["SpeedSkillHeader"] =
+		{
+			["en"] = "Speed",
+			["he"] = "מהירות",			
+			["it"] = "Speed",			
+			["es"] = "Speed",
+			["de"] = "Speed",
+			["fr"] = "Speed",
+			["ar"] = "Speed",	
+			["ru"] = "Speed",			
+			["pl"] = "Speed",
+			["pt"] = "Speed",
+			["tr"] = "Hız",
+		},	 
+["SpeedSkillDetails"] =
+		{
+			["en"] = "Higher top speed",
+			["he"] = "באיזה קצב אתה יכול לרוץ",			
+			["it"] = "Higher top speed",			
+			["es"] = "Higher top speed",
+			["de"] = "Higher top speed",
+			["fr"] = "Higher top speed",
+			["ar"] = "Higher top speed",	
+			["ru"] = "Higher top speed",			
+			["pl"] = "Higher top speed",
+			["pt"] = "Higher top speed",
+			["tr"] = "Yüksek hız",
+		},	 
+
+
+["TechniqueSkillHeader"] =
+		{
+			["en"] = "Technique",
+			["he"] = "טבניקה",			
+			["it"] = "Technique",			
+			["es"] = "Technique",
+			["de"] = "Technique",
+			["fr"] = "Technique",
+			["ar"] = "Technique",	
+			["ru"] = "Technique",			
+			["pl"] = "Technique",
+			["pt"] = "Technique",
+			["tr"] = "Teknik",
+		},	 
+["TechniqueSkillDetails"] =
+		{
+			["en"] = "Better control in low kicks",
+			["he"] = "שליטה בכדור בבעיטות נמוכות",			
+			["it"] = "Better control in low kicks",			
+			["es"] = "Better control in low kicks",
+			["de"] = "Better control in low kicks",
+			["fr"] = "Better control in low kicks",
+			["ar"] = "Better control in low kicks",	
+			["ru"] = "Better control in low kicks",			
+			["pl"] = "Better control in low kicks",
+			["pt"] = "Better control in low kicks",
+			["tr"] = "Düşük vuruşlarda daha iyi kontrol",
+		},	 
+
+["AttackSkillHeader"] =
+		{
+			["en"] = "Attack",
+			["he"] = "התקפה",			
+			["it"] = "Attack",			
+			["es"] = "Attack",
+			["de"] = "Attack",
+			["fr"] = "Attack",
+			["ar"] = "Attack",	
+			["ru"] = "Attack",			
+			["pl"] = "Attack",
+			["pt"] = "Attack",
+			["tr"] = "Saldırı",
+		},	 
+["AttackSkillDetails"] =
+		{
+			["en"] = "Find more goals",
+			["he"] = "היכולת להבקיע שערים",			
+			["it"] = "Find more goals",			
+			["es"] = "Find more goals",
+			["de"] = "Find more goals",
+			["fr"] = "Find more goals",
+			["ar"] = "Find more goals",	
+			["ru"] = "Find more goals",			
+			["pl"] = "Find more goals",
+			["pt"] = "Find more goals",
+			["tr"] = "Daha fazla gol bulmak",
+		},	 
+
+["PowerSkillHeader"] =
+		{
+			["en"] = "Power",
+			["he"] = "עוצמה",			
+			["it"] = "Power",			
+			["es"] = "Power",
+			["de"] = "Power",
+			["fr"] = "Power",
+			["ar"] = "Power",	
+			["ru"] = "Power",			
+			["pl"] = "Power",
+			["pt"] = "Power",
+			["tr"] = "Güç",
+		},	 
+["PowerSkillDetails"] =
+		{
+			["en"] = "Stronger high kicks",
+			["he"] = "עוצמת הבעיטה",			
+			["it"] = "Stronger high kicks",			
+			["es"] = "Stronger high kicks",
+			["de"] = "Stronger high kicks",
+			["fr"] = "Stronger high kicks",
+			["ar"] = "Stronger high kicks",	
+			["ru"] = "Stronger high kicks",			
+			["pl"] = "Stronger high kicks",
+			["pt"] = "Stronger high kicks",
+			["tr"] = "Güçlü tekmeler",
+		},	 				
+
 ["DailyRewardTitle"] =
 		{
-			["en"] = "DAILY REWARD!",
-			["he"] = "הפרס היומי!",			
-			["it"] = "Ricompense giornaliere!",			
+			["en"] = "DAILY REWARD",
+			["he"] = "הפרס היומי",			
+			["it"] = "Ricompense giornaliere",			
 			["es"] = "Recompensas Diarias",
 			["de"] = "Tägliche Belohnungen",
 			["fr"] = "Récompenses quotidiennes",
@@ -14,6 +147,7 @@ local dictionary =
 			["ru"] = "Ежедневные награды",			
 			["pl"] = "Codzienne Nagrody",
 			["pt"] = "Recompensas Diárias",
+			["tr"] = "Günlük Ödüller",
 		},	
 ["DailyRewardText"] =
 		{
@@ -27,6 +161,7 @@ local dictionary =
 			["ru"] = "Играйте каждый день и получайте лучшие награды",			
 			["pl"] = "Graj każdego dnia i zdobywaj lepsze nagrody",
 			["pt"] = "Jogue todos os dias e consiga melhores recompensas",
+			["tr"] = "Her gün oynayın ve daha iyi ödüller alın",
 		},	
 ["DailyRewardDay"] =
 		{
@@ -40,6 +175,7 @@ local dictionary =
 			["ru"] = "День",			
 			["pl"] = "Dzień",
 			["pt"] = "Dia",
+			["tr"] = "Gün",
 		},			
 
 		-- es , de , fr , ar  , ru 
@@ -55,6 +191,7 @@ local dictionary =
 			["it"] = "Gioca",
 			["pl"] = "Graj",
 			["pt"] = "Jogar",
+			["tr"] = "Oyun",
 			
 		},	
 ["Shop"] =
@@ -69,7 +206,7 @@ local dictionary =
 			["it"] = "Personalizza",
 			["pl"] = "Sklep",
 			["pt"] = "Loja",
-			
+			["tr"] = "Dükkan",
 		},	
 ["Packs"] =
 		{
@@ -83,7 +220,7 @@ local dictionary =
 			["it"] = "Pacchetti",
 			["pl"] = "Paczki",
 			["pt"] = "Pacotes",
-			
+			["tr"] = "Paketler",
 		},	
 ["Back"] =
 		{
@@ -97,6 +234,7 @@ local dictionary =
 			["it"] = "Indietro",
 			["pl"] = "Wstecz",
 			["pt"] = "Atrás",
+			["tr"] = "Geri",
 		},	
 ["Buy"] =
 		{
@@ -110,6 +248,7 @@ local dictionary =
 			["it"] = "Acquista",
 			["pl"] = "Kup",
 			["pt"] = "Comprar",
+			["tr"] = "Almak",
 		},	
 ["Use"] =
 		{
@@ -123,7 +262,7 @@ local dictionary =
 			["it"] = "Usa",
 			["pl"] = "Użyj",
 			["pt"] = "Usar",
-			
+			["tr"] = "seç",
 		},	
 ["Cancel"] =
 		{
@@ -137,6 +276,7 @@ local dictionary =
 			["it"] = "Annulla",
 			["pl"] = "Anuluj",
 			["pt"] = "Cancelar",
+			["tr"] = "İptal",
 			
 		},	
 ["SupaGems"] =
@@ -151,6 +291,7 @@ local dictionary =
 			["it"] = "Gemma Supa",
 			["pl"] = "Klejnoty Supa",
 			["pt"] = "Joias Supa",
+			["tr"] = "Supa taşlar",
 			
 		},	
 ["Highscore"] =
@@ -165,7 +306,7 @@ local dictionary =
 			["it"] = "Punteggio più alto",
 			["pl"] = "Najwyższy wynik",
 			["pt"] = "Pontuação",
-			
+			["tr"] = "Skor",
 		},	
 ["MainMenu"] =
 		{
@@ -179,6 +320,7 @@ local dictionary =
 			["it"] = "Menu Principale",
 			["pl"] = "główne menu",
 			["pt"] = "menu principal",
+			["tr"] = "ana Menü",
 		},	
 ["ShareScore"] =
 		{
@@ -192,6 +334,7 @@ local dictionary =
 			["it"] = "Condividi il punteggio",
 			["pl"] = "podziel się wynikiem",
 			["pt"] = "partilhar pontuação",
+			["tr"] = "paylaşım puanı",
 		},	
 ["OK"] =
 		{
@@ -205,6 +348,7 @@ local dictionary =
 			["it"] = "OK",
 			["pl"] = "OK",
 			["pt"] = "OK",
+			["tr"] = "OK",
 		},						
 ["GamesPlayed"] =
 		{
@@ -218,6 +362,7 @@ local dictionary =
 			["it"] = "Partite giocate",
 			["pl"] = "Rozegrane gry",
 			["pt"] = "Jogos jogados",
+			["tr"] = "Oynanan oyunlar",
 		},	
 ["AverageScore"] =
 		{
@@ -231,6 +376,7 @@ local dictionary =
 			["it"] = "Punteggio medio",
 			["pl"] = "Średni wynik",
 			["pt"] = "Pontuação média",
+			["tr"] = "Avaraj puanı",
 		},	
 ["PerfectRatio"] =
 		{
@@ -244,6 +390,7 @@ local dictionary =
 			["it"] = "Rapporto perfetto",
 			["pl"] = "Idealny wskaźnik",
 			["pt"] = "Rácio perfeito",
+			["tr"] = "Mükemmel oran",
 		},	
 ["HighestCombo"] =
 		{
@@ -257,6 +404,7 @@ local dictionary =
 			["it"] = "Combinazione più alta",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Maior Combo",
+			["tr"] = "En Yüksek Birleşim",
 		},	
 ["Continue"] =
 		{
@@ -270,6 +418,7 @@ local dictionary =
 			["it"] = "Continua",
 			["pl"] = "Kontynuuj",
 			["pt"] = "Continuar",
+			["tr"] = "Devam et",
 		},	
 ["YouWon"] =
 		{
@@ -283,6 +432,7 @@ local dictionary =
 			["it"] = "Hai vinto",
 			["pl"] = "Wygrałeś",
 			["pt"] = "Ganhou",
+			["tr"] = "Kazandın",
 		},	
 ["TryAgain"] =
 		{
@@ -296,6 +446,7 @@ local dictionary =
 			["it"] = "Riprova",
 			["pl"] = "Spróbuj ponownie",
 			["pt"] = "Tentar novamente",
+			["tr"] = "Tekrar deneyin",
 		},	
 ["Level"] =
 		{
@@ -309,6 +460,7 @@ local dictionary =
 			["it"] = "Livello",
 			["pl"] = "Poziom",
 			["pt"] = "Nível",
+			["tr"] = "Düzey",
 		},	
 ["WatchAd"] =
 		{
@@ -322,6 +474,7 @@ local dictionary =
 			["it"] = "Guarda l'annuncio",
 			["pl"] = "obejrzyj reklamę",
 			["pt"] = "ver anúncio",
+			["tr"] = "reklam izle",
 		},	
 ["Score"] =
 		{
@@ -335,6 +488,7 @@ local dictionary =
 			["it"] = "Punteggio",
 			["pl"] = "Wynik",
 			["pt"] = "Pontuação",
+			["tr"] = "Puan",
 		},	
 ["Challenges"] =
 		{
@@ -348,12 +502,13 @@ local dictionary =
 			["it"] = "Sfide",
 			["pl"] = "Wyzwania",
 			["pt"] = "Desafios",
+			["tr"] = "zorluk",
 		},			
 
 ["TimingTip"] =
 		{
 			["en"] = "Kick the ball when the circle turns green, to gain speed and combo",
-			["he"] = "בעט בכדור כשהעיגול נהיה ירוק, כדי להגביר מהירות ולקבל קומבו",						
+			["he"] = "בעט בכsור כשהעיגול נהיה ירוק, כדי להגביר מהירות ולקבל קומבו",						
 			["es"] = "Trate de golpear la pelota cuando el círculo se está cerrando, para ganar velocidad y combos",			
 			["de"] = "Versuchen Sie, den Ball zu treffen, wenn der Kreis sich schließt, um Geschwindigkeit und Combopunkte zu gewinnen.",			
 			["fr"] = "Essayez de frapper la balle lorsque le cercle se ferme, pour gagner de la vitesse et combo.",			
@@ -362,11 +517,12 @@ local dictionary =
 			["it"] = "Cerca di colpire la palla quando il cerchio si sta chiudendo, per guadagnare velocità e combinazione.",
 			["pl"] = "Próbuj uderzyć piłkę, gdy koło się zamyka, aby zyskać szybkość i kombinacje.",
 			["pt"] = "Tente acertar na bola quando o círculo está a fechar, para ganhar velocidade e combo.",
+			["tr"] = "Daire dolaşırken topa vurmaya çalışın, hız ve kombinasyon kazanmak için.",
 		},								
 ["SupaTip"] =
 		{
 			["en"] = "SUPA TIP",
-			["he"] = "סופה טיפ",						
+			["he"] = "סופה טיפ",									
 		},		
 ["totalMeters"] =
 		{
@@ -380,6 +536,7 @@ local dictionary =
 			["it"] = "contatore totale",
 			["pl"] = "Licznik całkowity",				
 			["pt"] = "metros totais",
+			["tr"] = "Metre",
 		},										
 ["youReached"] =
 		{
@@ -393,6 +550,7 @@ local dictionary =
 			["it"] = "hai raggiunto",
 			["pl"] = "dostałeś",				
 			["pt"] = "você alcançou",
+			--["tr"] = "Skills",
 		},					
 
 
@@ -409,6 +567,7 @@ local dictionary =
 			["it"] = "Raggiungi 10 metri",
 			["pl"] = "Osiągnij 10 Metrów",
 			["pt"] = "Alcançar 10 Metros",
+			["tr"] = "10 Metre Uzat",
 			
 		},
 ["reacehedMeters20"] =
@@ -423,6 +582,7 @@ local dictionary =
 			["it"] = "Raggiungi 20 metri",
 			["pl"] = "Osiągnij 20 Metrów",
 			["pt"] = "Alcançar 20 Metros",
+			["tr"] = "20 Metre Uzat",
 		},
 ["reacehedMeters50"] =
 		{
@@ -436,6 +596,7 @@ local dictionary =
 			["it"] = "Raggiungi 50 metri",
 			["pl"] = "Osiągnij 50 Metrów",
 			["pt"] = "Alcançar 50 Metros",
+			["tr"] = "50 Metre Uzat",
 		},
 ["reacehedMeters100"]  =
 		{
@@ -449,6 +610,7 @@ local dictionary =
 			["it"] = "Raggiungi 100 metri",
 			["pl"] = "Osiągnij 100 Metrów",
 			["pt"] = "Alcançar 100 Metros",
+			["tr"] = "100 Metre Uzat",
 		},
 ["reacehedMeters150"]  =
 		{
@@ -462,6 +624,7 @@ local dictionary =
 			["it"] = "Raggiungi 150 metri",
 			["pl"] = "Osiągnij 150 Metrów",
 			["pt"] = "Alcançar 150 Metros",
+			["tr"] = "150 Metre Uzat",
 		},
 ["reacehedMeters200"] =
 		{
@@ -475,6 +638,7 @@ local dictionary =
 			["it"] = "Raggiungi 200 metri",
 			["pl"] = "Osiągnij 200 Metrów",
 			["pt"] = "Alcançar 200 Metros",
+			["tr"] = "200 Metre Uzat",
 		},
 ["reacehedMeters300"] =
 		{
@@ -488,6 +652,7 @@ local dictionary =
 			["it"] = "Raggiungi 300 metri",
 			["pl"] = "Osiągnij 300 Metrów",
 			["pt"] = "Alcançar 300 Metros",
+			["tr"] = "300 Metre Uzat",
 		},
 ["kick5time"] =
 		{
@@ -501,6 +666,7 @@ local dictionary =
 			["it"] = "Calcia la palla 5 volte",
 			["pl"] = "Uderz piłkę 5 razy",
 			["pl"] = "Chutar a bola 5 vezes",
+			["tr"] = "Topu 5 kere başlat",
 		},
 ["collectCoin"] =
 		{
@@ -514,6 +680,7 @@ local dictionary =
 			["it"] = "Raccogli una moneta",
 			["pl"] = "Zbierz monetę",
 			["pt"] = "Recolher uma moeda",
+			["tr"] = "Para topla",
 		},
 ["jumpObstecale"] =
 		{
@@ -527,6 +694,7 @@ local dictionary =
 			["it"] = "Salta l'ostacolo",
 			["pl"] = "Przeskocz przez przeszkodę",
 			["pt"] = "Saltar sobre obstáculo",
+			["tr"] = "Engelin üzerinden atla",
 		},
 
 ["swap6"] =
@@ -541,6 +709,7 @@ local dictionary =
 			["it"] = "Scambia le gambe 6 volte",
 			["pl"] = "Zmień nogi 6 razy",
 			["pt"] = "Trocar de pernas 6 vezes",
+			["tr"] = "6 kez bacakları değiştir",
 		},
 
 ["perfect4"] =
@@ -555,6 +724,7 @@ local dictionary =
 			["it"] = "Calcio perfetto 4 volte",
 			["pl"] = "Uderz idealnie 4 razy",
 			["pt"] = "Um pontapé perfeito 4 vezes",
+			["tr"] = "4 kere mükemmel vuruş",
 		},
 ["perfect6"] =
 		{
@@ -568,6 +738,7 @@ local dictionary =
 			["it"] = "Calcio perfetto 6 volte",
 			["pl"] = "Uderz idealnie 6 razy",
 			["pt"] = "Um pontapé perfeito 6 vezes",
+			["tr"] = "6 kere mükemmel vuruş",
 		},
 ["scoreGoal"] =
 		{
@@ -581,6 +752,7 @@ local dictionary =
 			["it"] = "Segna un goal",
 			["pl"] = "Strzel gola",
 			["pt"] = "Marcar um golo",
+			["tr"] = "Gol at",
 		},
 
 
@@ -596,6 +768,7 @@ local dictionary =
 			["it"] = "Raggiungi 60 metri senza saltare",
 			["pl"] = "Osiągnij 60 Metrów bez skakania",
 			["pt"] = "Alcançar 60 Metros sem saltar",
+			["tr"] = "Atlamadan 60 Metreye Ulaşın",
 		},
 ["runFromBully"] =
 		{
@@ -609,6 +782,7 @@ local dictionary =
 			["it"] = "Scappa dal bullo",
 			["pl"] = "Ucieknij od prześladowcy",
 			["pt"] = "Fugir do agressor",
+			["tr"] = "Zorbadan kaç",
 		},
 ["maxSpeed"] =
 		{
@@ -622,6 +796,7 @@ local dictionary =
 			["it"] = "Raggiungi la velocità massima",
 			["pl"] = "Osiągnij maksymalną szybkość",
 			["pt"] = "Alcançar a velocidade máxima",
+			["tr"] = "Maksimum hıza ulaş",
 		},
 
 
@@ -637,6 +812,7 @@ local dictionary =
 			["it"] = "Raccogli 4 monete in perfetta catena",
 			["pl"] = "Zbierz 4 monety w idealnej hulance",
 			["pt"] = "Recolher 4 moedas numa sequência perfeita",
+			["tr"] = "Mükemmel parayla 4 sikke topla",
 		},
 ["collectSpreeCoins2"] =
 		{
@@ -650,6 +826,7 @@ local dictionary =
 			["it"] = "Raccogli 6 monete in perfetta catena",
 			["pl"] = "Zbierz 6 monet w idealnej hulance",
 			["pt"] = "Recolher 6 moedas numa sequência perfeita",
+			["tr"] = "Mükemmel para cezası ile 6 sikke toplayın",
 		},
 ["topScore350"] =
 		{
@@ -663,6 +840,7 @@ local dictionary =
 			["it"] = "Raggiungi 50 metri per 3 giochi di fila",
 			["pl"] = "Osiągnij 50 metrów w 3 grach pod rząd",
 			["pt"] = "Alcançar 50 metros em 3 jogos seguidos",
+			["tr"] = "50 metrede üst-üste 3 oyuna ulaşın",
 		},
 ["topScore3100"] =
 		{
@@ -676,6 +854,7 @@ local dictionary =
 			["it"] = "Raggiungi 100 metri per 3 giochi di fila",
 			["pl"] = "Osiągnij 100 metrów w 3 grach pod rząd",
 			["pt"] = "Alcançar 100 metros em 3 jogos seguidos",
+			["tr"] = "100 metrede üst-üste 3 oyuna ulaşın",
 		},
 
 
@@ -691,6 +870,7 @@ local dictionary =
 			["it"] = "Segna un goal per 3 partite di fila",
 			["pl"] = "Strzel gola w 3 grach pod rząd",
 			["pt"] = "Marcar um golo 3 jogos seguidos",
+			["tr"] = "Bir golü 3 maç üst üste atın",
 		},
 ["fireGoal"] =
 		{
@@ -704,6 +884,7 @@ local dictionary =
 			["it"] = "Segna un goal con la palla di fuoco",
 			["pl"] = "Strzel gola kulą ognia",
 			["pt"] = "Marcar um golo com a bola de fogo",
+			["tr"] = "Ateş topu ile gol atın",
 		},
 ["headerGoal"] =
 		{
@@ -717,6 +898,7 @@ local dictionary =
 			["it"] = "Valuta un obiettivo con una testata",
 			["pl"] = "Strzel gola głową",
 			["pt"] = "Marcar um golo com um cabeceamento",
+			["tr"] = "Bir başlık ile gol atın",
 		},
 ["saltaGoal"] =
 		{
@@ -730,6 +912,7 @@ local dictionary =
 			["it"] = "Valuta un gol con una sforbiciata",
 			["pl"] = "Strzel gola przewrotką",
 			["pt"] = "Marcar um golo com um pontapé de bicicleta",
+			["tr"] = "Bisiklette tekme ile gol at",
 		},
 ["marathon"] =
 		{
@@ -743,6 +926,7 @@ local dictionary =
 			["it"] = "Valuta un gol con una sforbiciata",
 			["pl"] = "Przebiegnij maraton",
 			["pt"] = "Correr uma maratona",
+			["tr"] = "Marton koş",
 		},
 ["goldDigger"] =
 		{
@@ -756,6 +940,7 @@ local dictionary =
 			["it"] = "Raccogli una moneta dal bordo",
 			["pl"] = "Zbierz monetę z krawędzi",
 			["pt"] = "Recolher uma moeda na extremidade",
+			["tr"] = "Kenardan para topla",
 		},
 
 ["challengeCompleted"] =
@@ -770,11 +955,12 @@ local dictionary =
 			["it"] = "Sfida completata",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Desafio Concluído ",
+			["tr"] = "Meydan Okuma Tamamlandı",
 		},		
 
 ["changeLegTip"] =
 		{
-			["en"] = "Challenge Completed",
+			["en"] = "You must change leg every kick",
 			["he"] = "האתגר הושלם",						
 			["es"] = "Desafío completado",			
 			["de"] = "Herausforderung abgeschlossen",			
@@ -784,6 +970,7 @@ local dictionary =
 			["it"] = "Sfida completata",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Desafio Concluído ",
+			["tr"] = "Her tekme için bacak değiştirmelisin.",
 		},		
 
 ["jumpingTip"] =
@@ -798,6 +985,7 @@ local dictionary =
 			["it"] = "Sfida completata",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Desafio Concluído ",
+			
 		},		
 
 ["perfectSafeTip"] =
@@ -812,6 +1000,7 @@ local dictionary =
 			["it"] = "Sfida completata",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Desafio Concluído ",
+			
 		},	
 ["jumpingDecelerateTip"] =
 		{
@@ -825,6 +1014,7 @@ local dictionary =
 			["it"] = "Sfida completata",
 			["pl"] = "Najwyższa Kombinacja",
 			["pt"] = "Desafio Concluído ",
+			
 		},		
 ["levelNewItems"] =
 		{
@@ -838,6 +1028,7 @@ local dictionary =
 			["it"] = "Adesso puoi usare i seguenti elementi nel negozio",
 			["pl"] = "Możesz teraz skorzystać z następujących przedmiotów w sklepie",
 			["pt"] = "Pode agora utilizar os seguintes itens na loja",
+			["tr"] = "Şimdi mağazada aşağıdaki öğeleri kullanabilirsiniz",
 		},				
 ["levelUp"] =
 		{
@@ -851,6 +1042,7 @@ local dictionary =
 			["it"] = "Livello",
 			["pl"] = "Poziom",
 			["pt"] = "Nível",
+			["tr"] = "LEVEL UP",
 		},		
 
 

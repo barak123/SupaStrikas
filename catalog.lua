@@ -14,6 +14,9 @@ local M = {}
       items.boosts = {}
 
       local itemsByLevel = {}
+
+      local skills = {}
+
      
      
       items.balls.category = "balls"
@@ -132,6 +135,7 @@ local M = {}
       items.skins[skinIdx].id = "Klaus" 
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 0
+      skills["Klaus"] = {speed = 6, power = 5 , skill = 7 , shoot = 7 }
 
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -143,6 +147,7 @@ local M = {}
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].packCategory = 1
       items.skins[skinIdx].level = 1
+      skills["BigBo" ] = {speed = 6, power = 9 , skill = 5, shoot = 3 }
 
      
 
@@ -156,6 +161,7 @@ local M = {}
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].packCategory = 2
       items.skins[skinIdx].level = 1
+      skills["Blok" ] = {speed = 7, power = 9 , skill = 5, shoot = 4 }
 
 
       skinIdx =skinIdx +  1
@@ -167,6 +173,7 @@ local M = {}
       items.skins[skinIdx].id = "NorthShaw" 
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 2
+      skills["NorthShaw" ] = {speed = 9, power = 6 , skill = 6 , shoot = 5}
 
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -177,6 +184,7 @@ local M = {}
       items.skins[skinIdx].id = "TwistingTiger" 
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 3
+      skills["TwistingTiger" ] = {speed = 9, power = 2 , skill = 8 , shoot = 7}
    
       skinIdx =skinIdx +  1
 
@@ -189,6 +197,7 @@ local M = {}
       items.skins[skinIdx].id = "CoolJoe" 
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 4
+      skills["CoolJoe" ] = {speed = 6, power = 7 , skill = 8 , shoot = 6}
 
       skinIdx =skinIdx +  1
 
@@ -200,6 +209,7 @@ local M = {}
       items.skins[skinIdx].id = "Shakes" 
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 5
+      skills["Shakes" ] = {speed = 9, power = 7 , skill = 9 , shoot = 9}
     
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -210,6 +220,7 @@ local M = {}
       items.skins[skinIdx].id = "ElMatador"
       items.skins[skinIdx].imgScale = 1
       items.skins[skinIdx].level = 6
+      skills["ElMatador" ] = {speed = 7, power = 9 , skill = 8 , shoot = 9}
 
       skinIdx =skinIdx +  1
       items.skins[skinIdx] = {}
@@ -219,7 +230,8 @@ local M = {}
       items.skins[skinIdx].image = "images/shop/skins/Rasta.png"
       items.skins[skinIdx].id = "Rasta" 
       items.skins[skinIdx].imgScale = 1
-      items.skins[skinIdx].level = 7      
+      items.skins[skinIdx].level = 7   
+      skills["Rasta" ] = {speed = 8, power = 9 , skill = 6 , shoot = 7}   
 
 
       local ballIdx = 1
@@ -536,6 +548,7 @@ end
       M.items = items 
       M.packCategories = packCategories 
       M.itemsByLevel = itemsByLevel
+      M.skills = skills
 
       M.getActiveItems = function (cat)
               local index = 1    

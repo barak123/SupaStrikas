@@ -1,9 +1,9 @@
 settings = {
      
-    --  build =
-    --{
-      --  neverStripDebugInfo = true,
-    --},
+      build =
+    {
+        neverStripDebugInfo = true,
+    },
      orientation = {
           default = "landscapeRight",
           content = "landscapeRight",
@@ -20,7 +20,8 @@ settings = {
 		"android.permission.INTERNET",
 		"com.android.vending.BILLING",
 		"android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION"
 	},
      --adds the font BorisBlackBloxx.ttf to our game
      --you will still need to reference the name in the
@@ -71,14 +72,19 @@ settings = {
             publisherId = "com.coronalabs",
              supportedPlatforms = { iphone=true , ["iphone-sim"]=true },
         },
-         ["plugin.admob"] =
+--         ["plugin.admob"] =
+--        {
+--            publisherId = "com.coronalabs"
+--        },
+--         ["plugin.startapp"] =
+--        {
+ --           publisherId = "com.startapp"
+  --      },
+      ["plugin.appodeal"] =
         {
             publisherId = "com.coronalabs"
         },
-         ["plugin.startapp"] =
-        {
-            publisherId = "com.startapp"
-        },
+
     --["plugin.superawesome"] =
     --{
       --  publisherId = "com.coronalabs"

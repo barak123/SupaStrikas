@@ -69,12 +69,12 @@ commonData.reloadLeaderboard =  function(callback)
         commonData.gpgsConnected = true              
         print("simulate leaderboard")
         --commonData.leaderboard.single = {{player={name="barak",id="123"}}}
-        commonData.leaderboard.top = {{player={name="barak",id="123"},formattedRank="11",formattedScore="50,000",rank=1},
-                                      {player={name="moshe",id="124"},formattedRank="12",formattedScore="40,000",rank=12},
-                                      {player={name="moshe2",id="125"},formattedRank="13",formattedScore="30,000",rank=13},
-                                      {player={name="moshe3",id="126"},formattedRank="14",formattedScore="20,000",rank=14},
-                                      {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",rank=15},
-                                      {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",rank=16}  
+        commonData.leaderboard.top = {{player={name="barak",id="123"},formattedRank="11",formattedScore="50,000",rank=1,tag="CoolJoe"},
+                                      {player={name="moshe",id="124"},formattedRank="12",formattedScore="40,000",rank=12,tag="CoolJoe"},
+                                      {player={name="moshe2",id="125"},formattedRank="13",formattedScore="30,000",rank=13,tag="CoolJoe"},
+                                      {player={name="moshe3",id="126"},formattedRank="14",formattedScore="20,000",rank=14,tag="CoolJoe"},
+                                      {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",rank=15,tag="ElMatador"},
+                                      {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",rank=16,tag="Blok"}  
                                     }
          commonData.leaderboard.centered = {{player={name="barak",id="123"},formattedRank="1",formattedScore="50,000"},
                                       {player={name="moshe",id="124"},formattedRank="2",formattedScore="40,000"},
@@ -1175,20 +1175,23 @@ Runtime:addEventListener( "system", systemEvents )
       packsIcon.x = packsButton.x - packsButton.contentWidth/2 + packsIcon.contentWidth/2  + 6
 
 
-      local  langBar = display.newImage("ExtrasMenu/LangBar.png")
-      langBar.yScale = (display.actualContentHeight *0.1) / langBar.height      
-       langBar.xScale = langBar.yScale
+    
+      
+
+      local allLanguages = {"en","he","es","de","fr","ar","ru","it","pl","pt","tr"}
+
+        local  langBar = display.newImage("ExtrasMenu/LangBar.png")
+      
+       langBar.xScale = 27 *  #allLanguages  / langBar.contentWidth
+       langBar.yScale = langBar.xScale -- (display.actualContentHeight *0.1) / langBar.height      
        changeLangGroup:insert(langBar)
        langBar.y = changeLangButton.y - (changeLangButton.contentHeight )/2  - langBar.contentHeight/2  
        langBar.x  = changeLangButton.x 
-      
-
-      local allLanguages = {"en","he","es","de","fr","ar","ru","it","pl","pt"}
 
       for i=1,#allLanguages do
         local pickLangButton = widget.newButton
           {
-              x = changeLangButton.x + (changeLangButton.contentWidth )/2 - 158  + 25 * i,
+              x = langBar.x - (langBar.contentWidth )/2   + 25 * i,
               y = langBar.y,
               id = allLanguages[i],
               defaultFile = "images/languages/" .. allLanguages[i] .. ".png",
@@ -1471,7 +1474,7 @@ function scene:show( event )
             commonData.gameData.selectedBooster = "fireBall"
             
             commonData.gameData.appOpened = 0  
-            commonData.gameData.abVersion = 4 + math.random(2)
+            commonData.gameData.abVersion = 6
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)

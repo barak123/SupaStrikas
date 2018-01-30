@@ -19,7 +19,6 @@ local skipAdmob = false
 
 local admobTime = nil
 local rateUsButton = nil
-local isFirstLoad = true
 
 local isGameOverActive = true
 local shouldReloadVideo = false
@@ -495,91 +494,106 @@ local function printTable( t, label, level )
   end
 end
 
-local admob = require( "plugin.admob" )
+-- --local admob = require( "plugin.admob" )
  
--- AdMob listener function
-local function adListener( event )
-    --printTable(event)
+-- -- AdMob listener function
+-- local function adListener( event )
+--     --printTable(event)
 
-    if ( event.phase == "init" ) then  -- Successful initialization
-        if ( system.getInfo( "platformName" ) == "Android" ) then
-          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-          admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
-        else
-          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
-          --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
-          admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+--     if ( event.phase == "init" ) then  -- Successful initialization
+--         if ( system.getInfo( "platformName" ) == "Android" ) then
+--           admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+--           admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+--         else
+--           admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+--           --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
+--           admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
           
-        end
+--         end
 
-    elseif ( event.phase == "displayed" ) then  -- Successful initialization    
-        if ( system.getInfo( "platformName" ) == "Android" ) then
-         admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-        else
-           admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )          
-        end
-        playButton.alpha = 1
+--     elseif ( event.phase == "displayed" ) then  -- Successful initialization    
+--         if ( system.getInfo( "platformName" ) == "Android" ) then
+--          admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+--         else
+--            admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )          
+--         end
+--         playButton.alpha = 1
         
-        if not isGameOverActive  then
-          commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
-          skipAdmob = true
-        end
-    elseif ( event.phase == "clicked" ) then  -- Successful initialization    
-        local typ = ""
-        if event.type then
-          typ = event.type
-         end 
+--         if not isGameOverActive  then
+--           commonData.analytics.logEvent( "admob banner during game", {  latency= tostring( system.getTimer() - admobTime ) } )           
+--           skipAdmob = true
+--         end
+--     elseif ( event.phase == "clicked" ) then  -- Successful initialization    
+--         local typ = ""
+--         if event.type then
+--           typ = event.type
+--          end 
 
-        commonData.analytics.logEvent( "admob " ..typ .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
-                                                highScore= tostring(  commonData.gameData.highScore) ,
-                                                 } )           
-    elseif ( event.phase == "reward" ) then  -- Successful initialization
-        adBonus(event)   
-        shouldReloadVideo = true
+--         commonData.analytics.logEvent( "admob " ..typ .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+--                                                 highScore= tostring(  commonData.gameData.highScore) ,
+--                                                  } )           
+--     elseif ( event.phase == "reward" ) then  -- Successful initialization
+--         adBonus(event)   
+--         shouldReloadVideo = true
+--     end
+-- end
+ 
+-- -- Initialize the AdMob plugin
+
+-- if ( system.getInfo( "platformName" ) == "Android" ) then
+--   admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640" , testMode=ob.isTestMode } ) -- , testMode=true
+-- else
+--   admob.init( adListener, { appId="ca-app-pub-3507083359749399~7795398690" } )
+-- end  
+
+
+-- local startapp = require( "plugin.startapp" )
+ 
+-- -- StartApp listener function
+-- local function startappListener( event )
+
+--     if ob.isTestMode then
+--       printTable(event)
+--     end  
+ 
+--     if ( event.phase == "init" ) then  -- Successful initialization        
+--         startapp.load( "interstitial" )
+--         startapp.load( "rewardedVideo" )
+--     elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
+        
+--     elseif ( event.phase == "failed" ) then  -- The ad failed to load
+        
+--     elseif ( event.phase == "displayed" ) then  -- The ad was displayed/played
+        
+--     elseif ( event.phase == "hidden" ) then  -- The ad was closed/hidden
+        
+--     elseif ( event.phase == "clicked" ) then  -- The ad was clicked/tapped
+--        -- commonData.analytics.logEvent( "startapp " .. event.type  .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
+--        --                                          highScore= tostring(  commonData.gameData.highScore) ,
+--        --                                           } )            
+--     elseif ( event.phase == "reward" ) then  -- Rewarded video ad playback completed
+--         adBonus(event)
+--     end
+
+-- end
+ 
+-- -- Initialize the StartApp plugin
+-- startapp.init( startappListener, { appId="200931196", enableReturnAds = true } )
+
+
+local appodeal = require( "plugin.appodeal" )
+local function appodealListener( event )
+      if ob.isTestMode then
+       printTable(event)
+     end  
+ 
+    if event.phase == "playbackEnded" and event.type=="rewardedVideo" then   
+      adBonus(event) 
     end
 end
  
--- Initialize the AdMob plugin
-
-if ( system.getInfo( "platformName" ) == "Android" ) then
-  admob.init( adListener, { appId="ca-app-pub-3507083359749399~5078602640" , testMode=ob.isTestMode } ) -- , testMode=true
-else
-  admob.init( adListener, { appId="ca-app-pub-3507083359749399~7795398690" } )
-end  
-
-
-local startapp = require( "plugin.startapp" )
- 
--- StartApp listener function
-local function startappListener( event )
-
-    if ob.isTestMode then
-      printTable(event)
-    end  
- 
-    if ( event.phase == "init" ) then  -- Successful initialization        
-        startapp.load( "interstitial" )
-        startapp.load( "rewardedVideo" )
-    elseif ( event.phase == "loaded" ) then  -- The ad was successfully loaded
-        
-    elseif ( event.phase == "failed" ) then  -- The ad failed to load
-        
-    elseif ( event.phase == "displayed" ) then  -- The ad was displayed/played
-        
-    elseif ( event.phase == "hidden" ) then  -- The ad was closed/hidden
-        
-    elseif ( event.phase == "clicked" ) then  -- The ad was clicked/tapped
-       commonData.analytics.logEvent( "admob " .. event.type  .. " clicked",  { gamesCount= tostring( commonData.gameData.gamesCount) ,                                                  
-                                                highScore= tostring(  commonData.gameData.highScore) ,
-                                                 } )            
-    elseif ( event.phase == "reward" ) then  -- Rewarded video ad playback completed
-        adBonus(event)
-    end
-
-end
- 
--- Initialize the StartApp plugin
-startapp.init( startappListener, { appId="200931196", enableReturnAds = true } )
+-- Initialize the Appodeal plugin
+appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03" } )
 
 -- local function fbAdListener( event )
   
@@ -921,7 +935,7 @@ local function showPromotion( gameResult , currentPromo)
     
 end  
 
-local function showGameOver( gameResult)
+local function showGameOver( gameResult, isFirstLoad)
 
         
         if ob.isTestMode then
@@ -992,18 +1006,18 @@ local function showGameOver( gameResult)
          end 
                
          
-         if not  admob.isLoaded( "interstitial" ) then
-            if ( system.getInfo( "platformName" ) == "Android" ) then
-             admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
-            else
-               admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
-            end
-         end
+         -- if not  admob.isLoaded( "interstitial" ) then
+         --    if ( system.getInfo( "platformName" ) == "Android" ) then
+         --     admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/1731272629", childSafe=true } )
+         --    else
+         --       admob.load( "interstitial", { adUnitId="ca-app-pub-3507083359749399/9627355114", childSafe=true } )
+         --    end
+         -- end
 
 
-         if not  startapp.isLoaded( "interstitial" ) then
-            startapp.load( "interstitial" )
-         end
+         -- if not  startapp.isLoaded( "interstitial" ) then
+         --    startapp.load( "interstitial" )
+         -- end
 
 
 
@@ -1022,26 +1036,28 @@ local function showGameOver( gameResult)
 
          
          
-         if not  admob.isLoaded( "rewardedVideo" ) then
-            if ( system.getInfo( "platformName" ) == "Android" ) then
-             admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
-            else
-              --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )              
-              admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
-            end
-         end
+         -- if not  admob.isLoaded( "rewardedVideo" ) then
+         --    if ( system.getInfo( "platformName" ) == "Android" ) then
+         --     admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+         --    else
+         --      --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )              
+         --      admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+         --    end
+         -- end
 
          -- if not  superawesome.isLoaded( "video" ) then
          --    superawesome.load( "video", { placementId=myPlacementID } )
          -- end
 
 
-         if not  startapp.isLoaded( "rewardedVideo" ) then
-            startapp.load( "rewardedVideo" )
-         end
+         -- if not  startapp.isLoaded( "rewardedVideo" ) then
+         --    startapp.load( "rewardedVideo" )
+         -- end
           
 
-         if  admob.isLoaded( "rewardedVideo" ) or  startapp.isLoaded( "rewardedVideo" ) or
+         if  --  admob.isLoaded( "rewardedVideo" ) or  
+            --startapp.isLoaded( "rewardedVideo" ) or
+            appodeal.isLoaded( "rewardedVideo" ) or
             (system.getInfo("environment") == "simulator") then
              -- showAdButton.alpha = 1
               ob.watchAd.skeleton.group.alpha = 1
@@ -1099,7 +1115,7 @@ local function showGameOver( gameResult)
            end 
          end
        
-       if (commonData.gameData.gamesCount > 20  and not  commonData.gameData.madePurchase and
+       if (commonData.gameData.gamesCount > 15  and not  commonData.gameData.madePurchase and
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and 
             showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
                                        -- show the advert.
@@ -1112,14 +1128,14 @@ local function showGameOver( gameResult)
                 -- else
                 
                  
-                if startapp.isLoaded( "interstitial" ) then
+                if appodeal.isLoaded( "interstitial" ) then
 
                     timer.performWithDelay(10,function ()
-                      startapp.show( "interstitial" )
+                      appodeal.show( "interstitial" )
                     end,1)
                     
-                else
-                  admob.show("interstitial") 
+                -- else
+                --   admob.show("interstitial") 
                 end
 
                    
@@ -1372,10 +1388,23 @@ local function showGameOver( gameResult)
                                   --   row = i +1
                                   -- end  
 
+
                                   challegesText.text = commonData.leaderboard.top[i].formattedRank ..". " ..  commonData.leaderboard.top[i].player.name 
-                                  challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 40
+                                  challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 60
                                   challegesText.y = 95 + row* 22
                                   
+                                  if commonData.leaderboard.top[i].tag then
+                                    local playerIcon = display.newImage("images/shop/skins/small/"..commonData.leaderboard.top[i].tag ..".png")
+
+                                    if playerIcon then
+                                      playerIcon.yScale = 23 / playerIcon.contentHeight
+                                      playerIcon.xScale = playerIcon.yScale
+                                      playerIcon.y = 95 + row* 22
+                                      playerIcon.x = 240 - background.contentWidth/2 + playerIcon.contentWidth/2 + 40 
+                                      leadersData:insert(playerIcon)
+                                    end
+                                  end  
+
                                   challegesCoinsText.y = 95 + row* 22
                                   challegesCoinsText.text = commonData.leaderboard.top[i].formattedScore
 
@@ -1388,7 +1417,7 @@ local function showGameOver( gameResult)
                                   if  challegesText.x +  challegesText.contentWidth / 2 >  challegesCoinsText.x - challegesCoin.contentWidth/2 then
                                     challegesText.xScale  =  (background.contentWidth*0.5) / challegesText.contentWidth
                                     challegesText.yScale  = challegesText.xScale 
-                                    challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 40
+                                    challegesText.x = 240 - background.contentWidth/2 + challegesText.contentWidth/2 + 60
                                   end
 
                                   
@@ -2268,10 +2297,13 @@ function scene:create( event )
 
          
           --composer.gotoScene( "game" , options )
-          composer.hideOverlay(true, "fade", 400 )
-          --sceneGroup.alpha = 0
+          --composer.hideOverlay(true, "fade", 400 )
+          sceneGroup.alpha = 0
           isGameOverActive = false
           parent:outerRestartGame()
+
+          --  local options = {params = {gameData = commonData.gameData}}
+          -- composer.gotoScene( "game" , options )      
           --commonData.kidoz.hide( "panelView")
 
                 --admob.hide()
@@ -2490,10 +2522,10 @@ function scene:create( event )
                   commonData.analytics.logEvent( "startWatchAd") 
                 if (not isSimulator)  then
                    
-                   if startapp.isLoaded( "rewardedVideo" ) then
-                      startapp.show( "rewardedVideo" )
-                   else
-                      admob.show("rewardedVideo")
+                   if appodeal.isLoaded( "rewardedVideo" ) then
+                      appodeal.show( "rewardedVideo" )
+                   -- else
+                   --    admob.show("rewardedVideo")
                    end
                     --showAdButton.alpha = 0
                     
@@ -3234,20 +3266,18 @@ function scene:hide( event )
       -- Insert code here to "pause" the scene.
       -- Example: stop timers, stop animation, stop audio, etc.
 --        parent:outerRestartGame()
-      if shouldReloadVideo then
-        if ( system.getInfo( "platformName" ) == "Android" ) then  
-            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
-        else    
-            --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
-            admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
+      -- if shouldReloadVideo then
+      --   if ( system.getInfo( "platformName" ) == "Android" ) then  
+      --       admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/6868049235", childSafe=true } )
+      --   else    
+      --       --admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/3307814188", childSafe=true } )
+      --       admob.load( "rewardedVideo", { adUnitId="ca-app-pub-3507083359749399/4388521593", childSafe=true } )
             
-        end
+      --   end
 
-        shouldReloadVideo = false        
-      end  
+      --   shouldReloadVideo = false        
+      -- end  
 
-      isFirstLoad = false
-      
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
    end
@@ -3265,26 +3295,32 @@ end
 
 
 
--- function scene:outerRefreshResults(gameResult)
---     --code to resume game
---  showGameOver(gameResult, false)
---  local sceneGroup = self.view
+function scene:outerRefreshResults(gameResult)
+    --code to resume game
+ showGameOver(gameResult, false)
+ local sceneGroup = self.view
 
---  sceneGroup.alpha = 0.05
---  local screenAlpha  = 0.05
---  timer.performWithDelay(5,function()
+ sceneGroup.alpha = 0.05
+ local screenAlpha  = 0.05
+ timer.performWithDelay(5,function()
 
---   if sceneGroup and sceneGroup.alpha and sceneGroup.alpha > 0 then
---    screenAlpha = screenAlpha + 0.05
---    sceneGroup.alpha = screenAlpha
+  if sceneGroup and sceneGroup.alpha and sceneGroup.alpha > 0 then
+   screenAlpha = screenAlpha + 0.05
+   sceneGroup.alpha = screenAlpha
 
---   end 
---  end, 19)
---  -- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
---  --          commonData.kidoz.show( "panelView")
---  -- end
+  end 
+ end, 19)
+ -- if (commonData.gameData.gamesCount > 50  and not  commonData.gameData.madePurchase) then
+ --          commonData.kidoz.show( "panelView")
+ -- end
  
--- end
+end
+
+
+function scene:isViewExists()
+  return self.view ~= nil
+end
+
 
 
 ---------------------------------------------------------------------------------

@@ -1299,13 +1299,6 @@ gameOverRect.alpha = ob.defualtAlpha
 gameOverRect.name = "gameOver"
 physics.addBody( gameOverRect, "kinematic", gameOverElement )
 
-local gameOverRect2 = display.newRect(100 , -30, 150,10)
-gameOverRect2.strokeWidth = 1
-gameOverRect2.alpha = ob.defualtAlpha
-gameOverRect2.name = "gameOver"
-gameOverRect2.shouldStopGame = false
-physics.addBody( gameOverRect2, "kinematic", upperGameOverElement )
-
 
 if ob.isSimulator then
   gameOverRect.shouldStopGame = true
@@ -2013,7 +2006,6 @@ sceneGroup:insert(ob.shadow)
 
 
 sceneGroup:insert(gameOverRect)
-sceneGroup:insert(gameOverRect2)
 
 
 sceneGroup:insert(fire)
@@ -2344,7 +2336,7 @@ ob.exitUltraMode = function()
     end
 
 
-local isGoalExists = false
+local isGoalExists = 1
 local  isGoalScored = false
 
 local function getSelectedFieldIndex()
@@ -2401,7 +2393,20 @@ ob.restartGame = function ()
 
 -- --      showNewTip
         
-        multiText2.alpha = 0 
+        MAX_SPEED = 4 + commonData.catalog.skills[commonData.selectedSkin].speed  
+        if MAX_SPEED >  11 then
+          START_SPEED =  8
+        end 
+
+        isGoalExists = 1
+        if commonData.catalog.skills[commonData.selectedSkin].shoot  >8  then
+          isGoalExists = 3
+        elseif commonData.catalog.skills[commonData.selectedSkin].shoot  >6  then
+          isGoalExists = 2
+        end
+            
+          
+        multiText2.alpha = 0  
         gameStatus.obsCount = 0
        
         addScoreText.alpha = 0                         
@@ -2482,8 +2487,7 @@ ob.restartGame = function ()
       gameStatus.isAnyLeg = true
       gameStatus.isGamePaused = false
       gameStatus.isConfirmationRequired = false
-          
-      isGoalExists = false
+                
       gameStatus.ignoreHeader = false
        --reset the score
      score = 0
@@ -2821,6 +2825,7 @@ ob.restartGame = function ()
 -- "scene:show()"
 function scene:show( event )
 
+  
    local sceneGroup = self.view
    local phase = event.phase
 
@@ -2882,12 +2887,19 @@ function scene:show( event )
                   boostConf.duration = ULTRA_MODE_DURATION / 1000
                 end  
                 
+
+
                 local emitter = display.newEmitter( boostConf )
                 --emitter:scale(0.005,0.005)
                 emitter:stop()
                 emitter.isOnKickEmitter = boostersConfig[commonData.selectedBooster][i].onKick
                 emitter.isEmitter = true
                 fire:insert( emitter )
+                
+                if boostConf.absolutePosition then
+                  print("abolute")
+                  emitter.absolutePosition = sceneGroup
+                end  
                 
               end
 
@@ -2977,9 +2989,10 @@ function scene:show( event )
       local newIndexes = {}
       local goalRnd = mRandom(100)
 
-      if (goalRnd < P_GOAL and not isGoalExists) then
+      if (goalRnd < P_GOAL and isGoalExists > 0) then
           newIndexes[1] = ob.GOAL_INDEX
-          isGoalExists = true  
+          isGoalExists = isGoalExists - 1  
+          
       elseif (score > EASY_MODE_LENGTH) then
         -- 5 normal obs + 3 logical index for compund - bird + kid
         local rnd = mRandom(8)
@@ -3568,8 +3581,9 @@ function scene:show( event )
                   (goal[i]):translate(gameStatus.speed * -1, 0)
                 end
 
-                if(ob.goalNet.x < -260) then
+                if(ob.goalNet.x < -460) then
                   goal.isAlive = false
+                  obstecales[a].isAlive = false  
 
                 end
               else  
@@ -3858,6 +3872,7 @@ gameStatus.isGameActive = true
     
     ob.stopGameElements =  function () 
 
+      
      setCoinsCount()
      gameStatus.isGameActive = false
                        --this simply pauses the current animation
@@ -3898,7 +3913,7 @@ gameStatus.isGameActive = true
                       obstecales[a].spine:pause()
                   end                      
           end
-
+            
     end
 
     local function stopGame()
@@ -3932,6 +3947,8 @@ gameStatus.isGameActive = true
 
          if ob.stopGameElements then
           ob.stopGameElements()   
+        else
+          
          end
 
         local currentSceneName = composer.getSceneName( "current" )
@@ -3939,13 +3956,12 @@ gameStatus.isGameActive = true
          if ( currentSceneName== "game" ) then
 
                 ob.scoreboardDetails.alpha = 0
-               -- local gameOverScene = composer.getScene( "gameOver"  )
+               local gameOverScene = composer.getScene( "gameOver"  )
 
-                -- if (gameOverScene) then
+                if (gameOverScene and gameOverScene:isViewExists()) then
 
-                  
-                --  gameOverScene:outerRefreshResults(gameStats)
-                -- else
+                 gameOverScene:outerRefreshResults(gameStats)
+                else
 
                   
                  local options = { isModal = false,
@@ -3953,60 +3969,23 @@ gameStatus.isGameActive = true
                                        time = 400,
                                        params = {results = gameStats , gameDisplay = sceneGroup}}
                  composer.showOverlay( "gameOver" , options )  
---                end 
+                end 
 
                 
          end
    end
-    local isFallConfirmed = false
-
-    local function getUp()
-      hero:init()
-
-      
-      hero:walk()
-      gameStatus.prevStage = 0
-      gameStatus.isGameActive = true
-      monster.kickTimer = 0
-      touchIDs = {}
-      ballon.x = BALL_X
-
-    end
-
     
    
     local function checkCollisions()
          ob.wasOnGround = ob.onGround
-         --this is where we check to see if the monster is on the ground or in the air, if he is in the air then he can't jump(sorry no double
-         --jumping for our little monster, however if you did want him to be able to double jump like Mario then you would just need
-         --to make a small adjustment here, by adding a second variable called something like hasJumped. Set it to false normally, and turn it to
-         --true once the double jump has been made. That way he is limited to 2 hops per jump.
-         --Again we cycle through the blocks group and compare the x and y values of each.
-         -- for a = 1, blocks.numChildren, 1 do
-         --      if(monster.y >= blocks[a].y - 45 and blocks[a].x < monster.x + 60 and blocks[a].x > monster.x - 60) then
-         --           monster.y = blocks[a].y - 46
-         --           ob.onGround = true
-         --           break
-         --      else
-         --           ob.onGround = false
-
-         --      end
-         -- end
-
-
+       
          if (gameStatus.isGameActive and  (ballon.x < 0 - (displayActualContentWidth - display.contentWidth) /2    or  
                                 ballon.x > display.contentWidth + (displayActualContentWidth - display.contentWidth) /2 )) then
             gameStats.finishReason = "ball out of screen"
             
             
-            if (gameStatus.isTutorial) then
-              
-              getUp()
-
-            else
               stopGame()
 
-            end
             
          end
 
@@ -4178,6 +4157,7 @@ gameStatus.isGameActive = true
                         ob.jumpLeg.width = 0
 
                         if gameStats.bounces > 0 and gameStatus.speed > 0 then
+                          
                           
                           hero:walk()
                           
@@ -4651,7 +4631,7 @@ gameStatus.isGameActive = true
               gameStatus.preventJump = false
               chaserRect.speed = REFEREE_START_SPEED
               
-              if (ob.onGround ) then
+              if (ob.onGround ) then                
                 hero:walk()
               end
               ob.chaser:walk()
@@ -4717,10 +4697,16 @@ gameStatus.isGameActive = true
             end 
         end
 
-        if gameStatus.isLeftLeg or not ob.onGround   then
+        if not ob.onGround   then
           ballon:setLinearVelocity(0,-500 * shotPower )  
+        elseif gameStatus.isLeftLeg  then
+          --ballon:setLinearVelocity(0,-500 * shotPower )  
+          ballon:setLinearVelocity(0,-380  - 10 * commonData.catalog.skills[commonData.selectedSkin].power  )  
+
+          
         else
-          ballon:setLinearVelocity(0,-350 * shotPower )  
+         -- ballon:setLinearVelocity(0,-350 * shotPower )   280
+          ballon:setLinearVelocity(0,-330 + 10 * commonData.catalog.skills[commonData.selectedSkin].skill )  
         end  
         
         --ballon:setLinearVelocity(0,-500 * shotPower )  

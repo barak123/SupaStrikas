@@ -35,8 +35,11 @@ local productsLoaded = false
 local seletedCategory = nil
 local buyButton = nil
 local useButton = nil
+local skillsButton = nil
 local cancelBuyButton = nil
 local backButton = nil
+
+local skillsGroup = nil
 
 -- local useDisabled = nil
 -- local buyDisabled = nil
@@ -72,6 +75,10 @@ local buyWithCashButtonIcon = nil
 local resolutionFactor = 0
 local  buyNotificationText = nil
 local  buyNotificationRect = nil
+
+
+-- local  skillsDetailsImg = nil
+-- local  skillsDetailsText = nil
 
 local categories = nil
 
@@ -173,8 +180,19 @@ local function  selectedItemChanged( itemIdx )
   end
 end
 
+
+
 local boutiqueFrame = nil
 local function openCategory()
+
+        if seletedCategory == "skins" then
+           skillsButton.alpha =1   
+           
+        else
+          skillsButton.alpha =0   
+          
+        end   
+
        Runtime:removeEventListener("enterFrame", boutiqueFrame)
         if (icons) then
           for i = 1, #icons do
@@ -458,7 +476,7 @@ local function openCategory()
                 --  print(velocity)
                   local item = objShop[j]
                   
-               if item then
+               if item and item.localToContent then
                    
                    --"scaling object"
                      local x, y = item:localToContent( 0, 0 )
@@ -1002,6 +1020,75 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           return true
        end
 
+       local function skillButtonListener( event )
+          
+          if ( "ended" == event.phase ) then
+            commonData.buttonSound()
+            if seletedCategory == "skins" then
+              skillsGroup.alpha = 1
+              local playerId = commonData.catalog.items[seletedCategory][selectedItemIdx].id
+
+              local playerCard =   display.newImage("images/shop/skills/" .. playerId .. "Card.png")      
+
+                for j = 1, skillsDynamicGroup.numChildren do
+                 if (skillsDynamicGroup[1]) then
+                  skillsDynamicGroup[1]:removeSelf()
+                 end 
+
+                end
+
+
+              if playerCard then
+                 playerCard.y  = 160
+                 playerCard.x  = 100
+                 playerCard.yScale =  display.actualContentHeight * 0.8 / playerCard.contentHeight
+                 playerCard.xScale = 0.001
+                 transition.to(playerCard, {xScale = playerCard.yScale,  time = 500})               
+
+                 skillsDynamicGroup:insert(playerCard)
+
+                 if  commonData.catalog.skills[playerId] then
+                    local speedBar =   display.newImage("images/shop/skills/Bar" .. commonData.catalog.skills[playerId].speed .. ".png")                          
+                    skillsDynamicGroup:insert(speedBar)
+                    speedBar.xScale = display.actualContentWidth * 0.3 / speedBar.contentWidth
+                    speedBar.yScale = speedBar.xScale
+                    speedBar.x = 190 + speedBar.contentWidth/2
+                    speedBar.y = 90
+
+
+                    local attackBar =   display.newImage("images/shop/skills/Bar" .. commonData.catalog.skills[playerId].shoot .. ".png")                          
+                    skillsDynamicGroup:insert(attackBar)
+                    attackBar.xScale = display.actualContentWidth * 0.3 / attackBar.contentWidth
+                    attackBar.yScale = attackBar.xScale
+                    attackBar.x = 190 + attackBar.contentWidth/2
+                    attackBar.y = 150
+
+
+                    local skillBar =   display.newImage("images/shop/skills/Bar" .. commonData.catalog.skills[playerId].skill .. ".png")                          
+                    skillsDynamicGroup:insert(skillBar)
+                    skillBar.xScale = display.actualContentWidth * 0.3 / skillBar.contentWidth
+                    skillBar.yScale = skillBar.xScale
+                    skillBar.x = 190 + skillBar.contentWidth/2
+                    skillBar.y = 210
+
+
+                    local powerBar =   display.newImage("images/shop/skills/Bar" .. commonData.catalog.skills[playerId].power .. ".png")                          
+                    skillsDynamicGroup:insert(powerBar)
+                    powerBar.xScale = display.actualContentWidth * 0.3 / powerBar.contentWidth
+                    powerBar.yScale = powerBar.xScale
+                    powerBar.x = 190 + powerBar.contentWidth/2
+                    powerBar.y = 270
+
+
+                 end 
+              end  
+
+             end              
+          end
+
+          return true
+       end
+
        local gradient = {
           type="gradient",
           color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
@@ -1041,9 +1128,25 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
        useButton:scale(0.5,0.5)
 
 
+      skillsButton = widget.newButton
+      {
+          x = 187,
+          y = 250,
+          id = "skillsButton",
+          defaultFile = "images/UseUp.png",          
+          overFile = "images/UseDown.png",          
+          label = getTransaltedText("Skills"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 25 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
+          onEvent = skillButtonListener
+      }
+       skillsButton:scale(0.5,0.5)
+
       buyButton.x = buyButton.x  - (display.actualContentWidth - display.contentWidth) /2
       useButton.x = useButton.x  - (display.actualContentWidth - display.contentWidth) /2
-
+      skillsButton.x = useButton.x  + useButton.contentWidth/2 +  skillsButton.contentWidth/2  - 30
 
      --  buyDisabled  = display.newImage("images/shop/BuyDisabled.png")      
      --  buyDisabled.width = buyButton.contentWidth
@@ -1366,6 +1469,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       backIcon.x = backButton.x - backButton.contentWidth/2 + backIcon.contentWidth/2  + 3
 
 
+
       local coinTextOptions = 
       {
          
@@ -1380,7 +1484,21 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
 
                 
-      
+      -- skillsDetailsImg = display.newImage("images/shop/skills/TipFlag.png")
+      -- skillsDetailsText = display.newText(coinTextOptions)       
+      -- skillsDetailsImg:scale(0.4,0.4)
+      -- skillsDetailsImg.y = 250
+      -- skillsDetailsText.y = 250
+      -- skillsDetailsImg.x = buyButton.x + buyButton.contentWidth /2 + skillsDetailsImg.contentWidth  /2 + 30
+      -- skillsDetailsText.x = skillsDetailsImg.x + 10
+
+      --  local gradient = {
+      --     type="gradient",
+      --     color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
+      -- }
+       
+      -- skillsDetailsText:setFillColor(gradient)    
+
       buyWithCoinsText = display.newText(coinTextOptions)       
       buyWithCoinsText.x = 315
       buyWithCoinsText.y = BUTTON_1_Y
@@ -1438,7 +1556,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       areYouSureBackground.x = 240
       areYouSureBackground.y = 160
 
-      local blackRect = display.newRect(240, 160, 600,400)
+      local blackRect = display.newRect(240, 160, 800,800)
       blackRect:setFillColor(0, 0, 0)
       blackRect.alpha = 0.4
 
@@ -1528,6 +1646,157 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       buyNotificationRect.width = areYouSureBackground.contentWidth -20
       buyNotificationRect.x = areYouSureBackground.x
 
+      skillsGroup = display.newGroup()
+      skillsDynamicGroup = display.newGroup()
+
+      skillsGroup.alpha = 0
+      local skillsRect = display.newRect(240, 160, 800,800)
+      skillsRect:setFillColor(0, 0, 0)
+      skillsRect.alpha = 0.6
+
+     local function skillsRectListener( event )  
+       if   ( event.phase == "ended" ) then
+          skillsGroup.alpha = 0
+
+          for j = 1, skillsDynamicGroup.numChildren do
+                 if (skillsDynamicGroup[1]) then
+                  skillsDynamicGroup[1]:removeSelf()
+                 end 
+
+          end
+
+        end
+        
+          return true
+     end
+
+     skillsRect:addEventListener("touch", skillsRectListener )
+     skillsGroup:insert(skillsRect)
+
+
+local skillHeaderOptions = 
+{
+    --parent = textGroup,
+    text = "",     
+    x = 415,
+    y = 23,
+   -- width = 120,     --required for multi-line and alignment
+    font = "UnitedSansRgHv",   
+    fontSize = 20,
+    align = "left"  --new alignment parameter
+}
+
+local skillSubHeaderOptions = 
+{
+    --parent = textGroup,
+    text = "",     
+    x = 415,
+    y = 23,
+   -- width = 120,     --required for multi-line and alignment
+    font = "UnitedSansRgHv",   
+    fontSize = 10,
+    align = "left"  --new alignment parameter
+}
+
+
+     local speedIcon =  display.newImage("images/shop/skills/SpeedIcon.png")             
+     speedIcon:scale(0.3,0.3)
+     speedIcon.x = 200
+     speedIcon.y = 60
+     skillsGroup:insert(speedIcon)
+     local speedIconText = display.newText(skillHeaderOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+     local speedIcon2Text = display.newText(skillSubHeaderOptions) 
+
+     speedIconText:setFillColor(1,206/255,0)
+     speedIconText.text = getTransaltedText("SpeedSkillHeader")
+     speedIcon2Text.text = getTransaltedText("SpeedSkillDetails")
+     speedIconText.x = speedIcon.x + speedIcon.contentWidth/2 + speedIconText.contentWidth/2  + 10
+     speedIcon2Text.x = speedIcon.x + speedIcon2Text.contentWidth/2  
+     speedIconText.y = speedIcon.y
+     speedIcon2Text.y = speedIconText.y + speedIconText.contentHeight /2 + speedIcon2Text.contentHeight /2  
+
+
+     skillsGroup:insert(speedIconText)
+     skillsGroup:insert(speedIcon2Text)
+
+
+
+     local AttackIcon =  display.newImage("images/shop/skills/AttackIcon.png")             
+     AttackIcon:scale(0.3,0.3)
+     AttackIcon.x = 200
+     AttackIcon.y = 120
+     skillsGroup:insert(AttackIcon)
+
+      local AttackIconText = display.newText(skillHeaderOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+     local AttackIcon2Text = display.newText(skillSubHeaderOptions) 
+
+     AttackIconText:setFillColor(1,206/255,0)
+     AttackIconText.text = getTransaltedText("AttackSkillHeader")
+     AttackIcon2Text.text = getTransaltedText("AttackSkillDetails")
+     AttackIconText.x = AttackIcon.x + AttackIcon.contentWidth/2 + AttackIconText.contentWidth/2  + 10
+     AttackIcon2Text.x = AttackIcon.x + AttackIcon2Text.contentWidth/2  
+     AttackIconText.y = AttackIcon.y
+     AttackIcon2Text.y = AttackIconText.y + AttackIconText.contentHeight /2 + AttackIcon2Text.contentHeight /2  
+
+
+     skillsGroup:insert(AttackIconText)
+     skillsGroup:insert(AttackIcon2Text)
+
+
+     local SkillIcon =  display.newImage("images/shop/skills/SkillIcon.png")             
+     SkillIcon:scale(0.3,0.3)
+     SkillIcon.x = 200
+     SkillIcon.y = 180
+     skillsGroup:insert(SkillIcon)
+
+      local SkillIconText = display.newText(skillHeaderOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+     local SkillIcon2Text = display.newText(skillSubHeaderOptions) 
+
+     SkillIconText:setFillColor(1,206/255,0)
+     SkillIconText.text = getTransaltedText("TechniqueSkillHeader")
+     SkillIcon2Text.text = getTransaltedText("TechniqueSkillDetails")
+     SkillIconText.x = SkillIcon.x + SkillIcon.contentWidth/2 + SkillIconText.contentWidth/2  + 10
+     SkillIcon2Text.x = SkillIcon.x + SkillIcon2Text.contentWidth/2  
+     SkillIconText.y = SkillIcon.y
+     SkillIcon2Text.y = SkillIconText.y + SkillIconText.contentHeight /2 + SkillIcon2Text.contentHeight /2  
+
+
+     skillsGroup:insert(SkillIconText)
+     skillsGroup:insert(SkillIcon2Text)
+
+
+
+     local PowerIcon =  display.newImage("images/shop/skills/PowerIcon.png")             
+     PowerIcon:scale(0.3,0.3)
+     PowerIcon.x = 200
+     PowerIcon.y = 240
+     skillsGroup:insert(PowerIcon)
+
+      local PowerIconText = display.newText(skillHeaderOptions) -- "",0,0, "UnitedSansRgHv" , 24)
+     local PowerIcon2Text = display.newText(skillSubHeaderOptions) 
+
+     PowerIconText:setFillColor(1,206/255,0)
+     PowerIconText.text = getTransaltedText("PowerSkillHeader")
+     PowerIcon2Text.text = getTransaltedText("PowerSkillDetails")
+     PowerIconText.x = PowerIcon.x + PowerIcon.contentWidth/2 + PowerIconText.contentWidth/2  + 10
+     PowerIcon2Text.x = PowerIcon.x + PowerIcon2Text.contentWidth/2  
+     PowerIconText.y = PowerIcon.y
+     PowerIcon2Text.y = PowerIconText.y + PowerIconText.contentHeight /2 + PowerIcon2Text.contentHeight /2  
+
+
+     skillsGroup:insert(PowerIconText)
+     skillsGroup:insert(PowerIcon2Text)
+
+
+
+     
+
+     
+
+     
+     skillsGroup:insert(skillsDynamicGroup)
+     
+
     sceneGroup:insert(background)
 
 
@@ -1545,6 +1814,10 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
     sceneGroup:insert(useButton)
     sceneGroup:insert(buyButton)
+    sceneGroup:insert(skillsButton)
+    -- sceneGroup:insert(skillsDetailsImg)
+    -- sceneGroup:insert(skillsDetailsText)
+    
     -- sceneGroup:insert(useDisabled)
     -- sceneGroup:insert(buyDisabled)
     
@@ -1556,7 +1829,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
      sceneGroup:insert(backIcon)
      
 
-
+     
+     sceneGroup:insert(skillsGroup)
     sceneGroup:insert(areYouSurePopup)
    
      
@@ -1644,7 +1918,7 @@ function scene:show( event )
       commonData.shopBall = commonData.selectedBall 
       loadProducts()
 
-       
+      skillsGroup.alpha = 0 
 
       hero:reload()
       hero:init()
@@ -1652,8 +1926,12 @@ function scene:show( event )
 
       buyButton:setLabel(getTransaltedText("Buy"))
       useButton:setLabel(getTransaltedText("Use"))
+      skillsButton:setLabel(getTransaltedText("Skills"))
       cancelBuyButton:setLabel(getTransaltedText("Cancel"))
       backButton:setLabel(getTransaltedText("Back"))
+
+      -- skillsDetailsText.text = getTransaltedText("SkillsTip")
+      -- skillsDetailsText.xScale  =  (skillsDetailsImg.contentWidth*0.8) / skillsDetailsText.contentWidth
 
       commonData.catalog.items.gems[9].hidden = (commonData.shopItems["removeads"] or  system.getInfo("platformName") ~= "Android" ) 
       
