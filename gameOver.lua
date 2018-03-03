@@ -47,7 +47,7 @@ local nextLevelText = nil
 local comboText = nil 
 local comboTextS = nil
 
-local dailyRewardBlocker = nil
+
 local loadingBlocker = nil
 local boosterRect = nil
 local boosterText  = nil
@@ -68,12 +68,12 @@ local leadersData = nil
 local leadersBox = nil
 local gameOverGroup = nil
 local newLevelGroup = nil
+local finishGameGroup = nil
 local promotionGroup = nil
 local newItemsGroup = nil
 
 local packReminder = nil
-local dailyReward = nil
-local dailyRewardGroup = nil
+
 local activeScreen = 1
 
 
@@ -433,19 +433,18 @@ local function showPrizeNotification( header , text , coins, displyOk )
 end
 
 
-local function adBonus( event )
+local function adBonus( )
         --showAdButton.alpha = 0
         
-    
+        commonData.analytics.logEvent( "endWatchAd" )   
         playButton.alpha = 1
         commonData.gameData.coins = commonData.gameData.coins + 20     
         commonData.gameData.adsPressed = commonData.gameData.adsPressed + 1   
 
         commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
-
         logCoins(commonData.gameData , 20)
-        commonData.analytics.logEvent( "endWatchAd" ) 
+        
 
         parent:outerCoinsReward(20 ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
 
@@ -466,10 +465,19 @@ local function leaderReward(score )
         commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
         commonData.analytics.logEvent( "leaderReward", {  gameScore= tostring( score ) } ) 
-
-        
-
 end
+
+local function notificationReward(score )
+
+        parent:outerTrophieReward(70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
+
+        commonData.gameData.packs = commonData.gameData.packs + 1
+
+        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+        commonData.analytics.logEvent( "notificationReward", {  gameScore= tostring( score ) } ) 
+end
+
 
 
 
@@ -581,19 +589,19 @@ end
 -- startapp.init( startappListener, { appId="200931196", enableReturnAds = true } )
 
 
-local appodeal = require( "plugin.appodeal" )
-local function appodealListener( event )
-      if ob.isTestMode then
-       printTable(event)
-     end  
+-- local appodeal = require( "plugin.appodeal" )
+-- local function appodealListener( event )
+--       if ob.isTestMode then
+--        printTable(event)
+--      end  
  
-    if event.phase == "playbackEnded" and event.type=="rewardedVideo" then   
-      adBonus(event) 
-    end
-end
+--     if event.phase == "playbackEnded" and event.type=="rewardedVideo" then   
+--       adBonus(event) 
+--     end
+-- end
  
--- Initialize the Appodeal plugin
-appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03" } )
+-- -- Initialize the Appodeal plugin
+-- appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03" } )
 
 -- local function fbAdListener( event )
   
@@ -945,23 +953,10 @@ local function showGameOver( gameResult, isFirstLoad)
         isGameOverActive = true
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        finishGameGroup.alpha =0 
         promotionGroup.alpha =0 
-        dailyRewardGroup.alpha =0 
-
-        -- if math.random(2) == 1 then
-             --showAdButton.alpha = 1
-        -- else
-        --     showAdButton.alpha = 0
-        -- end      
-
-
-             -- local memUsed = (collectgarbage("count"))
-             -- local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
-           
         
-            --print( string.format("%.00f", texUsed) .. " / " .. memUsed)
-             
-    
+      
         boosterMsg.skeleton.group.alpha = 0
         notification.alpha = 0
         
@@ -993,17 +988,18 @@ local function showGameOver( gameResult, isFirstLoad)
           
           end  
        end 
-      
+      commonData.sessionGames = commonData.sessionGames + 1
+
+       local showAdRnd =  commonData.sessionGames % 3
 
         local gmCnt = commonData.gameData.gamesCount
-       if (gmCnt == 0) then
-        gmCnt = 1
-       end 
-       local showAdRnd =  gmCnt % 5
-
-         if (gmCnt > 70 ) then
-          showAdRnd =  gmCnt % 3
+         if (gmCnt == 0) then
+          gmCnt = 1
          end 
+
+         -- if (gmCnt > 70 ) then
+         --  showAdRnd =  gmCnt % 3
+         -- end 
                
          
          -- if not  admob.isLoaded( "interstitial" ) then
@@ -1057,7 +1053,7 @@ local function showGameOver( gameResult, isFirstLoad)
 
          if  --  admob.isLoaded( "rewardedVideo" ) or  
             --startapp.isLoaded( "rewardedVideo" ) or
-            appodeal.isLoaded( "rewardedVideo" ) or
+            commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) or
             (system.getInfo("environment") == "simulator") then
              -- showAdButton.alpha = 1
               ob.watchAd.skeleton.group.alpha = 1
@@ -1115,9 +1111,10 @@ local function showGameOver( gameResult, isFirstLoad)
            end 
          end
        
-       if (commonData.gameData.gamesCount > 15  and not  commonData.gameData.madePurchase and
+       print(showAdRnd)
+       if (commonData.gameData.gamesCount > 10  and not  commonData.gameData.madePurchase and
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and 
-            showAdRnd == 1 and not isFirstLoad and not skipAdmob ) then
+            showAdRnd == 0) then
                                        -- show the advert.
                 
                 
@@ -1128,10 +1125,10 @@ local function showGameOver( gameResult, isFirstLoad)
                 -- else
                 
                  
-                if appodeal.isLoaded( "interstitial" ) then
+                if commonData.appodeal.isLoaded( "interstitial" ) then
 
                     timer.performWithDelay(10,function ()
-                      appodeal.show( "interstitial" )
+                      commonData.appodeal.show( "interstitial" )
                     end,1)
                     
                 -- else
@@ -1168,6 +1165,9 @@ local function showGameOver( gameResult, isFirstLoad)
             local endGameScore = gameResult.gameScore
             scoreText.text = commonData.comma_value(endGameScore)
             scoreTextS.text = commonData.comma_value(endGameScore)
+
+            
+            commonData.gameData.lastScores[gmCnt%10 + 1] = endGameScore
 
               local challengeTextOptions = 
                   {
@@ -1547,6 +1547,12 @@ local function showGameOver( gameResult, isFirstLoad)
               scoreTitleText.text = "NEW HIGH SCORE:"
               scoreTitleTextS.text = "NEW HIGH SCORE:"
 
+              if commonData.isTropyOnHighScore then
+                notificationReward(gameResult.gameScore)
+                commonData.isTropyOnHighScore = false                
+              end  
+
+              commonData.setHighScoreNotification(gameResult.gameScore)
               
             else
 
@@ -1569,6 +1575,7 @@ local function showGameOver( gameResult, isFirstLoad)
             commonData.gameData.unlockedAchivments = getUnlockedAchivments()
             commonData.gameData.unlockedChallenges = getUnlockedChallenges()
 
+            parent:outerRefreshCoins()
             -- local newLevelScene = composer.getScene( "newLevel"  )
 
             -- if (newLevelScene) then
@@ -1679,268 +1686,6 @@ local function showGameOver( gameResult, isFirstLoad)
             comboTextS.alpha = 1
 
 
-            local  t = os.date( '*t' )
-            
-            t.hour = 0
-            t.min = 0
-            t.sec = 0
-            
-            local todayStart =  os.time( t ) 
-
-            t.day = t.day -1
-
-            local yesterdayStart =  os.time( t ) 
-            
-            --  todayStart = os.time( os.date( '*t' ) ) 
-
-
-            if not commonData.gameData.lastGameTime then
-              commonData.gameData.fisrtGameTime = todayStart
-            end
-            
-            if  commonData.gameData.lastGameTime  and  (commonData.gameData.lastGameTime < todayStart or -- 1==1 or
-              (commonData.gameData.gamesCount == 10 and commonData.gameData.fisrtGameTime == todayStart)) then
-
-
-              if yesterdayStart < commonData.gameData.lastGameTime then
-              
-               -- reward
-                commonData.gameData.daysInARow = commonData.gameData.daysInARow + 1
-              else
-                commonData.gameData.daysInARow = 1              
-              end
-              
-              if commonData.gameData.daysInARow > 1 then
-                local version = ""
-                if  commonData.gameData.abVersion then
-                 version = " in version " .. tostring( commonData.gameData.abVersion)
-                end
-
-                commonData.analytics.logEvent( "dailyBonus day " .. tostring( commonData.gameData.daysInARow) ..  version, { gamesCount= tostring( commonData.gameData.gamesCount),
-                appOpened= tostring( commonData.gameData.appOpened)
-                 } )
-              end
-              local coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
-
-              -- if (coinsDailyReward > 120) then
-              --   coinsDailyReward  = 120
-              -- end  
-              --showNotification("DAILY REWARD! \n\n" ..  tostring( coinsDailyReward ) .. " COINS \n\n ")
-              --showPrizeNotification("DAILY REWARD!" , "play every day and get better rewards")
-
-
-              if not dailyReward then
-                dailyReward = display.newGroup()
-              
-
-                local boosterTextOptions = 
-                {
-                    --parent = textGroup,
-                    text = "",     
-                    x = 420,
-                    y = 12,
-                    width = 300,     --required for multi-line and alignment
-                    font = "UnitedItalicRgHv",   
-                    fontSize = 10,
-                    align = "center"  --new alignment parameter
-                }
-
-                local boosterHeaderTextOptions = 
-                {
-                    --parent = textGroup,
-                    text = "",     
-                    x = 420,
-                    y = 20,
-                    --width = 230,     --required for multi-line and alignment
-                    font = "UnitedSansRgStencil",   
-                    fontSize = 25,
-                    align = "center"  --new alignment parameter
-                }
-
-
-               
-
-                local dailySubTitleText = display.newText(boosterTextOptions)
-                --dailySubTitleText:setFillColor(194/256,236/256,254/256)
-                dailySubTitleText.x = 240
-                dailySubTitleText.y = 80 
-                dailySubTitleText.text = getTransaltedText("DailyRewardText")
-
-              --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
-               -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
-
-                local  dailyTitleText = display.newText(boosterHeaderTextOptions)
-               -- dailyTitleText:setFillColor(194/256,236/256,254/256)
-                dailyTitleText.x = 240
-                dailyTitleText.y = 60
-                dailyTitleText.text = getTransaltedText("DailyRewardTitle") 
-                           
-
-                 local function dailyOkBtnListener( event )
-          
-                      if ( "ended" == event.phase ) then
-                        
-                        commonData.buttonSound()
-
-
-                       
-                        --newLevelGroup.alpha = 0
-
-                        
-                          if (commonData.gameData.daysInARow < 7) then
-                            if not coinsDailyReward then
-                               coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
-                            end  
-                            commonData.gameData.coins = commonData.gameData.coins + coinsDailyReward        
-                        
-                            logCoins(commonData.gameData , coinsDailyReward) 
-                          else
-                            commonData.gameData.gems = commonData.gameData.gems + 1     
-                            commonData.gameData.daysInARow = 0
-                            coinsDailyReward = nil
-                          end  
-                          
-                          commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
-
-                          timer.performWithDelay(300, 
-                            function()
-                             parent:outerCoinsReward(coinsDailyReward ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
-                              dailyRewardGroup.alpha = 0
-                              gameOverGroup.alpha = 1
-                            end
-                          , 1)
-
-                      end
-                      return true
-                 end
-
-                 local gradient = {
-                      type="gradient",
-                      color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
-                  }
-
-                  local dailyOkBtn = widget.newButton
-                  {
-                      x = 240,
-                      y = 270,
-                      id = "boosterButton",
-                      defaultFile =  "BlueSet/End/EGMainMenuUp.png",
-                      overFile = "BlueSet/End/EGMainMenuDown.png",
-                      onEvent = dailyOkBtnListener,
-                      label = getTransaltedText("OK"),
-                      labelAlign = "center",
-                      font = "UnitedSansRgHv",  
-                      fontSize = 40 ,           
-                      labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }                                
-                  }
-                 dailyOkBtn.xScale =  (display.actualContentWidth*0.3) / dailyOkBtn.width
-                  dailyOkBtn.yScale = dailyOkBtn.xScale  
-                 
-
-                  local dailyBackground = display.newRect(240, 160, 700,400)
-                  dailyBackground.fill.effect = "generator.radialGradient"
-             
-                  dailyBackground.fill.effect.color2 = { 0.8, 0, 0.2, 1 }
-                  dailyBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 0.85 }
-                  dailyBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
-                  dailyBackground.fill.effect.aspectRatio  = 1
-                 
-                
-                 local dailyBackground2 = display.newImage("images/TeamImage.png")
-                 --background:setFillColor(59/255,  131/255 , 163/255)
-                 dailyBackground2.x = 240
-                 dailyBackground2.y = 160
-                 dailyBackground2.xScale = display.actualContentWidth / dailyBackground2.contentWidth 
-                 dailyBackground2.yScale = display.actualContentHeight  / dailyBackground2.contentHeight
-
-                 
-
-                 dailyReward:insert(dailyBackground)
-                 dailyReward:insert(dailyBackground2)
-
-                 --commonData.gameData.daysInARow =3 
-                 for i=1,7 do
-                      local card = nil
-                      if  i == commonData.gameData.daysInARow then
-                        card =  display.newImage("images/shop/ShopItemExlusive.png")             
-                      else
-                        card =  display.newImage("images/shop/ItemsNoCash.png")            
-                      end  
-                      
-                      card.xScale = display.actualContentWidth * 0.14 / card.contentWidth 
-                      card.yScale =  card.xScale 
-
-                      card.x = 240 - display.actualContentWidth / 2 + card.contentWidth /2 + (i-1) * (card.contentWidth + 3)
-                      card.y = 160
-                      dailyReward:insert(card)
-
-                     local dayText = display.newText(boosterTextOptions)
-                      dayText:setFillColor(255/255,241/255,208/255)
-                      dayText.x = card.x
-                      dayText.y = card.y - card.contentHeight/2 + 15
-                      dayText.text = getTransaltedText("DailyRewardDay") .." " .. i 
-
-                     dailyReward:insert(dayText) 
-                     local priceImg = nil
-                     if i == 7 then
-                      priceImg = display.newImage("images/SupaGem.png")
-                     else
-                      priceImg = display.newImage("images/IcoCoins.png")
-                     end 
-
-                     --background:setFillColor(59/255,  131/255 , 163/255)
-                     priceImg.x = card.x
-                     priceImg.y = card.y 
-                     priceImg.xScale = card.contentWidth * 0.5 / priceImg.contentWidth 
-                     priceImg.yScale = priceImg.xScale
-                     
-                     dailyReward:insert(priceImg)  
-
-
-
-                      local day1Text = display.newText(boosterTextOptions)
-                      day1Text:setFillColor(255/255,241/255,208/255)
-                      day1Text.x = card.x
-                      day1Text.y = card.y + card.contentHeight/2  - 20
-
-                       if i == 7 then
-                        day1Text.text = "1"  .. getTransaltedText("SupaGems") 
-                       else
-                        day1Text.text = 20 + i * 20  .. " Coins" 
-                       end 
-                      
-
-                      dailyReward:insert(day1Text)  
-                 end
-
-                
-                
-               
-                dailyReward:insert(dailyOkBtn)
-                dailyReward:insert(dailyTitleText)
-                dailyReward:insert(dailySubTitleText)
-                
-                dailyRewardGroup:insert(dailyReward)
-              
-              end  
-
-              local function giveDailyReward()
-
-                showPrizeNotification( getTransaltedText("DailyRewardTitle") ,
-                           getTransaltedText("DailyRewardText"), coinsDailyReward, true)
-                timer.performWithDelay(2000, 
-                  function()
-                   parent:outerCoinsReward(coinsDailyReward ,  70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
-                  end
-                , 1)
-
-                commonData.gameData.coins = commonData.gameData.coins + coinsDailyReward        
-            
-                logCoins(commonData.gameData , coinsDailyReward)                
-              end
-             
-            dailyRewardGroup.alpha = 1 
-            gameOverGroup.alpha = 0
             --  local function validateDailyReward(event)
                       
             --       -- no internet - no glory
@@ -1982,7 +1727,7 @@ local function showGameOver( gameResult, isFirstLoad)
           
 
                
-           elseif (commonData.gameData.gamesCount > 50 and isHighScore and not commonData.gameData.rateUsShown   ) then   
+           if (commonData.gameData.gamesCount > 50 and isHighScore and not commonData.gameData.rateUsShown   ) then   
            
               local rateImg = display.newImage("images/Rate.png")
               rateImg:scale(0.7,0.7)
@@ -2010,7 +1755,7 @@ local function showGameOver( gameResult, isFirstLoad)
             end    
 
 
-            t = os.date( '*t' )
+            local t = os.date( '*t' )
 
 
             if not commonData.gameData.lastGameTime or commonData.gameData.lastGameTime < os.time( t ) then
@@ -2103,6 +1848,31 @@ local function showGameOver( gameResult, isFirstLoad)
 
       end    
 end
+
+
+local function showFinishGame()
+    if not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  system.getInfo("environment") ~= "simulator" then
+        finishGameGroup.alpha =0
+        showGameOver(ob.priceResult)
+
+    else                    
+        gameOverGroup.alpha =0 
+        newLevelGroup.alpha =0 
+        finishGameGroup.alpha =1
+        promotionGroup.alpha =0 
+
+        ob.normalCoins.text = ob.priceResult.coins
+        ob.specialCoins.text = ob.priceResult.coins * 2
+
+        if ob.priceResult.coins < 10 then 
+          ob.specialCoins.text = 20
+        end
+        ob.normalXp.text = ob.priceResult.meters
+        ob.specialXp.text = ob.priceResult.meters * 2
+    end
+        
+end
+
 -- "scene:create()"
 function scene:create( event )
 
@@ -2123,10 +1893,11 @@ function scene:create( event )
 
      gameOverGroup = display.newGroup()
      newLevelGroup = display.newGroup()
+     finishGameGroup = display.newGroup()
      promotionGroup = display.newGroup()
      newItemsGroup = display.newGroup()
-     dailyRewardGroup = display.newGroup()
-
+     
+     finishGameGroup.alpha = 0
      
      buttonsSet = "BlueSet"
      --everything from here down to the return line is what makes
@@ -2197,6 +1968,7 @@ function scene:create( event )
 
             gameOverGroup.alpha = 1
             newLevelGroup.alpha = 0
+            finishGameGroup.alpha = 0
             promotionGroup.alpha = 0
             
           end
@@ -2238,9 +2010,304 @@ function scene:create( event )
      newLevelGroup:insert(newLevelOkBtn)
 
 
-
-
      
+      local blackRect2 = display.newRect(240, 170, 800,600)
+    blackRect2:setFillColor(0, 0, 0)
+    blackRect2.alpha = 0.7
+
+    -- blackRect2.xScale = display.actualContentWidth / blackRect2.contentWidth 
+    -- blackRect2.yScale = display.actualContentHeight  / blackRect2.contentHeight
+
+
+      local cardDecline =  display.newImage("images/CardDecline.png")
+     --   cardDecline.xScale =  (display.actualContentWidth*0.3) / cardDecline.contentWidth
+     -- cardDecline.yScale =  cardDecline.xScale
+     cardDecline.x = 290 - cardDecline.contentWidth/2
+     cardDecline.y = 160
+     cardDecline:scale(0.5 , 0.5)
+
+     local cardDouble =  display.newImage("images/CardDouble.png")
+     --    cardDouble.xScale =  (display.actualContentWidth*0.3) / cardDouble.contentWidth
+     -- cardDouble.yScale =  cardDouble.xScale
+     cardDouble:scale(0.5 , 0.5)
+     cardDouble.x = 230 + cardDouble.contentWidth/2
+     cardDouble.y = 160
+
+     local function regularPriceListener( event )
+          
+          if ( "ended" == event.phase ) then
+            
+            commonData.buttonSound()
+
+            finishGameGroup.alpha = 0
+            showGameOver(ob.priceResult)
+            
+          end
+          return true
+     end
+
+     local function giveDoublePrice()
+
+          commonData.analytics.logEvent( "endWatchAd - gameReward",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore) ,
+                                    totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                    totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                    madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                    playerLevel =  tostring(  commonData.getLevel() )
+                                     }) 
+
+          ob.priceResult.meters = ob.priceResult.meters * 2
+          ob.priceResult.coins = ob.priceResult.coins * 2
+          if ob.priceResult.coins < 10 then 
+            ob.priceResult.coins = 20
+          end
+          showGameOver(ob.priceResult)
+          --parent:outerRefreshCoins()
+
+     end
+
+      local function showGameRewardAd( )
+
+          commonData.gameData.isShopAdShown = true
+          local isSimulator = (system.getInfo("environment") == "simulator");
+                  
+                  if (not isSimulator)  then
+                     
+                     if commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) then
+                        commonData.analytics.logEvent( "startWatchAd - gameReward",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore) ,
+                                    totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                    totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                    madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                    playerLevel =  tostring(  commonData.getLevel() )
+                                     })       
+                        commonData.videoRewardFunction = giveDoublePrice
+                        commonData.appodeal.show( "rewardedVideo",{placement = "EndOfMissionDR"} )
+                     else   
+                      commonData.analytics.logEvent( "noAvailableAd - gameReward",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore) ,
+                                    totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                    totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                    madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                    playerLevel =  tostring(  commonData.getLevel() )
+                                     })      
+                      giveDoublePrice()                
+                     end
+                      
+                  else                      
+                      giveDoublePrice()
+                    
+                  end             
+       end
+
+       local function onAdApprove( event )
+          if ( event.action == "clicked" ) then
+              local i = event.index
+              if ( i == 1 ) then
+                 showGameRewardAd()
+                 commonData.analytics.logEvent( "game reward ad popup approved" ) 
+              elseif ( i == 2 ) then
+                commonData.analytics.logEvent( "game reward popup ignored" ) 
+                       
+                 
+              end
+          end
+      end
+        
+      -- Show alert with two buttons
+      
+       local function watchAdListener( event )
+          
+          if ( "ended" == event.phase ) then
+
+            if not commonData.gameData.isShopAdShown then
+               local alert = native.showAlert( "DOUBLE EARNINGS", "Watch video ad to get a double earnings?", { "YES", "NO" }, onAdApprove )
+            else
+                showGameRewardAd()  
+            end
+          end
+
+          return true
+       end
+
+
+
+     local function specialPriceListener( event )
+          
+          if ( "ended" == event.phase ) then
+            
+            commonData.buttonSound()
+
+             if not commonData.gameData.isShopAdShown then
+               local alert = native.showAlert( "DOUBLE EARNINGS", "Watch video ad to get a double earnings?", { "YES", "NO" }, onAdApprove )
+            else
+                showGameRewardAd()  
+            end
+          end
+          return true
+     end
+
+     local regularPriceBtn = widget.newButton
+      {
+          x = cardDecline.x,
+          y = 280,
+          id = "regularPriceBtn",
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
+          onEvent = regularPriceListener,
+          label = "Dismiss",
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          labelXOffset = -30,
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     regularPriceBtn.xScale =  (display.actualContentWidth*0.3) / regularPriceBtn.width
+     regularPriceBtn.yScale = regularPriceBtn.xScale  
+
+      local specialPriceBtn = widget.newButton
+      {
+          x = cardDouble.x,
+          y = 280,
+          id = "specialPriceBtn",
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
+          onEvent = specialPriceListener,
+          label = "X2",
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          labelXOffset = 50,
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     specialPriceBtn.xScale =  (display.actualContentWidth*0.3) / specialPriceBtn.width
+     specialPriceBtn.yScale = specialPriceBtn.xScale  
+
+     cardDouble:addEventListener("touch", specialPriceListener )
+
+    local boosterHeaderTextOptions = 
+    {
+        --parent = textGroup,
+        text = "",     
+        x = 420,
+        y = 20,
+        --width = 300,     --required for multi-line and alignment
+        font = "UnitedSansRgStencil",   
+        fontSize = 20,
+        align = "left"  --new alignment parameter
+    }
+
+   
+
+  --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
+   -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
+
+    local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
+    local normalHeader = display.newText(boosterHeaderTextOptions)
+    normalHeader:setFillColor(gradient)
+    normalHeader.text = "NORMAL REWARD"
+    normalHeader:scale(0.5,0.5)
+
+    local specialHeader = display.newText(boosterHeaderTextOptions)
+    specialHeader:setFillColor(gradient)
+    specialHeader.text = "X2 REWARD"
+     
+    ob.normalCoins = display.newText(boosterHeaderTextOptions)
+    ob.normalCoins:setFillColor(gradient)
+
+    ob.specialCoins = display.newText(boosterHeaderTextOptions)
+    ob.specialCoins:setFillColor(gradient)
+
+     ob.normalXp = display.newText(boosterHeaderTextOptions)
+    ob.normalXp:setFillColor(gradient)
+
+    ob.specialXp = display.newText(boosterHeaderTextOptions)
+    ob.specialXp:setFillColor(gradient)
+ 
+    local rewardCoinImg  = display.newImage("Coin/Coin.png")
+    rewardCoinImg.x = regularPriceBtn.x  -40
+    rewardCoinImg.y = 140
+    rewardCoinImg:scale(0.3,0.3)
+
+
+    local  rewardCoinImg2  = display.newImage("Coin/Coin.png")
+    rewardCoinImg2.x = specialPriceBtn.x - 40
+    rewardCoinImg2.y = 140
+    rewardCoinImg2:scale(0.3,0.3)
+
+
+     local rewardXpImg  = display.newImage("images/XPIcon.png")
+    rewardXpImg.x = regularPriceBtn.x  -40
+    rewardXpImg.y = 200
+    rewardXpImg:scale(0.5,0.5)
+
+    local rewardXpImg2  = display.newImage("images/XPIcon.png")
+    rewardXpImg2.x = specialPriceBtn.x  -40
+    rewardXpImg2.y = 200
+    rewardXpImg2:scale(0.5,0.5)
+
+
+    local watchAdIcon  = display.newImage("images/Continue/AdIcon.png")
+    watchAdIcon.x = specialPriceBtn.x - 10
+    watchAdIcon.y = specialPriceBtn.y
+
+    watchAdIcon.yScale = specialPriceBtn.contentHeight * 0.9/ watchAdIcon.contentHeight
+    watchAdIcon.xScale = watchAdIcon.yScale
+
+    local closeIcon  = display.newImage("images/Continue/XIcon.png")
+    closeIcon.x = regularPriceBtn.x + 40
+    closeIcon.y = regularPriceBtn.y
+
+    closeIcon.yScale = regularPriceBtn.contentHeight * 0.5 / closeIcon.contentHeight
+    closeIcon.xScale = closeIcon.yScale
+
+    
+    
+    ob.normalCoins.x = rewardCoinImg.x + rewardCoinImg.contentWidth / 2 + ob.normalCoins.contentWidth / 2 + 40
+    ob.normalCoins.y = rewardCoinImg.y 
+
+    ob.specialCoins.x = rewardCoinImg2.x + rewardCoinImg2.contentWidth / 2 + ob.specialCoins.contentWidth / 2 + 40
+    ob.specialCoins.y = rewardCoinImg2.y 
+
+     ob.normalXp.x = ob.normalCoins.x
+    ob.normalXp.y = rewardXpImg.y 
+
+    ob.specialXp.x = ob.specialCoins.x
+    ob.specialXp.y = rewardXpImg.y 
+
+    normalHeader.x = ob.normalCoins.x -20
+    normalHeader.y = 85
+
+    specialHeader.x  = ob.specialCoins.x -20
+    specialHeader.y = 85
+
+     finishGameGroup:insert(blackRect2)
+     finishGameGroup:insert(cardDecline)
+     finishGameGroup:insert(cardDouble)
+     finishGameGroup:insert(regularPriceBtn)
+     finishGameGroup:insert(specialPriceBtn)
+
+     finishGameGroup:insert(normalHeader)
+     finishGameGroup:insert(specialHeader)
+
+     finishGameGroup:insert(rewardCoinImg)
+     finishGameGroup:insert(rewardCoinImg2)
+     finishGameGroup:insert(rewardXpImg)
+     finishGameGroup:insert(rewardXpImg2)
+     finishGameGroup:insert(ob.normalCoins)
+     finishGameGroup:insert(ob.specialCoins)
+     finishGameGroup:insert(ob.normalXp)
+     finishGameGroup:insert(ob.specialXp)
+
+     finishGameGroup:insert(watchAdIcon)
+     finishGameGroup:insert(closeIcon)
+     
+     
+
       
        local chalengesTable = display.newImage("images/ChallengeScreenTable.png")
 
@@ -2505,27 +2572,26 @@ function scene:create( event )
          if ( "ended" == event.phase ) then
           notification.alpha = 0 
 
-        
-          if dailyReward then
-            dailyReward:removeSelf()
-            dailyReward = nil
-          end  
-
+       
          end 
            return true
        end
 
+     
         local function showAdListener( event )
           
             if ( "ended" == event.phase ) then
                   local isSimulator = (system.getInfo("environment") == "simulator");
-                  commonData.analytics.logEvent( "startWatchAd") 
+                  
                 if (not isSimulator)  then
                    
-                   if appodeal.isLoaded( "rewardedVideo" ) then
-                      appodeal.show( "rewardedVideo" )
-                   -- else
-                   --    admob.show("rewardedVideo")
+                   if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) then
+                      commonData.analytics.logEvent( "startWatchAd") 
+                      commonData.videoReward = {isContinueReward = false, source = "getCoins"}
+                      commonData.videoRewardFunction = adBonus
+                      commonData.appodeal.show( "rewardedVideo", {placement= "RewardedVideo"} )
+                   else
+                      commonData.analytics.logEvent( "noAvailableAd") 
                    end
                     --showAdButton.alpha = 0
                     
@@ -2533,7 +2599,7 @@ function scene:create( event )
                 else
                     --showAdButton.alpha = 0
                     
-                    adBonus(event)
+                    adBonus()
                   ob.watchAd:open()
                 end
 
@@ -2552,7 +2618,11 @@ function scene:create( event )
           return true
      end
 
-        
+      
+     local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
       -- Create the widget
       playButton = widget.newButton
       {
@@ -2561,7 +2631,13 @@ function scene:create( event )
           id = "playButton",
           defaultFile = buttonsSet .. "/End/TryAgainUp.png",
           overFile = buttonsSet .. "/End/TryAgainDown.png",
-          onEvent = buttonListener
+          onEvent = buttonListener,
+          label = getTransaltedText("Play"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 50 ,           
+          labelYOffset = -100,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
       }
       local scaleFactorP = (display.contentWidth*0.15) / playButton.width
      playButton:scale(scaleFactorP , scaleFactorP)
@@ -2570,13 +2646,7 @@ function scene:create( event )
      --playButton.alpha = 0
 
      playButton.x =  background.x + background.contentWidth /2  + playButton.contentWidth /2 - 10
-      
-    
-
-      local gradient = {
-          type="gradient",
-          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
-      }
+     
 
       local menuButton = widget.newButton
       {
@@ -2858,11 +2928,7 @@ function scene:create( event )
     boosterRect.xScale = display.actualContentWidth / boosterRect.contentWidth 
     boosterRect.yScale = display.actualContentHeight  / boosterRect.contentHeight
     
-    dailyRewardBlocker = display.newRect(240, 160, 700,400)
-    dailyRewardBlocker:setFillColor(0, 0, 0)
-    dailyRewardBlocker.alpha = 0
-    dailyRewardBlocker:addEventListener("touch", boosterRectListener )
-
+    
     loadingBlocker = display.newRect(240, 160, 700,400)
     loadingBlocker:setFillColor(0, 0, 0)
     loadingBlocker.alpha = 0
@@ -3159,7 +3225,7 @@ function scene:create( event )
      
      
        
-      gameOverGroup:insert(dailyRewardBlocker)
+     
 
      notification:insert(boosterRect)
      
@@ -3190,7 +3256,9 @@ function scene:create( event )
 
      sceneGroup:insert(gameOverGroup) 
      sceneGroup:insert(newLevelGroup) 
-     sceneGroup:insert(dailyRewardGroup) 
+     sceneGroup:insert(finishGameGroup) 
+     
+     
      sceneGroup:insert(promotionGroup) 
 
      gameOverGroup.y = gameOverGroup.y - 10
@@ -3220,7 +3288,7 @@ function scene:show( event )
       -- Called when the scene is still off screen (but is about to come on screen).
       -- loadingBlocker.alpha = 0.01
       -- playButton.alpha = 0
-        gameOverGroup.alpha =1 
+        gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
         promotionGroup.alpha =0 
         xp.xpEmiter:start()
@@ -3240,7 +3308,9 @@ function scene:show( event )
 
        
       if(event.params and event.params.results) then
-        showGameOver(event.params.results , true)
+        ob.priceResult = event.params.results
+        showFinishGame()
+        --showGameOver(event.params.results , true)
       end  
 
        
@@ -3297,7 +3367,9 @@ end
 
 function scene:outerRefreshResults(gameResult)
     --code to resume game
- showGameOver(gameResult, false)
+ --showGameOver(gameResult, false)
+ ob.priceResult = gameResult
+ showFinishGame()
  local sceneGroup = self.view
 
  sceneGroup.alpha = 0.05

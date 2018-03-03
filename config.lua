@@ -24,6 +24,16 @@ application =
             key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqNBPgUTBTXgrfaBfcnBHHWJCdZc1mPgWu8ACneGyBhInYUBLa9tWyMhwZ8CFlFljsBQ9IxCkDXdquW1y01wqvTAz1q0sgb0i9xDmDz3fEGXRoqXyDOK0rP44fp79gyLorqH8FOo/IhYer80o1Ptt/O80j9tS6sgLbikM/HAnR6j6kLu9gHR7lu4J7FOnbgY+cmhpIIUX9dP+r3Yd2bArPmrQ+zgLWoqs4PoPkRG2GREDCQif3gl/2DP/VHSTK1TKs4R9CxNTIGVDgUrgoMyE1vH+aJf9+0QrQ59M49NjkYEt0GdWFq5ItrsEXzCL4GEAFf/4zwDIPiAgnQ9SCu1H5wIDAQAB",
         },
     },
+     notification =
+    {
+        iphone =
+        {
+            types =
+            {                
+                "alert"
+            },
+        },
+    },
 
 	--[[
 	-- Push notifications

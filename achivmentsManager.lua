@@ -6,6 +6,7 @@ local newAchivments = {}
 
 local challenges = {}
 local newChalenges = {}
+local isNewChallenge = false
 
 challenges["reacehedMeters10"] = {}
 challenges["reacehedMeters20"] = {}
@@ -465,12 +466,12 @@ end
 
 function unlockChallenge(name)
 	local isNew = false 
-
 	
-	if (challenges[name] and challenges[name].isAvailable and  not challenges[name].isUnlocked) then
+	if (challenges[name] and challenges[name].isAvailable and  not challenges[name].isUnlocked and not isNewChallenge) then
 		challenges[name].isUnlocked = true
 		newChalenges[name] = challenges[name]
 		isNew = true
+		isNewChallenge = true
 	end
 
 	return isNew
@@ -479,6 +480,8 @@ end
 function startGameTracking()
 	newAchivments = {}
 	newChalenges = {}
+	isNewChallenge = false
+
 end
 
 function initAchivments(pUnlockedAchivments)

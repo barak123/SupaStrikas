@@ -17,6 +17,16 @@ local packsButton = nil
 local playButton = nil
 local shopButton = nil 
 local iCloud = nil
+local dailyRewardBlocker = nil
+local dailyReward = nil
+local dailyRewardGroup = nil
+local  coinsReward = nil
+local dailyOkBtn = nil
+local dailyOkBtn2 = nil
+local coinsCountText = nil
+local coinsShadowText = nil
+
+
 commonData.catalog = require("catalog")
       local levelTextOptions23 = 
         {         
@@ -31,6 +41,27 @@ commonData.catalog = require("catalog")
         }
 
       --debugText = display.newText(levelTextOptions23) -- "",0,0, "UnitedSansRgHv" , 24)
+commonData.sessionGames = 0
+
+local notifications = require( "plugin.notifications.v2" )
+  
+commonData.setHighScoreNotification =  function(score)  
+    -- Cancel the above notification
+    notifications.cancelNotification()
+
+    local  t1 = os.date( '*t' )
+
+    if t1.hour > 9 and  t1.hour < 21 then
+
+      local notificationsOptions = {
+          alert = "Win a free trophy pack if you reach more than " .. score .. " points",
+          custom = {getTropy = true, name = "barak"}
+      }
+       
+     -- local notificationId = notifications.scheduleNotification( 60 * 60 * 24, notificationsOptions )
+      local notificationId = notifications.scheduleNotification( 60 * 60 * 24 * 3, notificationsOptions )
+    end
+end
 
 
 if ( system.getInfo("platformName") == "Android" ) then
@@ -169,6 +200,10 @@ local function gpgsInitListener( event )
 end
  
  if ( system.getInfo("platformName") == "Android" ) then
+    timer.performWithDelay(1, function()                                
+        commonData.gpgs.init( gpgsInitListener )                                 
+                                end, 1)       
+
    commonData.gpgs.init( gpgsInitListener )
  end
 
@@ -226,6 +261,16 @@ local function logAppOpens()
         break
     end  
   end  
+
+   if commonData.isTropyOnHighScore then
+     commonData.analytics.logEvent( "App opened from trophy notification", 
+              { appOpened  = tostring(commonData.gameData.appOpened), 
+                gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                highScore = tostring(  commonData.gameData.highScore) ,
+                totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                avgScore =  tostring(commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)) } )
+   end
+
 end
 
 
@@ -266,6 +311,581 @@ if ( system.getInfo("platformName") == "Android" ) then
     flurryKey =  "J86WNYRJSSS5MMY98V2Q"
  end
 commonData.analytics.init( flurryListener, { apiKey=flurryKey , crashReportingEnabled=true })
+
+local isAppodealTimeOut = false
+
+commonData.appodeal = require( "plugin.appodeal" )
+
+local function giveDailyReward()
+
+        if not commonData.gameData then 
+            return
+        end  
+
+        if not isAppodealTimeOut and not commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) then 
+          return
+        end  
+
+            local  t = os.date( '*t' )
+            
+            t.hour = 0
+            t.min = 0
+            t.sec = 0
+            
+            local todayStart =  os.time( t ) 
+
+            t.day = t.day -1
+
+            local yesterdayStart =  os.time( t ) 
+            
+            --  todayStart = os.time( os.date( '*t' ) ) 
+
+
+            if not commonData.gameData.lastGameTime then
+              commonData.gameData.fisrtGameTime = todayStart
+              commonData.gameData.fisrtDayReward  = false
+            end
+            
+            if  commonData.gameData.lastGameTime  and  ((commonData.gameData.lastGameTime < todayStart) 
+                 or (commonData.gameData.fisrtGameTime == todayStart and 
+                     not commonData.gameData.fisrtDayReward and
+                     commonData.gameData.gamesCount > 5)) then
+
+              commonData.gameData.fisrtDayReward  = true
+              if yesterdayStart < commonData.gameData.lastGameTime then
+              
+               -- reward
+                commonData.gameData.daysInARow = commonData.gameData.daysInARow + 1
+              else
+                commonData.gameData.daysInARow = 1              
+              end
+              
+              if commonData.gameData.daysInARow > 1 then
+                local version = ""
+                if  commonData.gameData.abVersion then
+                 version = " in version " .. tostring( commonData.gameData.abVersion)
+                end
+
+                commonData.analytics.logEvent( "dailyBonus day " .. tostring( commonData.gameData.daysInARow) ..  version, { gamesCount= tostring( commonData.gameData.gamesCount),
+                appOpened= tostring( commonData.gameData.appOpened)
+                 } )
+              end
+              local coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
+
+
+                local t = os.date( '*t' )
+
+
+                if commonData.gameData.lastGameTime < os.time( t ) then
+                  commonData.gameData.lastGameTime = os.time( t )
+                end
+
+              -- if (coinsDailyReward > 120) then
+              --   coinsDailyReward  = 120
+              -- end  
+              --showNotification("DAILY REWARD! \n\n" ..  tostring( coinsDailyReward ) .. " COINS \n\n ")
+              --showPrizeNotification("DAILY REWARD!" , "play every day and get better rewards")
+
+
+              if not dailyReward then
+                dailyReward = display.newGroup()
+              
+
+                local boosterTextOptions = 
+                {
+                    --parent = textGroup,
+                    text = "",     
+                    x = 420,
+                    y = 12,
+                    width = 300,     --required for multi-line and alignment
+                    font = "UnitedItalicRgHv",   
+                    fontSize = 10,
+                    align = "center"  --new alignment parameter
+                }
+
+                local boosterHeaderTextOptions = 
+                {
+                    --parent = textGroup,
+                    text = "",     
+                    x = 420,
+                    y = 20,
+                    --width = 230,     --required for multi-line and alignment
+                    font = "UnitedSansRgStencil",   
+                    fontSize = 25,
+                    align = "center"  --new alignment parameter
+                }
+
+
+               
+
+                local dailySubTitleText = display.newText(boosterTextOptions)
+                --dailySubTitleText:setFillColor(194/256,236/256,254/256)
+                dailySubTitleText.x = 240
+                dailySubTitleText.y = 80 
+                dailySubTitleText.text = getTransaltedText("DailyRewardText")
+
+              --  boosterText.y =   boosterText.y  + (display.actualContentHeight - display.contentHeight)/2  
+               -- boosterButton.y =   boosterButton.y  + (display.actualContentHeight - display.contentHeight)/2  
+
+                local  dailyTitleText = display.newText(boosterHeaderTextOptions)
+               -- dailyTitleText:setFillColor(194/256,236/256,254/256)
+                dailyTitleText.x = 240
+                dailyTitleText.y = 60
+                dailyTitleText.text = getTransaltedText("DailyRewardTitle") 
+                           
+               local rewardsSpineAn = require "reward"
+
+                       
+                 coinsReward = rewardsSpineAn.new(2)
+                 dailyRewardGroup:insert(coinsReward.skeleton.group)
+
+                 local function enableDailyButton()
+                    dailyOkBtnDisabled.alpha = 0                             
+                    commonData.analytics.logEvent( "endWatchAd - double bonus" , 
+                      { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                              highScore = tostring(  commonData.gameData.highScore) ,
+                              totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                              totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                              madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                              playerLevel =  tostring(  commonData.getLevel() )
+                               } )                        
+                 end
+
+                local function showAd( )
+
+                  commonData.gameData.isDoubleBonusAdShown = true
+                  if (system.getInfo("environment") == "simulator") then
+                        enableDailyButton()                         
+                    else
+
+
+                        if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  )  then
+                          commonData.videoRewardFunction = enableDailyButton
+                          commonData.analytics.logEvent( "startWatchAd - double bonus", 
+                          { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                            highScore = tostring(  commonData.gameData.highScore) ,
+                            totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                            totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                            madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                            playerLevel =  tostring(  commonData.getLevel() )
+                             } )   
+                          commonData.appodeal.show( "rewardedVideo" , {placement= "DoubleDailyBonus"} )
+                        else
+                          commonData.analytics.logEvent( "notAvailableAd - double bonus", 
+                          { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                            highScore = tostring(  commonData.gameData.highScore) ,
+                            totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                            totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                            madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                            playerLevel =  tostring(  commonData.getLevel() )
+                             } )   
+                          enableDailyButton()                      
+
+                        end
+       
+                    end    
+               end
+
+                 local function onAdApprove( event )
+                    if ( event.action == "clicked" ) then
+                        local i = event.index
+                        if ( i == 1 ) then
+                           showAd()
+                           commonData.analytics.logEvent( "double bonus ad popup approved" ) 
+                        elseif ( i == 2 ) then
+                          commonData.analytics.logEvent( "double bonus ad popup ignored" )                                  
+                        end
+                    end
+                end
+        
+
+                 local function doubleDailyListener( event )
+                    if ( "ended" == event.phase ) then
+                          if not commonData.gameData.isDoubleBonusAdShown then
+                             local alert = native.showAlert( "DOUBLE DAILY", "Watch video ad to get double bonus?", { "YES", "NO" }, onAdApprove )
+                          else
+                              showAd()  
+                          end                       
+                    end
+                 end
+                  
+                 local function dailyOkBtnListener( event )
+          
+                      if ( "ended" == event.phase ) then
+                        
+                        commonData.buttonSound()
+                       
+                        --newLevelGroup.alpha = 0
+
+                          local  prevCoins = commonData.gameData.coins
+                          if (commonData.gameData.daysInARow < 7) then
+                            if not coinsDailyReward then
+                               coinsDailyReward = 20 + commonData.gameData.daysInARow * 20
+                            end  
+                            commonData.gameData.coins = commonData.gameData.coins + coinsDailyReward        
+                        
+                            --logCoins(commonData.gameData , coinsDailyReward) 
+                          else
+                            commonData.gameData.gems = commonData.gameData.gems + 1     
+                            commonData.gameData.daysInARow = 0
+                            coinsDailyReward = nil
+                          end  
+                          
+                          commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+
+                          if dailyOkBtn2.alpha == 0  and
+                            (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) or (system.getInfo("environment") == "simulator")) 
+                            then
+                            dailyOkBtnDisabled.alpha = 1                              
+                            dailyOkBtn2.alpha = 1
+
+                          else 
+                            if dailyOkBtn2.alpha == 0 then
+                              commonData.analytics.logEvent( "double bonus not available" )   
+                            end
+
+                            dailyOkBtn:setEnabled(false) 
+                            timer.performWithDelay(800, 
+                                function()                                
+                                  dailyRewardGroup.alpha = 0
+                                  dailyRewardBlocker.alpha = 0
+                                 
+                                end
+                              , 1)      
+                          end  
+
+                          timer.performWithDelay(10, 
+                            function()
+                             prevCoins = prevCoins + 1 
+                             coinsShadowText.text =  prevCoins
+                             coinsCountText.text =  prevCoins
+                             
+                            end
+                          , coinsDailyReward)
+
+                          
+                          
+                          timer.performWithDelay(300, 
+                            function()
+                              coinsReward:init()
+                              coinsReward.skeleton.group.x = 240
+                              coinsReward.skeleton.group.y = 280
+
+                              commonData.playSound(coinsGoalSound)
+                              --dailyRewardGroup.alpha = 0
+                             
+                            end
+                          , 1)
+
+                      end
+                      return true
+                 end
+
+                 local gradient = {
+                      type="gradient",
+                      color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+                  }
+
+                  dailyOkBtn = widget.newButton
+                  {
+                      x = 240,
+                      y = 270,
+                      id = "boosterButton",
+                      defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+                      overFile = "BlueSet/End/EGMainMenuDown.png",
+                      onEvent = dailyOkBtnListener,
+                      label = getTransaltedText("Claim"),
+                      labelAlign = "center",
+                      font = "UnitedSansRgHv",  
+                      fontSize = 40 ,           
+                      labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }                                
+                  }
+                 dailyOkBtn.xScale =  (display.actualContentWidth*0.3) / dailyOkBtn.width
+                  dailyOkBtn.yScale = dailyOkBtn.xScale  
+                 
+                  dailyOkBtnDisabled = widget.newButton
+                  {
+                      x = 240,
+                      y = 270,
+                      id = "boosterButton",
+                      defaultFile =  "BlueSet/End/EGMainMenuDisabled.png",                                            
+                      label = getTransaltedText("Claim"),
+                      labelAlign = "center",
+                      font = "UnitedSansRgHv",  
+                      fontSize = 40 ,           
+                      labelColor = { default={  15/255,44/255,44/255 } }                                
+                  }
+                 dailyOkBtnDisabled.xScale =  (display.actualContentWidth*0.3) / dailyOkBtnDisabled.width
+                 dailyOkBtnDisabled.yScale = dailyOkBtnDisabled.xScale  
+                 dailyOkBtnDisabled.alpha = 0
+
+
+                  dailyOkBtn2 = widget.newButton
+                  {
+                      x = 350,
+                      y = 265,
+                      id = "boosterButton",
+                      defaultFile =  "images/DailyX2.png",
+                      --overFile = "BlueSet/End/EGMainMenuDown.png",
+                      onEvent = doubleDailyListener,
+                      label = "x2",
+                      labelAlign = "center",
+                      font = "UnitedSansRgHv",  
+                      fontSize = 40 ,           
+                      labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }                                
+                  }
+                 dailyOkBtn2.xScale =  (display.actualContentWidth*0.2) / dailyOkBtn2.width
+                  dailyOkBtn2.yScale = dailyOkBtn2.xScale  
+                  dailyOkBtn2.alpha = 0
+
+                  local dailyBackground = display.newRect(240, 160, 700,400)
+                  dailyBackground.fill.effect = "generator.radialGradient"
+             
+                  dailyBackground.fill.effect.color2 = { 0.8, 0, 0.2, 1 }
+                  dailyBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 0.85 }
+                  dailyBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
+                  dailyBackground.fill.effect.aspectRatio  = 1
+                 
+                
+                 local dailyBackground2 = display.newImage("images/TeamImage.png")
+                 --background:setFillColor(59/255,  131/255 , 163/255)
+                 dailyBackground2.x = 240
+                 dailyBackground2.y = 160
+                 dailyBackground2.xScale = display.actualContentWidth / dailyBackground2.contentWidth 
+                 dailyBackground2.yScale = display.actualContentHeight  / dailyBackground2.contentHeight
+
+                 
+
+
+                 dailyReward:insert(dailyBackground)
+                 dailyReward:insert(dailyBackground2)
+
+
+                 local coinImg  = display.newImage("Coin/Coin.png")
+                  coinImg.x = 20
+                  coinImg.y = 23
+                  coinImg:scale(0.25,0.25)
+
+                  -- local packsImg  = display.newImage("TrophieReward/Trophie.png")
+                  -- packsImg.x = 450
+                  -- packsImg.y = 58
+                  -- packsImg:scale(0.07,0.07)
+
+                  local coinTextOptions = 
+                  {
+                      --parent = textGroup,
+                      text = "",     
+                      x = 100,
+                      y = 23,
+                      width = 120,     --required for multi-line and alignment
+                      font = "UnitedSansRgHv",   
+                      fontSize = 20,
+                      align = "left"  --new alignment parameter
+                  }
+
+
+
+
+                  -- packsCountText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+                  -- packsShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+
+                  -- packsCountText:setFillColor(1,206/255,0)
+                  -- packsShadowText:setFillColor(128/255,97/255,40/255)
+                  -- packsCountText.y  =  packsCountText.y  + 35 
+                  -- packsShadowText.y = packsCountText.y + 2
+
+                  -- packsImg.x = packsImg.x + (display.actualContentWidth - display.contentWidth) /2
+                  -- packsCountText.x = packsCountText.x + (display.actualContentWidth - display.contentWidth) /2
+                  -- packsShadowText.x = packsShadowText.x + (display.actualContentWidth - display.contentWidth) /2
+
+                  coinsCountText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+                  coinsShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+                  
+                  coinsCountText:setFillColor(1,206/255,0)
+                  coinsShadowText:setFillColor(128/255,97/255,40/255)
+                  coinsShadowText.y = coinsCountText.y + 2
+
+                  coinImg.x = coinImg.x - (display.actualContentWidth - display.contentWidth) /2
+                  coinsCountText.x = coinsCountText.x - (display.actualContentWidth - display.contentWidth) /2
+                  coinsShadowText.x = coinsShadowText.x - (display.actualContentWidth - display.contentWidth) /2
+
+                  coinsShadowText.text =  commonData.gameData.coins
+                  coinsCountText.text =  commonData.gameData.coins
+
+
+                 --commonData.gameData.daysInARow =3 
+                 for i=1,7 do
+                      local card = nil
+                      if  i == commonData.gameData.daysInARow then
+                        card =  display.newImage("images/shop/ShopItemExlusive.png")             
+                      else
+                        card =  display.newImage("images/shop/ItemsNoCash.png")            
+                      end  
+                      
+                      card.xScale = display.actualContentWidth * 0.14 / card.contentWidth 
+                      card.yScale =  card.xScale 
+
+                      card.x = 240 - display.actualContentWidth / 2 + card.contentWidth /2 + (i-1) * (card.contentWidth + 3)
+                      card.y = 160
+                      dailyReward:insert(card)
+
+                     local dayText = display.newText(boosterTextOptions)
+                      dayText:setFillColor(255/255,241/255,208/255)
+                      dayText.x = card.x
+                      dayText.y = card.y - card.contentHeight/2 + 15
+                      dayText.text = getTransaltedText("DailyRewardDay") .." " .. i 
+
+                     dailyReward:insert(dayText) 
+                     local priceImg = nil
+                     if i == 7 then
+                      priceImg = display.newImage("images/SupaGem.png")
+                     else
+                      priceImg = display.newImage("images/IcoCoins.png")
+                     end 
+
+                     --background:setFillColor(59/255,  131/255 , 163/255)
+                     priceImg.x = card.x
+                     priceImg.y = card.y 
+                     priceImg.xScale = card.contentWidth * 0.5 / priceImg.contentWidth 
+                     priceImg.yScale = priceImg.xScale
+                     
+                     dailyReward:insert(priceImg)  
+
+
+
+                      local day1Text = display.newText(boosterTextOptions)
+                      day1Text:setFillColor(255/255,241/255,208/255)
+                      day1Text.x = card.x
+                      day1Text.y = card.y + card.contentHeight/2  - 20
+
+                       if i == 7 then
+                        day1Text.text = "1"  .. getTransaltedText("SupaGems") 
+                       else
+                        day1Text.text = 20 + i * 20  .. " Coins" 
+                       end 
+                      
+
+                      dailyReward:insert(day1Text)  
+                 end
+
+                                
+                 local function closeListener( event )
+                    if ( "ended" == event.phase ) then
+                        dailyRewardGroup.alpha = 0
+                        dailyRewardBlocker.alpha = 0
+
+
+                          if dailyOkBtn2.alpha == 1 and dailyOkBtnDisabled.alpha == 1 then
+                            commonData.analytics.logEvent( "double bonus ignored" , 
+                            { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                              highScore = tostring(  commonData.gameData.highScore) ,
+                              totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                              totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                              madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                              playerLevel =  tostring(  commonData.getLevel() )
+                               } )   
+                          end                            
+                    end
+                 end
+
+              
+                 local dailyClose = widget.newButton
+                {
+                   
+                    x = 457,
+                    y = 23,
+                    id = "dailyCloseBtn",
+                    defaultFile = "images/Continue/BtnBg.png",                    
+                    onEvent = closeListener    
+                }
+                
+                dailyClose.xScale =  (display.actualContentWidth*0.05) / dailyClose.width
+                dailyClose.yScale = dailyClose.xScale  
+
+                dailyClose.x = dailyClose.x + (display.actualContentWidth - display.contentWidth) /2
+
+                local closeIcon  = display.newImage("images/Continue/XIcon.png")
+                closeIcon.x = dailyClose.x
+                closeIcon.y = dailyClose.y
+
+                closeIcon.xScale = dailyClose.contentWidth * 0.6 / closeIcon.contentWidth
+                closeIcon.yScale = closeIcon.xScale
+
+                  
+                
+                
+                dailyReward:insert(coinImg)
+                -- dailyReward:insert(packsImg)
+
+                -- dailyReward:insert(packsShadowText)
+                -- dailyReward:insert(packsCountText)
+
+                
+                dailyReward:insert(coinsShadowText)
+                dailyReward:insert(coinsCountText)
+                dailyReward:insert(dailyClose)
+                dailyReward:insert(closeIcon)
+                dailyReward:insert(dailyOkBtn)
+                dailyReward:insert(dailyOkBtnDisabled)
+                
+                dailyReward:insert(dailyOkBtn2)
+                dailyReward:insert(dailyTitleText)
+                dailyReward:insert(dailySubTitleText)
+                
+                dailyRewardGroup:insert(dailyReward)
+
+                   
+              
+              end  
+
+             
+            dailyRewardGroup.alpha = 1 
+            dailyRewardBlocker.alpha = 0.7
+            end
+end -- giveReward
+
+timer.performWithDelay(10000, function( )
+  isAppodealTimeOut = true
+  giveDailyReward()
+end,1)
+
+
+    local  t = os.date( '*t' )
+            
+    local now =  os.time( t ) 
+
+    print("appodel start- " .. now)
+
+
+local function appodealListener( event )
+    local  t = os.date( '*t' )
+            
+    local now =  os.time( t ) 
+
+    print("appodel event- " ..now)
+    if ( event.phase == "init" ) then  -- Successful initialization
+        giveDailyReward()
+    end
+    
+    if event.phase == "playbackEnded" and event.type=="rewardedVideo" then   
+      if commonData.videoRewardFunction then
+
+        commonData.videoRewardFunction()
+        commonData.videoRewardFunction = nil
+        
+      end
+    end
+end
+ 
+timer.performWithDelay(1, 
+                                function()                                
+      -- Initialize the Appodeal plugin
+      commonData.appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03", disableWriteExternalPermissionCheck=true, 
+supportedAdTypes={"interstitial", "rewardedVideo"} } )
+                                 
+                                end
+                              , 1)       
 
 
 
@@ -315,7 +935,7 @@ local isFirstGame = false
 
 local heroSpine =  nil
 local hero = nil
-local packsIndicator = nil
+
 local splash = nil
 local splash2 = nil
 local blackRect = nil 
@@ -421,6 +1041,19 @@ function scene:create( event )
 
    local sceneGroup = self.view
 
+   dailyRewardGroup = display.newGroup()
+   dailyRewardGroup.alpha = 0
+
+   local function boosterRectListener( event )   
+        
+          return true
+     end
+
+dailyRewardBlocker = display.newRect(240, 160, 700,400)
+    dailyRewardBlocker:setFillColor(0, 0, 0)
+    dailyRewardBlocker.alpha = 0
+    dailyRewardBlocker:addEventListener("touch", boosterRectListener )
+
 
 commonData.selectedSkin = "Klaus"
 commonData.selectedBall = "NormalBall"
@@ -436,6 +1069,7 @@ if system.getInfo("environment") == "simulator" then
            print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
            collectgarbage("step")
 
+           
           
       end, -1)
 end 
@@ -445,6 +1079,7 @@ commonData.shopSkin = commonData.selectedSkin
 commonData.shopBall = commonData.selectedBall 
 
 local selectMenuSound =  audio.loadSound( "BtnPress.mp3" )
+local coinsGoalSound  = audio.loadSound( "CoinsGoal.mp3" )
 
 
 
@@ -950,16 +1585,7 @@ Runtime:addEventListener( "system", systemEvents )
        packsButton.x = packsButton.x - (display.actualContentWidth - display.contentWidth)/2
        packsButton.y =  shopButton.y + packsButton.contentHeight /2  + shopButton.contentHeight /2 + 5
 
-      packsIndicator = display.newImage("images/PacksIndicator.png")
-      
-      packsIndicator:scale(0.5,0.5)
-
-     -- packsIndicator:setFillColor(1,0,0)
-
-      packsIndicator.x =  packsButton.x + 20
-      packsIndicator.y =  packsButton.y
-
-
+    
 
       local leaderButton = widget.newButton
       {
@@ -1116,8 +1742,6 @@ Runtime:addEventListener( "system", systemEvents )
       playButton.x = leaderButton.x 
       shopButton.x = leaderButton.x
       packsButton.x = leaderButton.x
-      packsIndicator.x =  packsButton.x + 60
-      packsIndicator.y =  packsButton.y
       
       -- shopButton.xScale = playButton.xScale
       -- packsButton.xScale = shopButton.xScale
@@ -1288,7 +1912,7 @@ Runtime:addEventListener( "system", systemEvents )
      sceneGroup:insert(statsButton)
      sceneGroup:insert(shopButton)
      sceneGroup:insert(packsButton)
-     sceneGroup:insert(packsIndicator)
+     
      sceneGroup:insert(logo)   
 
      sceneGroup:insert(playIcon)   
@@ -1303,9 +1927,9 @@ Runtime:addEventListener( "system", systemEvents )
       sceneGroup:insert(changeLangGroup)
       sceneGroup:insert(changeLangButton)
       
+      sceneGroup:insert(dailyRewardBlocker)
       
-      
-
+      sceneGroup:insert(dailyRewardGroup) 
  
      sceneGroup:insert(splash)
      if splash2 then
@@ -1472,9 +2096,11 @@ function scene:show( event )
             commonData.gameData.selectedBall = "NormalBall"
             commonData.gameData.selectedField = "Stadium"
             commonData.gameData.selectedBooster = "fireBall"
+            commonData.gameData.continueProb = 5
+            
             
             commonData.gameData.appOpened = 0  
-            commonData.gameData.abVersion = 6
+            commonData.gameData.abVersion = 4
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)
@@ -1482,6 +2108,13 @@ function scene:show( event )
           
           if (not commonData.gameData.packs ) then
             commonData.gameData.packs = 0
+          end
+          if (not commonData.gameData.lastScores ) then
+            commonData.gameData.lastScores = {}
+            local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
+            for i=1,10 do
+              commonData.gameData.lastScores[i] = avgScore
+            end
           end
 
           if (not commonData.gameData.language ) then
@@ -1558,14 +2191,7 @@ function scene:show( event )
 
          commonData.globalHighScore = commonData.gameData.highScore 
 
-
-        if (commonData.gameData.packs > 0) then
-          -- TOOD: remove
-          packsIndicator.alpha = 0
-        else  
-          packsIndicator.alpha = 0
-        end
-        
+         giveDailyReward()
    end
 
     local function removeSplash2()
@@ -1606,13 +2232,7 @@ function scene:show( event )
        if (commonData.gameData) then 
          commonData.globalHighScore = commonData.gameData.highScore 
 
-          if (commonData.gameData.packs > 0) then
-            -- TOOD: remove
-            packsIndicator.alpha = 0
-          else  
-            packsIndicator.alpha = 0
-          end
-        
+          
        else 
 
           

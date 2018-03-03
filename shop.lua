@@ -3,7 +3,6 @@ local commonData = require( "commonData" )
 local composer = require( "composer" )
 local widget = require( "widget" )
 
-require ("achivmentsManager")
 local store = nil
 if ( system.getInfo("platformName") == "Android" ) then
   store = require("plugin.google.iap.v3")
@@ -35,6 +34,9 @@ local productsLoaded = false
 local seletedCategory = nil
 local buyButton = nil
 local useButton = nil
+local watchAdButton = nil
+local watchAdDisabledButton = nil
+
 local skillsButton = nil
 local cancelBuyButton = nil
 local backButton = nil
@@ -100,7 +102,7 @@ local productList =
   "com.ld.promopack",  
 }
             
-
+local  ob = {}
 ---------------------------------------------------------------------------------
 -- All code outside of the listener functions will only be executed ONCE
 -- unless "composer.removeScene()" is called.
@@ -127,9 +129,73 @@ local productList =
           levelSelectGroup.verticalScrollDisabled =  true
           
   end 
+ 
 
+local function timeCount()
+
+   local  t1 = os.date( '!*t' )
+      
+   local now =  os.time( t1 ) 
+    
+    if not commonData.gameData.lastVideoTime then
+      return "CLAIM NOW"
+    end  
+    local eod =  commonData.gameData.lastVideoTime + 60 * 60 * 12
+
+    if eod < now then
+      return "CLAIM NOW"
+    end
+
+
+    local diff = os.difftime(eod , now )
+
+    local nSeconds = diff
+    if nSeconds == 0 then
+
+        return "00:00:00"
+    else
+      local nHours = string.format("%02.f", math.floor(nSeconds/3600));
+      local nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+      local nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+      
+      return  nHours..":"..nMins..":"..nSecs
+
+  end
+end
 
  
+  
+     
+
+  local function startClock()
+    if ob and ob.leaderCounter  then
+         ob.leaderCounter.text = timeCount()
+     
+          ob.clockHandle = timer.performWithDelay(1000,function ()
+             local  t = os.date( '!*t' )
+        
+              
+               if ob and ob.leaderCounter  then
+                ob.leaderCounter.text = timeCount()
+              end
+              --  t.hour = 0
+              -- t.min = 0
+              -- t.sec = 0
+              
+              -- local todayStart =  os.time( t ) 
+
+          end,-1)
+        end
+  end 
+
+  local function stopClock()
+      if (ob.clockHandle) then
+       timer.cancel( ob.clockHandle )
+       ob.clockHandle = nil
+     end 
+     
+  end
+
  --local scrollView
 local icons = {}
 
@@ -142,12 +208,29 @@ local function  selectedItemChanged( itemIdx )
 
     selectedItemIdx = itemIdx
     itemDesc.text = catItems[itemIdx].name
-    if (catItems[itemIdx] and commonData.shopItems[catItems[itemIdx].id]) then
+    if (catItems[itemIdx].id == "freeGem") then
+      useButton.alpha = 0
+      buyButton.alpha = 0
+
+      if timeCount() == "CLAIM NOW" then
+        watchAdButton.alpha = 1
+        watchAdDisabledButton.alpha=0
+        
+      else
+        watchAdDisabledButton.alpha=0
+        watchAdButton.alpha = 0
+
+      end
+    elseif (commonData.shopItems[catItems[itemIdx].id]) then
       useButton.alpha = 1
       buyButton.alpha = 0
+      watchAdButton.alpha = 0
+      watchAdDisabledButton.alpha=0
     else
       useButton.alpha = 0
       buyButton.alpha = 1
+      watchAdButton.alpha = 0
+      watchAdDisabledButton.alpha=0
     end
 
     -- if (commonData.catalog.items[seletedCategory][itemIdx].level and 
@@ -182,6 +265,7 @@ end
 
 
 
+
 local boutiqueFrame = nil
 local function openCategory()
 
@@ -193,18 +277,20 @@ local function openCategory()
           
         end   
 
+        stopClock()
+        --ob.leaderCounter.alpha = 0
        Runtime:removeEventListener("enterFrame", boutiqueFrame)
         if (icons) then
           for i = 1, #icons do
              if  icons[i] and icons[i].numChildren then
                for j = 1, icons[i].numChildren do
-                 if (icons[i][1]) then
+                 if (icons[i][1] and icons[i][1].removeSelf) then
                   icons[i][1]:removeSelf()
                  end 
 
                 end
 
-                if icons[1] then
+                if icons[1] and icons[1].removeSelf then
                   icons[1]:removeSelf()
                 end
              end   
@@ -216,7 +302,9 @@ local function openCategory()
           if not catItems[i].hidden then 
             local card = nil
 
-            if catItems[i].specialOffer then
+            if catItems[i].id == "freeGem"  then
+              card =  display.newImage("images/shop/FreeGemItem.png")             
+            elseif catItems[i].specialOffer then
               card =  display.newImage("images/shop/ShopItemsOffer.png")             
             elseif catItems[i].cashCost then
               card =  display.newImage("images/shop/ShopItemExlusive.png")             
@@ -232,6 +320,35 @@ local function openCategory()
             card.y = 100
 
             icons[i]:insert(card)
+
+
+            if catItems[i].id == "freeGem"  then
+              local textOptions = 
+              {
+                                --parent = textGroup,
+                                text = "",     
+                                x = 420,
+                                y = 20,
+                              --  width = 300,     --required for multi-line and alignment
+                                font = "UnitedSansRgHv",   
+                                fontSize = 25,
+                                align = "left"  --new alignment parameter
+                            }
+             
+
+
+              ob.leaderCounter = display.newText(textOptions)
+              ob.leaderCounter.x = 350 
+              ob.leaderCounter.y = 115
+              ob.leaderCounter.text = ""
+              ob.leaderCounter:setFillColor(255/255,241/255,208/255)
+
+              icons[i]:insert(ob.leaderCounter)
+              ob.leaderCounter.alpha = 1
+              ob.leaderCounter.y = 155 
+              ob.leaderCounter.x = 2
+              startClock()
+            end
 
             if (catItems[i].image) then
                  local  img = display.newImage(catItems[i].image) -- "",0,0, "UnitedSansRgHv" , 24)
@@ -621,9 +738,7 @@ end
 function scene:create( event )
 
    local sceneGroup = self.view
-
-      initAchivments(commonData.gameData.unlockedAchivments ) 
-
+      
     --everything from here down to the return line is what makes
      --up the scene so... go crazy
      local background = display.newImage("images/shop/ShopBG.jpg")
@@ -715,6 +830,8 @@ gemsShadowText.y = gemsCountText.y + 2
 gemImg.x = gemImg.x + (display.actualContentWidth - display.contentWidth) /2
 gemsCountText.x = gemsCountText.x + (display.actualContentWidth - display.contentWidth) /2
 gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.contentWidth) /2
+
+
 
 
 
@@ -839,26 +956,20 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
 
              if (seletedCategory == "skins") then
-               commonData.selectedSkin = commonData.catalog.items[seletedCategory][selectedItemIdx].id
-                unlockChallenge("changeCharacter")
+               commonData.selectedSkin = commonData.catalog.items[seletedCategory][selectedItemIdx].id                
             end  
 
              if (seletedCategory == "balls") then
-               commonData.selectedBall = commonData.catalog.items[seletedCategory][selectedItemIdx].id
-                unlockChallenge("changeBall")
+               commonData.selectedBall = commonData.catalog.items[seletedCategory][selectedItemIdx].id                
             end  
 
             if (seletedCategory == "fields") then
-               commonData.selectedField = commonData.catalog.items[seletedCategory][selectedItemIdx].id
-                unlockChallenge("changeField")
+               commonData.selectedField = commonData.catalog.items[seletedCategory][selectedItemIdx].id                
             end  
 
             if (seletedCategory == "boosts") then
                commonData.selectedBooster = commonData.catalog.items[seletedCategory][selectedItemIdx].id                
             end
-            
-
-
 
           commonData.gameData.selectedBall = commonData.selectedBall                  
           commonData.gameData.selectedSkin = commonData.selectedSkin 
@@ -981,7 +1092,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
             end
         
 
-            if itemToBuyImg then
+            if itemToBuyImg and itemToBuyImg.removeSelf then
                 itemToBuyImg:removeSelf()
             end  
 
@@ -1020,6 +1131,104 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           return true
        end
 
+       local function giveGem( )
+        commonData.analytics.logEvent( "endWatchAd - shop" , { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                              highScore = tostring(  commonData.gameData.highScore) ,
+                              totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                              totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                              madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                              playerLevel =  tostring(  commonData.getLevel() )
+                               }) 
+        commonData.gameData.gems = commonData.gameData.gems + 1
+
+        local  t1 = os.date( '!*t' )
+      
+        local now =  os.time( t1 ) 
+        
+        commonData.gameData.lastVideoTime = now
+        
+        commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
+        gemsCount = commonData.gameData.gems
+        setCoinsCount()
+        watchAdButton.alpha = 0
+
+
+       end
+
+       local function showAd( )
+
+          commonData.gameData.isShopAdShown = true
+          local isSimulator = (system.getInfo("environment") == "simulator");
+                  
+                  if (not isSimulator)  then
+                     
+                     if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "HCFreePack"} ) then
+                        
+                        commonData.analytics.logEvent( "startWatchAd - shop",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore) ,
+                                    totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                    totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                    madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                    playerLevel =  tostring(  commonData.getLevel() )
+                                     }) 
+
+                        commonData.videoRewardFunction = giveGem
+                        commonData.appodeal.show( "rewardedVideo" , {placement= "HCFreePack"} )
+                     -- else
+                     --    admob.show("rewardedVideo")
+                     else
+                      commonData.analytics.logEvent( "notAvailableAd - shop",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore) ,
+                                    totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                    totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                    madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                    playerLevel =  tostring(  commonData.getLevel() )
+                                     }) 
+                      local alert = native.showAlert( "FREE GEM", "we're sorry. but there are no available videos to show right now", { "OK" })
+                     end
+                      --showAdButton.alpha = 0
+                      
+                      
+                  else
+                      --showAdButton.alpha = 0
+                      
+                      giveGem()
+                    
+                  end             
+       end
+
+       local function onAdApprove( event )
+          if ( event.action == "clicked" ) then
+              local i = event.index
+              if ( i == 1 ) then
+                 showAd()
+                 commonData.analytics.logEvent( "shop ad popup approved" ) 
+              elseif ( i == 2 ) then
+                commonData.analytics.logEvent( "shop ad popup ignored" ) 
+                       
+                 
+              end
+          end
+      end
+        
+      -- Show alert with two buttons
+      
+       local function watchAdListener( event )
+          
+          if ( "ended" == event.phase ) then
+
+            if not commonData.gameData.isShopAdShown then
+               local alert = native.showAlert( "FREE GEM", "Watch video ad to get a free Gem?", { "YES", "NO" }, onAdApprove )
+            else
+                showAd()  
+            end
+          end
+
+          return true
+       end
+
+       
+
        local function skillButtonListener( event )
           
           if ( "ended" == event.phase ) then
@@ -1031,7 +1240,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
               local playerCard =   display.newImage("images/shop/skills/" .. playerId .. "Card.png")      
 
                 for j = 1, skillsDynamicGroup.numChildren do
-                 if (skillsDynamicGroup[1]) then
+                 if (skillsDynamicGroup[1]) and skillsDynamicGroup[1].removeSelf then
                   skillsDynamicGroup[1]:removeSelf()
                  end 
 
@@ -1127,6 +1336,36 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
       }
        useButton:scale(0.5,0.5)
 
+      watchAdButton = widget.newButton
+      {
+          x = 137,
+          y = 250,
+          id = "useButton",
+          defaultFile = "images/UseUp.png",          
+          overFile = "images/UseDown.png",          
+          label = getTransaltedText("WatchAd"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 15 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
+          onEvent = watchAdListener
+      }
+       watchAdButton:scale(0.5,0.5)
+
+      watchAdDisabledButton = widget.newButton
+      {
+          x = 137,
+          y = 250,
+          id = "useButton",
+          defaultFile =  "BlueSet/End/EGMainMenuDisabled.png",                                            
+          label = getTransaltedText("WatchAd"),
+          labelAlign = "center",
+          font = "UnitedItalicRgHv",  
+          fontSize = 15 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },
+          onEvent = watchAdListener
+      }
+      watchAdDisabledButton:scale(0.5,0.5)
 
       skillsButton = widget.newButton
       {
@@ -1146,6 +1385,10 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
       buyButton.x = buyButton.x  - (display.actualContentWidth - display.contentWidth) /2
       useButton.x = useButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      watchAdButton.x = watchAdButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      watchAdDisabledButton.x = watchAdDisabledButton.x  - (display.actualContentWidth - display.contentWidth) /2
+      
+      
       skillsButton.x = useButton.x  + useButton.contentWidth/2 +  skillsButton.contentWidth/2  - 30
 
      --  buyDisabled  = display.newImage("images/shop/BuyDisabled.png")      
@@ -1219,6 +1462,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
                   areYouSurePopup.alpha = 0
                   useButton.alpha = 1
                   buyButton.alpha = 0
+                  watchAdButton.alpha = 0
+                  watchAdDisabledButton.alpha = 0
                   setSlidesLocked(false)
 
 
@@ -1276,6 +1521,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
                   areYouSurePopup.alpha = 0
                   useButton.alpha = 1
                   buyButton.alpha = 0
+                  watchAdButton.alpha = 0
+                  watchAdDisabledButton.alpha = 0
                   setSlidesLocked(false)
              else
                areYouSurePopup.alpha = 0
@@ -1659,7 +1906,7 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
           skillsGroup.alpha = 0
 
           for j = 1, skillsDynamicGroup.numChildren do
-                 if (skillsDynamicGroup[1]) then
+                 if (skillsDynamicGroup[1] and skillsDynamicGroup[1].removeSelf) then
                   skillsDynamicGroup[1]:removeSelf()
                  end 
 
@@ -1812,6 +2059,9 @@ local skillSubHeaderOptions =
     sceneGroup:insert(gemImg)
 
 
+    sceneGroup:insert(watchAdButton)
+    sceneGroup:insert(watchAdDisabledButton)
+    
     sceneGroup:insert(useButton)
     sceneGroup:insert(buyButton)
     sceneGroup:insert(skillsButton)
@@ -1885,7 +2135,7 @@ end
       if not isProductLoaded then
         
         if (store.isActive and store.canLoadProducts ) then
-          print("try to load products")
+          
           isProductLoaded = true 
           store.loadProducts( productList, productCallback )
           
@@ -1926,6 +2176,9 @@ function scene:show( event )
 
       buyButton:setLabel(getTransaltedText("Buy"))
       useButton:setLabel(getTransaltedText("Use"))
+      watchAdButton:setLabel(getTransaltedText("WatchAd"))
+      watchAdDisabledButton:setLabel(getTransaltedText("watchAd"))
+      
       skillsButton:setLabel(getTransaltedText("Skills"))
       cancelBuyButton:setLabel(getTransaltedText("Cancel"))
       backButton:setLabel(getTransaltedText("Back"))
@@ -1975,6 +2228,7 @@ function scene:hide( event )
         Runtime:removeEventListener("enterFrame", boutiqueFrame)
         areYouSurePopup.alpha = 0
         setSlidesLocked(false)
+        stopClock()
 
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.

@@ -957,31 +957,13 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 		end	
 
 
+
 		if avatar then
 			skinToDisplay = avatar.skin
 		end
 
 		-- print("reloaddd")
-					
-			-- TODO: add cache
-		-- print(skinToDisplay)
-		if (skinToDisplay == "littleDribbler") then
-			self.skeleton:setSkin("DribbleGuy")
-			
-		elseif (skinToDisplay == "DribbleGirl") then
-			self.skeleton:setSkin("DribbleGirl")
-		
-		elseif (skinToDisplay == "Rolando") then
-			
-			self.skeleton:setSkin("Ronaldo")
-		
-		elseif (skinToDisplay == "Nessi") then
-			
-			self.skeleton:setSkin("Messi")
-		elseif (skinToDisplay == "PewDiePie") then
-			
-			self.skeleton:setSkin("PDP")
-		elseif 	skinToDisplay then
+		if 	skinToDisplay then
 			self.skeleton:setSkin(skinToDisplay)
 		end
 		

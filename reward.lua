@@ -32,7 +32,7 @@ function reward.new (rewardType)
 		stateData = nil ,
 		state = nil
 	}
-
+	print(rewardType)
 	self.json = spine.SkeletonJson.new()	
 	self.json.scale = rewardTypes[rewardType].scale
 	self.skeletonData = self.json:readSkeletonDataFile(rewardTypes[rewardType].json)

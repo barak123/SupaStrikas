@@ -3,6 +3,9 @@ local commonData = require( "commonData" )
 local composer = require( "composer" )
 local widget = require( "widget" )
 require "translation"
+require ("game_config")
+require ("achivmentsManager")
+
 local scene = composer.newScene()
 
 ---------------------------------------------------------------------------------
@@ -36,6 +39,7 @@ local gameStatus ={
     stageCounter = 1,
     prevScore1 = 0 ,
     prevScore2 = 0,
+    conitnueCounter = 0,
     isSalta = false,
     mainTimer = nil,
     inEvent = 0, 
@@ -220,6 +224,7 @@ local hero = nil
 local fire = nil
 local ballSkinGroup = nil
 local newChallengeGroup = nil
+local continueGroup = nil
 local houses =nil
 local dirt = nil
 local scoreText = nil
@@ -263,6 +268,61 @@ local rightHand = nil
 -- "scene:create()"
 
 
+
+local function appodealContinueGame()
+
+    if commonData.gameData then
+      local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
+
+       -- if not commonData.gameData.continueProb then
+       --  commonData.gameData.continueProb = 5
+       -- end 
+
+       -- commonData.gameData.continueProb = commonData.gameData.continueProb + 1
+
+       -- if commonData.gameData.continueProb > 10 then
+       --  commonData.gameData.continueProb  = 10
+       -- end 
+
+       
+      commonData.analytics.logEvent( "endWatchAd - continueGame" , 
+              { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                highScore = tostring(  commonData.gameData.highScore) ,
+                                gameScore = tostring(  gameStatus.newScore) ,
+                                totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                playerLevel =  tostring(  commonData.getLevel() )
+                                 } )          
+    end
+    ob.continueGame()          
+end
+
+
+-- commonData.appodeal = require( "plugin.appodeal" )
+-- local function appodealListener( event )
+      
+    
+--     if event.phase == "playbackEnded" and event.type=="rewardedVideo" then   
+--       if commonData.videoReward and  commonData.videoReward.isContinueReward then
+
+        
+
+--       else  
+
+--         adBonus(event) 
+--       end
+
+--       commonData.videoReward  = nil
+--     end
+
+
+-- end
+ 
+-- -- Initialize the Appodeal plugin
+-- commonData.appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03" } )
+
+
 local function buttonListener( event )
           
           if (ob.onGround and not gameStatus.preventJump) then
@@ -304,6 +364,28 @@ local function buttonListener( event )
           return true
      end
 
+local function setCoinsCount(e)
+      if commonData.gameData then
+          coinsShadowText.text = commonData.gameData.coins  
+          coinsCountText.text =  commonData.gameData.coins  
+
+          if (gameStats.coins and gameStats.coins > 0) then
+
+            coinsShadowText.text = commonData.gameData.coins   .. "   +" .. gameStats.coins
+            coinsCountText.text =  commonData.gameData.coins   .. "   +" .. gameStats.coins
+
+          end
+
+          -- local playerLevel = string.format("%.00f", commonData.getLevel()) 
+          -- trophieShadowText.text = playerLevel
+          -- trophieCountText.text =  playerLevel
+
+          trophieShadowText.text = commonData.gameData.packs
+          trophieCountText.text =  commonData.gameData.packs
+
+        end
+  end 
+
 function scene:create( event )
 
   
@@ -319,9 +401,7 @@ display.setStatusBar(display.HiddenStatusBar)
  ob.chaser =  require ("chaser")
  ob.coach =  require ("coach")
  ob.bubble =  require ("bubble").new()
- require ("game_config")
- require ("achivmentsManager")
-
+ 
 comments = require("comments").new()
 comments.skeleton.group.x = 240
 comments.skeleton.group.y = 160
@@ -341,7 +421,7 @@ if commonData.gameData then
 end
 
 ob.notification = display.newGroup()
-  
+continueGroup  = display.newGroup()
 
 local function boosterButtonListener( event )
 
@@ -1721,10 +1801,10 @@ commonData.pauseGame = function (event)
 
 local function goBack(event)
     if ( "ended" == event.phase ) then
-          
-        commonData.gameData.coins = commonData.gameData.coins + gameStats.coins
-        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
-
+        if commonData.gameData    then
+          commonData.gameData.coins = commonData.gameData.coins + gameStats.coins
+          commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+        end
         local options = {params = {gameData = commonData.gameData}}
          composer.gotoScene( "menu" , options )
   
@@ -1854,8 +1934,202 @@ local function onSystemEvent( event )
 end
 
 
-
 Runtime:addEventListener( "system", onSystemEvent )
+
+ local function showAd( )
+
+      commonData.gameData.isContinueAdShown = true
+      local isSimulator = (system.getInfo("environment") == "simulator");
+          
+          local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
+
+       
+
+         -- if not commonData.gameData.continueProb then
+         --  commonData.gameData.continueProb = 4
+         -- end 
+
+         -- commonData.gameData.continueProb = commonData.gameData.continueProb + 1
+
+        if (not isSimulator)  then
+            
+           if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) then
+               commonData.analytics.logEvent( "startWatchAd - continueGame" , 
+                   { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                              highScore = tostring(  commonData.gameData.highScore) ,
+                              gameScore = tostring(  gameStatus.newScore) ,
+                              totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                              totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                              madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                              playerLevel =  tostring(  commonData.getLevel() )
+                               } ) 
+              commonData.videoReward = {isContinueReward = true, source = "continueGame"}
+              commonData.videoRewardFunction = appodealContinueGame
+              commonData.appodeal.show( "rewardedVideo", {placement= "ContinueRun"} )
+          else
+             commonData.analytics.logEvent( "notAvailableAd - continueGame",
+                  { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                              highScore = tostring(  commonData.gameData.highScore) ,
+                              gameScore = tostring(  gameStatus.newScore) ,
+                              totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                              totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                              madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                              playerLevel =  tostring(  commonData.getLevel() )
+                               } ) 
+             ob.continueGame() 
+           end
+            
+        else
+            --showAdButton.alpha = 0
+            
+            ob.continueGame()          
+        end
+
+         continueGroup.alpha = 0
+
+   end
+
+     local function onAdApprove( event )
+        if ( event.action == "clicked" ) then
+            local i = event.index
+            if ( i == 1 ) then
+               showAd()
+               commonData.analytics.logEvent( "continue ad popup approved" ) 
+            elseif ( i == 2 ) then
+              commonData.analytics.logEvent( "continue ad popup ignored" )                                  
+            end
+        end
+    end
+
+
+     local function showAdListener( event )
+        if ( "ended" == event.phase ) then
+            if commonData.gameData then
+              if not commonData.gameData.isContinueAdShown then
+                 local alert = native.showAlert( "Continue", "Watch video ad to get continue the game?", { "YES", "NO" }, onAdApprove )
+              else
+                  showAd()  
+              end                      
+            end   
+        end
+     end
+
+local function continueCloseListener( event )
+         if ( "ended" == event.phase ) then
+            if commonData.gameData then
+               commonData.analytics.logEvent( "continue offer declined" , 
+                     { gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                highScore = tostring(  commonData.gameData.highScore) ,
+                                gameScore = tostring(  gameStatus.newScore) ,
+                                totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
+                                totalGems = tostring(  commonData.gameData.gems + commonData.gameData.usedgems) ,
+                                madePurchase = tostring(  commonData.gameData.madePurchase) ,
+                                playerLevel =  tostring(  commonData.getLevel() )
+                                 } ) 
+             end
+             ob.goToGameOver()
+              
+             continueGroup.alpha = 0
+          end
+           return true
+     end
+
+local watchAdRect2 = display.newRect(240, 160, 600,400)
+watchAdRect2:setFillColor(0, 0, 0)
+watchAdRect2.alpha = 0.7
+
+watchAdRect2.xScale = display.actualContentWidth / watchAdRect2.contentWidth 
+watchAdRect2.yScale = display.actualContentHeight  / watchAdRect2.contentHeight
+
+
+
+
+       local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 255/255,255/255,255/255,1 }, direction="up"
+      }
+         
+local showAd = widget.newButton
+{
+    x = 210,
+    y = 235,
+    id = "continueBtn",
+    defaultFile = "images/Continue/BtnBg.png",  
+    label = getTransaltedText("Yes"),
+    font = "UnitedItalicRgHv",  
+    fontSize = 40 , 
+    labelYOffset = 30,
+    labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },  
+    onEvent = showAdListener    
+}
+
+showAd:scale(0.4,0.4)
+
+local watchAdClose = widget.newButton
+{
+    x = 270,
+    y = 235,
+    id = "continueCloseBtn",
+    defaultFile = "images/Continue/BtnBg.png",    
+    label = getTransaltedText("No"),
+    font = "UnitedItalicRgHv",  
+    fontSize = 40 , 
+    labelYOffset = 30,
+    labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } },  
+    onEvent = continueCloseListener    
+}
+
+watchAdClose:scale(0.4,0.4)
+
+
+local continueGlow  = display.newImage("images/Continue/BG Glow.png")
+continueGlow.x = 240
+continueGlow.y = 160
+
+continueGlow.xScale = display.actualContentWidth / continueGlow.contentWidth 
+continueGlow.yScale = display.actualContentHeight  / continueGlow.contentHeight
+
+local coachImg  = display.newImage("images/Continue/CoachImg.png")
+coachImg.x = 240
+coachImg.y = 160
+
+
+coachImg.yScale = display.actualContentHeight * 0.9 / coachImg.contentHeight
+coachImg.xScale = coachImg.yScale
+coachImg.y = display.actualContentHeight/2 + 160 - coachImg.contentHeight/2
+coachImg.x = display.actualContentWidth/2 + 240 - coachImg.contentWidth/2  - 15
+
+local continueImg  = display.newImage("images/Continue/CONTINUE.png")
+continueImg.x = 240
+continueImg.y = 80
+
+continueImg.xScale = display.actualContentWidth * 0.35 / continueImg.contentWidth
+continueImg.yScale = continueImg.xScale
+
+
+local watchAdIcon  = display.newImage("images/Continue/AdIcon.png")
+watchAdIcon.x = 210
+watchAdIcon.y = 225
+
+watchAdIcon.xScale = showAd.contentWidth * 0.5 / watchAdIcon.contentWidth
+watchAdIcon.yScale = watchAdIcon.xScale
+
+local closeIcon  = display.newImage("images/Continue/XIcon.png")
+closeIcon.x = 270
+closeIcon.y = 225
+
+closeIcon.xScale = watchAdClose.contentWidth * 0.3 / closeIcon.contentWidth
+closeIcon.yScale = closeIcon.xScale
+
+
+continueGroup:insert(watchAdRect2)
+continueGroup:insert(continueGlow)
+continueGroup:insert(coachImg)
+continueGroup:insert(continueImg)
+continueGroup:insert(showAd)
+continueGroup:insert(watchAdClose)
+continueGroup:insert(watchAdIcon)
+continueGroup:insert(closeIcon)
 
 
 
@@ -2039,7 +2313,8 @@ sceneGroup:insert(ob.notification)
 
 sceneGroup:insert(screenBorder)
 
-
+sceneGroup:insert(continueGroup)
+     
 
 
      
@@ -2388,10 +2663,223 @@ local function showNewTip(tipCode)
         end , 1)
 end 
 
+
+ob.continueGame = function ()
+
+-- --      showNewTip
+        continueGroup.alpha = 0  
+        multiText2.alpha = 0  
+        
+        addScoreText.alpha = 0                         
+        addScoreText2.alpha = 0                         
+        addScoreText3.alpha = 0                         
+        addScoreText4.alpha = 0                         
+        
+        
+      
+       collisionRect.isSensor = false
+       ballon.isSleepingAllowed = false
+      
+      physics.start()       
+      touchIDs = {} 
+      gameStatus.isGameActive = true
+      gameStatus.isAnyLeg = true
+      gameStatus.isGamePaused = false
+      gameStatus.isConfirmationRequired = false
+      gameStatus.canContinue = false
+                
+      gameStatus.ignoreHeader = false
+       --reset the score
+     
+     gameStatus.inEvent=0
+     ob.wasOnGround = true
+     -- reset the pause button
+     
+     --reset the monster
+     ballon.y = 10
+     ballon.x = BALL_X
+     ballon.angularVelocity = 0
+     ballon:setLinearVelocity(0,0  ) 
+     ballon.gravityScale=1
+     ballon.isBullet = true
+
+     fire.x = ballon.x
+     fire.y = ballon.y
+     fire.alpha = 0
+     
+
+     ob.onGround = true
+     monster.isAlive = true
+     monster.x = 120
+     monster.y = 285
+     monster.accel = 0 
+     monster:setSequence("running")
+     monster:play()
+     
+     monster.rotation = 0
+     monster.kickTimer =0
+     
+     ob.coach.skeleton.group.x = 20
+     ob.bubble.skeleton.group.x = 40
+     ob.bubble.skeleton.group.y = 170
+     
+     gameStatus.chaserLocation = -50
+     gameStatus.preventJump = true
+     collisionRect.width = 0
+     collisionRect.x= -400
+     --collisionRect.isBullet = true
+     ob.jumpLeg.width=0
+     ob.jumpLeg.x = 0
+     
+     
+      gameStatus.chaserLocation = -200
+
+    if (display.screenOriginX - 200 > gameStatus.chaserLocation) then
+      ob.chaser.skeleton.group.x = display.screenOriginX    - 200        
+    else
+      ob.chaser.skeleton.group.x = gameStatus.chaserLocation
+    end
+    chaserRect.x = 80 +  ob.chaser.skeleton.group.x
+
+      
+     for a = 1, blocks.numChildren, 1 do
+          --blocks[a].x = (a * blocks[a].contentWidth) - blocks[a].contentWidth
+          blocks[a].x = (a-2) * 82
+          blocks[a].y = ob.groundLevel
+          
+     end
+
+     blocks.alpha=0
+     for a = 1, coins.numChildren, 1 do
+          coins[a].y = 600
+          coins[a].isAlive = false
+          coins[a].spine:pause()
+          coinsSpine[a].y = 700
+          
+     end
+    
+      for a = 1, obstecales.numChildren, 1 do
+        obstecales[a].isAlive = false            
+                
+           obstecales[a].x =900          
+       
+           if (obstecales[a].name == "goal") then
+
+               for i = 1, goal.numChildren, 1 do                  
+                  goal[i].x = 900
+                end
+           else
+      
+              obstecales[a].rotation = 0
+              obstecales[a]:applyTorque(0)
+              obstecales[a]:setLinearVelocity( 0, 0 )
+          end
+
+          if (obstecales[a].spine) then
+              obstecales[a].spine.skeleton.group.x = obstecales[a].x                                        
+              obstecales[a].spine:pause()
+          end
+      
+        
+     end
+  
+
+
+      -- if commonData.gameData.gamesCount == 0 then 
+      -- -- TODO: cahnge
+      --   ob.getNextObstecalePos(40,3)
+      -- else
+      --   ob.getNextObstecalePos(10,15)
+      -- end
+      -- --ob.getNextObstecalePos(2,2)
+      
+      
+      -- ob.getNextCoinPos(5,25)
+      ob.getNextObstecalePos(1,1)
+      ob.leftCtrl.fill.effect = nil
+      ob.rightCtrl.fill.effect = nil
+      ob.leftCtrl.alpha = 1           
+      ob.rightCtrl.alpha = 1           
+
+      ob.leftCtrl:setFillColor(1,1,1)
+      ob.rightCtrl:setFillColor(1,1,1)
+      --ob.leftCtrl:setFillColor(0,0,0)
+      
+       
+        ob.chaser.skeleton.group.alpha = 1
+        ob.coach.skeleton.group.alpha = 1
+        
+
+           -- Start standing
+          ballon.isSleepingAllowed = false
+          
+          collisionRect.isSensor = false
+          
+          ballon.alpha = 1
+          if (ballSkin) then
+             ballon.alpha = 0
+            ballSkin.alpha = 1
+          end  
+
+          ballon:setLinearVelocity(0,0)  
+          ballon.gravityScale=0
+          ballon.y = 240
+      
+      local musicRnd = math.random(3)
+
+      if (musicRnd == 1 ) then
+        if ob.backgroundMusicHdl and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl)
+          audio.resume(ob.backgroundMusicHdl)
+          ob.activeMusicHdl = ob.backgroundMusicHdl
+        end
+      elseif (musicRnd == 1 ) then
+        if ob.backgroundMusicHdl2 and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl2)
+          audio.resume(ob.backgroundMusicHdl2)
+          ob.activeMusicHdl = ob.backgroundMusicHdl2
+        end
+      else
+        if ob.backgroundMusicHdl3 and not commonData.isMute then
+          --audio.resume(ob.backgroundMusicHdl)
+          audio.rewind(ob.backgroundMusicHdl3)
+          audio.resume(ob.backgroundMusicHdl3)
+          ob.activeMusicHdl = ob.backgroundMusicHdl3
+        end
+      end   
+      
+      gameStatus.isStaticBall = true
+
+      hero:reload()
+      hero:init()
+      hero:cancelKick()
+      hero:stand(true)
+      
+      ob.chaser:init()
+      ob.chaser:stand()
+
+      ob.coach:init()
+      ob.coach:stand()
+
+       ob.bubble:init()
+
+
+      ob.exitUltraMode()
+  
+      timer.resume(gameStatus.mainTimer)
+    
+    end
+
+
+--- end continueGame
 ob.restartGame = function ()
 -- function restartGame()
 
 -- --      showNewTip
+
+        continueGroup.alpha = 0    
         
         MAX_SPEED = 4 + commonData.catalog.skills[commonData.selectedSkin].speed  
         if MAX_SPEED >  11 then
@@ -2416,31 +2904,27 @@ ob.restartGame = function ()
         
        gameStatus.forceSwap = false
        gameStatus.newbieHelp = false
-     
-        if commonData.gameData.gamesCount < 3 then
-          gameStatus.forceSwap = true
-        end  
-        if  (commonData.gameData.gamesCount % 7 == 2 and commonData.gameData.highScore < 3000) then
-          gameStatus.newbieHelp = true
-        end  
-          
-      --end
+        
+        if commonData.gameData then
+              if commonData.gameData.gamesCount < 3 then
+                gameStatus.forceSwap = true
+              end  
+              if  (commonData.gameData.gamesCount % 7 == 2 and commonData.gameData.highScore < 3000) then
+                gameStatus.newbieHelp = true
+              end  
+              
+              if commonData.gameData.gamesCount > 10 then
+                gameStatus.canContinue = true      
+              end    
+            --end
 
-      if (commonData.gameData.gamesCount % 20 == 0 and commonData.gameData.highScore < 3000) then
-        commonData.gameData.tipCircleShown = false
-      end   
-    
+            if (commonData.gameData.gamesCount % 20 == 0 and commonData.gameData.highScore < 3000) then
+              commonData.gameData.tipCircleShown = false
+            end   
+        else
+          commonData.analytics.logEvent("restartGame without gameData")     
+        end
 
-      if ob.isSimulator then
---          gameStatus.forceSwap = true
-        --commonData.gameData.tipCircleShown = false
-      end
-      
-      
-      -- gameStatus.forceSwap = true
-      -- TODO: save in file
-      -- gameStatus.jumpOverShowed  = false
-      -- gameStatus.kickOverShowed = false
        ob.obstacleArrow.alpha = 0
        collisionRect.isSensor = false
        ballon.isSleepingAllowed = false
@@ -2494,8 +2978,6 @@ ob.restartGame = function ()
      gameStatus.newScore = 0
      gameStatus.level = getSelectedFieldIndex()
 
-     --reset the game speed
-     gameStatus.speed = 6
      
      gameStatus.inEvent=0
      ob.wasOnGround = true
@@ -2531,7 +3013,7 @@ ob.restartGame = function ()
      monster.kickTimer =0
      chaserRect.x = 20
      chaserRect.y = 235
-     chaserRect.speed = 0
+     
      ob.chaser.skeleton.group.x = 0
      ob.coach.skeleton.group.x = 20
      ob.bubble.skeleton.group.x = 40
@@ -2663,7 +3145,7 @@ ob.restartGame = function ()
     end
 
 
-      if commonData.gameData.gamesCount == 0 then 
+      if commonData.gameData and commonData.gameData.gamesCount == 0 then 
       -- TODO: cahnge
         ob.getNextObstecalePos(40,3)
       else
@@ -2686,6 +3168,7 @@ ob.restartGame = function ()
       gameStats.bouncesLate = 0
       gameStats.bouncesLeft = 0
       gameStats.bouncesRight = 0
+
       
       gameStats.jumps = 0
       gameStats.combo = 0
@@ -2739,7 +3222,7 @@ ob.restartGame = function ()
 
            -- Start standing
           ballon.isSleepingAllowed = false
-          gameStatus.speed = 0
+          
           
           collisionRect.isSensor = false
           
@@ -2782,7 +3265,9 @@ ob.restartGame = function ()
         end
       end   
       
-       
+       chaserRect.speed = REFEREE_START_SPEED
+       gameStatus.speed = START_SPEED
+              
       
       gameStatus.firstStage = mRandom(80 ) + 80
       gameStatus.secondStage = gameStatus.firstStage + mRandom(80 ) + 70
@@ -2808,7 +3293,7 @@ ob.restartGame = function ()
 
 
       ob.exitUltraMode()
-      
+      setCoinsCount(nil)
      
       
      for a = 1, dirt.numChildren, 1 do
@@ -2896,8 +3381,7 @@ function scene:show( event )
                 emitter.isEmitter = true
                 fire:insert( emitter )
                 
-                if boostConf.absolutePosition then
-                  print("abolute")
+                if boostConf.absolutePosition then                  
                   emitter.absolutePosition = sceneGroup
                 end  
                 
@@ -2949,28 +3433,7 @@ function scene:show( event )
         ob.wasOnGround = true
         
         local additionalCount = nil
-        local function setCoinsCount(e)
-
-          coinsShadowText.text = ob.coinsCount
-          coinsCountText.text =  ob.coinsCount
-
-          if (additionalCount) then
-
-            coinsShadowText.text = ob.coinsCount .. "   +" .. additionalCount
-            coinsCountText.text =  ob.coinsCount .. "   +" .. additionalCount
-
-          end
-
-          -- local playerLevel = string.format("%.00f", commonData.getLevel()) 
-          -- trophieShadowText.text = playerLevel
-          -- trophieCountText.text =  playerLevel
-
-          trophieShadowText.text = commonData.gameData.packs
-          trophieCountText.text =  commonData.gameData.packs
-
-
-        end 
-
+        
 
           if(event.params ) then
            
@@ -3151,7 +3614,7 @@ function scene:show( event )
                    gameStatus.eventRun = 1
               end
 
-              if (score == ob.nextCoinPos) then
+              if (score >= ob.nextCoinPos) then
                       gameStatus.inEvent = 14
                       gameStatus.eventRun = 1
                       ob.getNextCoinPos(10 ,10)
@@ -3159,7 +3622,7 @@ function scene:show( event )
               end
                         --the more frequently you want events to happen then
               --greater you should make the checks
-              if(score == ob.nextObsecalePos) then
+              if(score >= ob.nextObsecalePos) then
                       gameStatus.inEvent = 12
                       gameStatus.eventRun = 1
 
@@ -3620,7 +4083,7 @@ function scene:show( event )
 
                         
                         
-                        if (not gameStatus.isTutorial and not commonData.gameData.kickOverShowed 
+                        if (not gameStatus.isTutorial and commonData.gameData and not commonData.gameData.kickOverShowed 
                                 and obstecales[a].x > 260 and obstecales[a].x < 300) then                              
 
                                handleFisrtObstacle()                               
@@ -3645,7 +4108,7 @@ function scene:show( event )
                       if (not gameStatus.isTutorial and (obstecales[a].name == "trash" or obstecales[a].name == "cone"
                           or obstecales[a].name == "bird"))  then
 
-                          if (not commonData.gameData.jumpOverShowed and obstecales[a].x > 200 and obstecales[a].x < 220) then
+                          if (commonData.gameData and not commonData.gameData.jumpOverShowed and obstecales[a].x > 200 and obstecales[a].x < 220) then
                               
                                handleFisrtObstacle()                               
                                commonData.gameData.jumpOverShowed = true
@@ -3877,7 +4340,7 @@ gameStatus.isGameActive = true
      gameStatus.isGameActive = false
                        --this simply pauses the current animation
                         monster:pause()
-                        gameStatus.speed = 0
+                        --gameStatus.speed = 0
         timer.pause(gameStatus.mainTimer)
         hero:pause()
         ob.chaser:pause()
@@ -3916,13 +4379,9 @@ gameStatus.isGameActive = true
             
     end
 
-    local function stopGame()
-          
-          --commonData.playSound( sounds.heroFallSound )
-          -- if 1==1 then   
-          --   return
-          -- end
-         if (gameStatus.prevScore1 >= 50 and gameStatus.prevScore2 >= 50 and score >= 50) then  
+    ob.goToGameOver= function ()
+
+        if (gameStatus.prevScore1 >= 50 and gameStatus.prevScore2 >= 50 and score >= 50) then  
            reportChallenge("topScore350")   
            
          end   
@@ -3940,18 +4399,15 @@ gameStatus.isGameActive = true
             gameStatus.goalInARow = 0 
          end   
 
-         if commonData.gameData.totalScore + score >= 42195 then
+         if commonData.gameData and commonData.gameData.totalScore + score >= 42195 then
 
           reportChallenge("marathon")
          end 
 
-         if ob.stopGameElements then
-          ob.stopGameElements()   
-        else
-          
-         end
+         --showAdButton.alpha = 0
+             continueGroup.alpha = 0 
 
-        local currentSceneName = composer.getSceneName( "current" )
+      local currentSceneName = composer.getSceneName( "current" )
         
          if ( currentSceneName== "game" ) then
 
@@ -3973,6 +4429,76 @@ gameStatus.isGameActive = true
 
                 
          end
+      
+    end
+
+    local function stopGame()
+          
+          --commonData.playSound( sounds.heroFallSound )
+          -- if 1==1 then   
+          --   return
+          -- end
+     
+
+         if ob.stopGameElements then
+          ob.stopGameElements()   
+        else
+          
+         end
+
+         
+         local continueRnd = math.random(10)
+
+         if  commonData.gameData and gameStatus.canContinue  then
+
+
+               local lowerScoresCnt = 0
+
+               for i=1,10 do
+                    
+                    if gameStatus.newScore >= commonData.gameData.lastScores[i] then
+                      lowerScoresCnt = lowerScoresCnt + 1
+
+                    end  
+               end
+
+              gameStatus.conitnueCounter = gameStatus.conitnueCounter - 1
+                -- if  gameStatus.canContinue and gameStatus.newScore > avgScore and continueRnd <= commonData.gameData.continueProb and
+                --   (commonData.appodeal.isLoaded( "rewardedVideo" ) or
+                --   (system.getInfo("environment") == "simulator")) then
+                 if  lowerScoresCnt > 5 and gameStatus.conitnueCounter <=0 and
+                   (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) or
+                   (system.getInfo("environment") == "simulator")) then
+                  
+                   -- showAdButton.alpha = 1
+                    continueGroup.alpha = 1
+                    gameStatus.conitnueCounter = 3
+                    
+                    -- commonData.gameData.continueProb = commonData.gameData.continueProb - 1
+
+                    -- if commonData.gameData.continueProb < 1 then
+                    --   commonData.gameData.continueProb = 1
+                    -- end  
+
+                    local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
+ 
+                      commonData.analytics.logEvent( "continueGame offered", 
+                        {  highScore = tostring(  commonData.gameData.highScore) ,
+                          gameScore = tostring(  gameStatus.newScore) ,
+                          gamesCount = tostring(  commonData.gameData.gamesCount) ,
+                          avarageScore =  tostring(avgScore) } )
+                else
+              
+                continueGroup.alpha = 0
+                ob.goToGameOver()
+               end        
+              
+          else
+             ob.goToGameOver()
+             continueGroup.alpha = 0
+          end    
+
+          
    end
     
    
@@ -4065,7 +4591,7 @@ gameStatus.isGameActive = true
 
             
             if gameStatus.forceSwap and math.abs(220 - ballon.y) < 10  then
-              if (commonData.gameData.gamesCount == 0 and gameStats.bounces < 8) or  gameStats.bounces < 4  
+              if (commonData.gameData and commonData.gameData.gamesCount == 0 and gameStats.bounces < 8) or  gameStats.bounces < 4  
                 or  gameStats.isKickInstruct  then
                 pauseBall()
                 ob.rightTimer:setFillColor(0,1,0)
@@ -4260,7 +4786,7 @@ gameStatus.isGameActive = true
 
     ob.touched = function ( event )
 
-            if commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall
+            if commonData.gameData and commonData.gameData.gamesCount == 0 and gameStatus.forceSwap and  not gameStatus.isStaticBall
               and  gameStats.bounces < 3 then
               
                 return
@@ -4378,7 +4904,7 @@ gameStatus.isGameActive = true
                                     gameStatus.isAnyLeg = true
         
                                       
-                                      if  gameStatus.forceSwap and 
+                                      if  gameStatus.forceSwap  and commonData.gameData and 
                                         ((commonData.gameData.gamesCount == 0 and gameStats.bounces < 3) ) and
                                         ((rightHand.skeleton.group.alpha == 1  and gameStatus.isLeftLeg) or
                                         (leftHand.skeleton.group.alpha == 1 and not gameStatus.isLeftLeg)) then
@@ -4535,7 +5061,7 @@ gameStatus.isGameActive = true
                  trophieRnd = 15
               end  
 
-              if (mRandom(trophieRnd) == 1 ) then
+              if (mRandom(trophieRnd) == 1 and commonData.gameData) then
                 rewardIndex = 3
                 addCoins = nil
                 achivmentAlert("PackWinner")
@@ -4629,15 +5155,14 @@ gameStatus.isGameActive = true
               ballon.isSleepingAllowed = true
               
               gameStatus.preventJump = false
-              chaserRect.speed = REFEREE_START_SPEED
-              
+
               if (ob.onGround ) then                
                 hero:walk()
               end
               ob.chaser:walk()
               ob.coach:walk()
               
-              gameStatus.speed = START_SPEED
+              
               kickToStart.alpha = 0
               pauseButton.alpha = 1
               gameStatus.isStaticBall = false
@@ -4806,7 +5331,7 @@ gameStatus.isGameActive = true
                     if (ob.onGround) then            
 
 
-                        if (not commonData.gameData.tipCircleShown  and commonData.gameData.gamesCount > 0 and score < 15) then
+                        if (commonData.gameData and not commonData.gameData.tipCircleShown  and commonData.gameData.gamesCount > 0 and score < 15) then
                             commonData.gameData.tipCircleShown = true
 
 
@@ -4946,7 +5471,7 @@ gameStatus.isGameActive = true
           end  
         end
 
-        if commonData.gameData.gamesCount == 0  then 
+        if commonData.gameData and commonData.gameData.gamesCount == 0  then 
           if (gameStatus.forceSwap and gameStats.bounces < 9) then
             isPerfectKcick = true
           elseif gameStats.bounces== 9 then
@@ -5064,7 +5589,7 @@ gameStatus.isGameActive = true
           if (params.coinObj.isEnabled and gameStatus.isGameActive) then
             params.coinObj.isEnabled = false
             ob.coinsCount = ob.coinsCount  + 1            
-            setCoinsCount()
+            
             params.coinObj.spine:collect()
             local ts = timer.performWithDelay(500, removeCoin, 1)
             ts.params = {coinObj =  params.coinObj}
@@ -5073,6 +5598,7 @@ gameStatus.isGameActive = true
             gameStats.coins = gameStats.coins + 1
             
             reportChallenge("collectCoin")
+            setCoinsCount()
 
 
             if params.coinObj.ultra then
@@ -5240,7 +5766,7 @@ gameStatus.isGameActive = true
                                  gameStats.finishReason = "fallByCone"
                                  timer.performWithDelay(1000, stopGame, 1)  
 
-                                 if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                 if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
                                    commonData.gameData.jumpOverShowed = true
                                  end
                                
@@ -5259,7 +5785,7 @@ gameStatus.isGameActive = true
                                  gameStats.finishReason = "fallByBot"
                                  timer.performWithDelay(1000, stopGame, 1)  
                                 
-                                 if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                 if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
                                    commonData.gameData.jumpOverShowed = true
                                  end
                                
@@ -5279,7 +5805,7 @@ gameStatus.isGameActive = true
                                     gameStats.finishReason = "fallByCan"
                                     timer.performWithDelay(1000, stopGame, 1)  
                                 
-                                if commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
+                                if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
                                    commonData.gameData.jumpOverShowed = true
                                  end
 
@@ -5404,16 +5930,20 @@ gameStatus.isGameActive = true
         local function update( event )
         --updateBackgrounds will call a function made specifically to handle the background movement
           --dateSpeed()
-
+          updateMonster()
+          if not gameStatus.isStaticBall then
              updateBackgrounds()
-            
-            updateMonster()
+          
+      
             updateBlocks()
             updateObstecales()
             updateCoins()
             updateReferee()
             checkCollisions()
-            updateKids()
+            updateKids()           
+            end  
+
+
 
 
 
@@ -5495,7 +6025,7 @@ end
 function scene:destroy( event )
 
    local sceneGroup = self.view
-   --print("hide game")
+   
 
    -- Called prior to the removal of scene's view ("sceneGroup").
    -- Insert code here to clean up the scene.
@@ -5521,6 +6051,21 @@ function scene:outerCoinsReward(coinsToAdd , x , y)
 
   end  
 end
+function scene:outerRefreshCoins()
+    --code to resume game
+    
+    if commonData.gameData then
+      coinsShadowText.text = commonData.gameData.coins  
+      coinsCountText.text =  commonData.gameData.coins  
+
+       ob.rewards[2]:init()
+       ob.rewards[2].skeleton.group.x = x
+       ob.rewards[2].skeleton.group.y = y
+
+       commonData.playSound(sounds.coinsGoalSound)
+   end
+
+end
 
 
 function scene:outerTrophieReward( x , y)
@@ -5530,8 +6075,10 @@ function scene:outerTrophieReward( x , y)
       ob.rewards[3].skeleton.group.x = x
       ob.rewards[3].skeleton.group.y = y
 
-      trophieShadowText.text = commonData.gameData.packs .. " +1"
-      trophieCountText.text =  commonData.gameData.packs .. " +1"
+      if commonData.gameData then
+        trophieShadowText.text = commonData.gameData.packs .. " +1"
+        trophieCountText.text =  commonData.gameData.packs .. " +1"
+      end
 
       commonData.playSound(sounds.trophieGoalSound)
              

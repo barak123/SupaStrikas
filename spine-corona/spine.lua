@@ -29,6 +29,7 @@
 -------------------------------------------------------------------------------
 
 spine = {}
+--local  spine = spine
 
 spine.utils = require "spine-lua.utils"
 spine.SkeletonJson = require "spine-lua.SkeletonJson"

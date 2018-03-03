@@ -58,13 +58,21 @@ local M = {}
       gemIdx =gemIdx +  1
       items.gems[gemIdx] = {}
       items.gems[gemIdx].name = "Value pack"
-      items.gems[gemIdx].cashCost = 3
+      --items.gems[gemIdx].cashCost = 3
       items.gems[gemIdx].image = "images/shop/gems/RastaMatadorPromo.png"      
       items.gems[gemIdx].id = "megaPack"       
       items.gems[gemIdx].storeId = "com.ld.promopack" 
       items.gems[gemIdx].hidden = true
       items.gems[gemIdx].specialOffer = true
 
+      gemIdx =gemIdx +  1
+      items.gems[gemIdx] = {}
+      items.gems[gemIdx].name = "FREE GEM"
+      --items.gems[gemIdx].cashCost = 0
+      --items.gems[gemIdx].image = "images/shop/gems/1 Gem.png"
+      items.gems[gemIdx].id = "freeGem" 
+      items.gems[gemIdx].gemsCount = 1
+      
 
       gemIdx =gemIdx +  1
       items.gems[gemIdx] = {}

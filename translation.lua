@@ -1044,6 +1044,48 @@ local dictionary =
 			["pt"] = "Nível",
 			["tr"] = "LEVEL UP",
 		},		
+["Yes"] =
+		{
+			["en"] = "Yes",
+			-- ["he"] = "עלית רמה",						
+			-- ["es"] = "Nivel",			
+			-- ["de"] = "LEVEL UP",			
+			-- ["fr"] = "niveau",			
+			-- ["ar"] = "مستوى",		
+			-- ["ru"] = "уровень",
+			-- ["it"] = "Livello",
+			-- ["pl"] = "Poziom",
+			-- ["pt"] = "Nível",
+			-- ["tr"] = "LEVEL UP",
+		},		
+["No"] =
+		{
+			["en"] = "No",
+			-- ["he"] = "עלית רמה",						
+			-- ["es"] = "Nivel",			
+			-- ["de"] = "LEVEL UP",			
+			-- ["fr"] = "niveau",			
+			-- ["ar"] = "مستوى",		
+			-- ["ru"] = "уровень",
+			-- ["it"] = "Livello",
+			-- ["pl"] = "Poziom",
+			-- ["pt"] = "Nível",
+			-- ["tr"] = "LEVEL UP",
+		},		
+["Claim"] =
+		{
+			["en"] = "Claim",
+			-- ["he"] = "עלית רמה",						
+			-- ["es"] = "Nivel",			
+			-- ["de"] = "LEVEL UP",			
+			-- ["fr"] = "niveau",			
+			-- ["ar"] = "مستوى",		
+			-- ["ru"] = "уровень",
+			-- ["it"] = "Livello",
+			-- ["pl"] = "Poziom",
+			-- ["pt"] = "Nível",
+			-- ["tr"] = "LEVEL UP",
+		},		
 
 
 
