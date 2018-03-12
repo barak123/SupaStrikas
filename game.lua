@@ -4095,8 +4095,10 @@ function scene:show( event )
                                ballon.x = BALL_X                         
                                gameStatus.preventJump = true
 
+
                               timer.performWithDelay(1500 , function ()                          
                                 ob.kickOverImg.alpha = 1
+                                commonData.analytics.logEvent( "Kick Over Showed")          
                               end , 1)
                               timer.performWithDelay(2500 , function ()
                                 ob.boosterButton.alpha = 1                          
@@ -4129,6 +4131,8 @@ function scene:show( event )
                                 
                                  rightHand.skeleton.group.alpha = 1
                                  rightHand:tapRight()
+
+                                 commonData.analytics.logEvent( "Jump Over Showed")          
 
                               end , 1)
                               timer.performWithDelay(2500 , function ()
@@ -5177,6 +5181,13 @@ gameStatus.isGameActive = true
 
         if (ob.onGround ) then
             gameStats.bounces =  gameStats.bounces + 1
+    
+            if commonData.gameData and commonData.gameData.gamesCount == 0  then 
+              if (gameStatus.forceSwap and gameStats.bounces < 9) then
+                commonData.analytics.logEvent( "tutorial kick " .. gameStats.bounces)          
+              end
+            end  
+
 
               if gameStatus.isLeftLeg  then
                 gameStats.bouncesLeft =  gameStats.bouncesLeft + 1
@@ -5474,6 +5485,7 @@ gameStatus.isGameActive = true
         if commonData.gameData and commonData.gameData.gamesCount == 0  then 
           if (gameStatus.forceSwap and gameStats.bounces < 9) then
             isPerfectKcick = true
+
           elseif gameStats.bounces== 9 then
               gameStatus.newScore = 0
           end
@@ -5767,7 +5779,9 @@ gameStatus.isGameActive = true
                                  timer.performWithDelay(1000, stopGame, 1)  
 
                                  if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
-                                   commonData.gameData.jumpOverShowed = true
+                                   commonData.gameData.jumpOverShowed = false
+                                   commonData.analytics.logEvent( "Jump Over help")          
+
                                  end
                                
                          elseif ( event.object1.name == "bird" or  event.object2.name == "bird") then
@@ -5786,7 +5800,8 @@ gameStatus.isGameActive = true
                                  timer.performWithDelay(1000, stopGame, 1)  
                                 
                                  if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
-                                   commonData.gameData.jumpOverShowed = true
+                                   commonData.gameData.jumpOverShowed = false
+                                   commonData.analytics.logEvent( "Jump Over help")          
                                  end
                                
                         elseif ( event.object1.name == "trash" or  event.object2.name == "trash" ) then
@@ -5806,7 +5821,8 @@ gameStatus.isGameActive = true
                                     timer.performWithDelay(1000, stopGame, 1)  
                                 
                                 if commonData.gameData and commonData.gameData.jumps + gameStats.jumps < 4 and commonData.gameData.gamesCount > 10 then
-                                   commonData.gameData.jumpOverShowed = true
+                                   commonData.gameData.jumpOverShowed = false
+                                   commonData.analytics.logEvent( "Jump Over help")          
                                  end
 
                         elseif ( event.object1.name == "defender" or  event.object2.name == "defender") then
@@ -6059,8 +6075,8 @@ function scene:outerRefreshCoins()
       coinsCountText.text =  commonData.gameData.coins  
 
        ob.rewards[2]:init()
-       ob.rewards[2].skeleton.group.x = x
-       ob.rewards[2].skeleton.group.y = y
+       ob.rewards[2].skeleton.group.x = 70 - (display.actualContentWidth - display.contentWidth) /2 
+       ob.rewards[2].skeleton.group.y = 165
 
        commonData.playSound(sounds.coinsGoalSound)
    end

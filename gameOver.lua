@@ -1111,7 +1111,7 @@ local function showGameOver( gameResult, isFirstLoad)
            end 
          end
        
-       print(showAdRnd)
+       
        if (commonData.gameData.gamesCount > 10  and not  commonData.gameData.madePurchase and
             (commonData.gameData.adsPressed / gmCnt) < 0.2  and 
             showAdRnd == 0) then
@@ -1844,18 +1844,24 @@ local function showGameOver( gameResult, isFirstLoad)
 
             showActiveScreen()
 
-            collectgarbage()
+            collectgarbage("step")
 
       end    
 end
 
 
 local function showFinishGame()
+
     if not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  system.getInfo("environment") ~= "simulator" then
         finishGameGroup.alpha =0
         showGameOver(ob.priceResult)
 
-    else                    
+    else
+        if commonData.gameData and  commonData.gameData.gamesCount and commonData.gameData.gamesCount == 0 then
+          commonData.analytics.logEvent( "tutorialEnd")
+        end  
+
+
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
         finishGameGroup.alpha =1

@@ -25,7 +25,8 @@ local dailyOkBtn = nil
 local dailyOkBtn2 = nil
 local coinsCountText = nil
 local coinsShadowText = nil
-
+local isDoubleBonusClaimed = false
+local  isAppodealInitCalled = false
 
 commonData.catalog = require("catalog")
       local levelTextOptions23 = 
@@ -204,7 +205,7 @@ end
         commonData.gpgs.init( gpgsInitListener )                                 
                                 end, 1)       
 
-   commonData.gpgs.init( gpgsInitListener )
+   --commonData.gpgs.init( gpgsInitListener )
  end
 
 -- commonData.kidoz = require( "plugin.kidoz" )
@@ -440,7 +441,11 @@ local function giveDailyReward()
                  dailyRewardGroup:insert(coinsReward.skeleton.group)
 
                  local function enableDailyButton()
-                    dailyOkBtnDisabled.alpha = 0                             
+                     -- dailyOkBtnDisabled.alpha = 0                             
+
+                     dailyOkBtn.alpha = 1                             
+                     dailyOkBtn2.alpha = 0          
+                     isDoubleBonusClaimed  = true
                     commonData.analytics.logEvent( "endWatchAd - double bonus" , 
                       { gamesCount = tostring( commonData.gameData.gamesCount)  ,
                               highScore = tostring(  commonData.gameData.highScore) ,
@@ -534,17 +539,17 @@ local function giveDailyReward()
                           commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
 
-                          if dailyOkBtn2.alpha == 0  and
+                          if not isDoubleBonusClaimed  and
                             (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) or (system.getInfo("environment") == "simulator")) 
                             then
-                            dailyOkBtnDisabled.alpha = 1                              
+                            --dailyOkBtnDisabled.alpha = 1                              
                             dailyOkBtn2.alpha = 1
+                            dailyOkBtn.alpha = 0 
 
                           else 
-                            if dailyOkBtn2.alpha == 0 then
+                            if not isDoubleBonusClaimed then
                               commonData.analytics.logEvent( "double bonus not available" )   
-                            end
-
+                            end                            
                             dailyOkBtn:setEnabled(false) 
                             timer.performWithDelay(800, 
                                 function()                                
@@ -604,26 +609,26 @@ local function giveDailyReward()
                  dailyOkBtn.xScale =  (display.actualContentWidth*0.3) / dailyOkBtn.width
                   dailyOkBtn.yScale = dailyOkBtn.xScale  
                  
-                  dailyOkBtnDisabled = widget.newButton
-                  {
-                      x = 240,
-                      y = 270,
-                      id = "boosterButton",
-                      defaultFile =  "BlueSet/End/EGMainMenuDisabled.png",                                            
-                      label = getTransaltedText("Claim"),
-                      labelAlign = "center",
-                      font = "UnitedSansRgHv",  
-                      fontSize = 40 ,           
-                      labelColor = { default={  15/255,44/255,44/255 } }                                
-                  }
-                 dailyOkBtnDisabled.xScale =  (display.actualContentWidth*0.3) / dailyOkBtnDisabled.width
-                 dailyOkBtnDisabled.yScale = dailyOkBtnDisabled.xScale  
-                 dailyOkBtnDisabled.alpha = 0
+                 --  dailyOkBtnDisabled = widget.newButton
+                 --  {
+                 --      x = 240,
+                 --      y = 270,
+                 --      id = "boosterButton",
+                 --      defaultFile =  "BlueSet/End/EGMainMenuDisabled.png",                                            
+                 --      label = getTransaltedText("Claim"),
+                 --      labelAlign = "center",
+                 --      font = "UnitedSansRgHv",  
+                 --      fontSize = 40 ,           
+                 --      labelColor = { default={  15/255,44/255,44/255 } }                                
+                 --  }
+                 -- dailyOkBtnDisabled.xScale =  (display.actualContentWidth*0.3) / dailyOkBtnDisabled.width
+                 -- dailyOkBtnDisabled.yScale = dailyOkBtnDisabled.xScale  
+                 -- dailyOkBtnDisabled.alpha = 0
 
 
                   dailyOkBtn2 = widget.newButton
                   {
-                      x = 350,
+                      x = 240,
                       y = 265,
                       id = "boosterButton",
                       defaultFile =  "images/DailyX2.png",
@@ -776,7 +781,7 @@ local function giveDailyReward()
                         dailyRewardBlocker.alpha = 0
 
 
-                          if dailyOkBtn2.alpha == 1 and dailyOkBtnDisabled.alpha == 1 then
+                          if dailyOkBtn2.alpha == 1 then
                             commonData.analytics.logEvent( "double bonus ignored" , 
                             { gamesCount = tostring( commonData.gameData.gamesCount)  ,
                               highScore = tostring(  commonData.gameData.highScore) ,
@@ -827,7 +832,7 @@ local function giveDailyReward()
                 dailyReward:insert(dailyClose)
                 dailyReward:insert(closeIcon)
                 dailyReward:insert(dailyOkBtn)
-                dailyReward:insert(dailyOkBtnDisabled)
+                --dailyReward:insert(dailyOkBtnDisabled)
                 
                 dailyReward:insert(dailyOkBtn2)
                 dailyReward:insert(dailyTitleText)
@@ -864,7 +869,7 @@ local function appodealListener( event )
     local now =  os.time( t ) 
 
     print("appodel event- " ..now)
-    if ( event.phase == "init" ) then  -- Successful initialization
+    if ( event.phase == "loaded" and event.type=="rewardedVideo") then  -- Successful initialization
         giveDailyReward()
     end
     
@@ -878,18 +883,6 @@ local function appodealListener( event )
     end
 end
  
-timer.performWithDelay(1, 
-                                function()                                
-      -- Initialize the Appodeal plugin
-      commonData.appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03", disableWriteExternalPermissionCheck=true, 
-supportedAdTypes={"interstitial", "rewardedVideo"} } )
-                                 
-                                end
-                              , 1)       
-
-
-
-
               -- if system.getInfo("environment") == "simulator" then  
               -- local mt = getmetatable(_G)
               -- if mt == nil then
@@ -922,7 +915,7 @@ supportedAdTypes={"interstitial", "rewardedVideo"} } )
               --    for _, v in ipairs{...} do mt.__declared[v] = true end
               -- end
 
-              -- end
+              --  end
 -- combre = require( "plugin.combre" )
 
 -- -- Initialize Commercial Break
@@ -1033,6 +1026,9 @@ end
 
 
 
+local selectMenuSound =  audio.loadSound( "BtnPress.mp3" )
+local coinsGoalSound  = audio.loadSound( "CoinsGoal.mp3" )
+
 
 local prevMem = 0
  local memUsed = 0 
@@ -1067,7 +1063,7 @@ if system.getInfo("environment") == "simulator" then
              memUsed = (collectgarbage("count"))            
              local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
            print( string.format("%.00f", texUsed) .. " / " .. memUsed .. " / " .. memUsed - prevMem)
-           collectgarbage("step")
+      --     collectgarbage("step")
 
            
           
@@ -1077,10 +1073,6 @@ end
 
 commonData.shopSkin = commonData.selectedSkin 
 commonData.shopBall = commonData.selectedBall 
-
-local selectMenuSound =  audio.loadSound( "BtnPress.mp3" )
-local coinsGoalSound  = audio.loadSound( "CoinsGoal.mp3" )
-
 
 
 commonData.gameNetwork = require( "gameNetwork" )
@@ -1370,7 +1362,7 @@ Runtime:addEventListener( "system", systemEvents )
       local function buttonListener( event )
           
           if ( "ended" == event.phase ) then
-          collectgarbage()   
+          --collectgarbage()   
             commonData.playSound( selectMenuSound ) 
             local isTutorial = (event.target.id == "tutorialButton") or isFirstGame
 
@@ -2217,6 +2209,32 @@ function scene:show( event )
           
      timer.performWithDelay(2000 + removeTimer, removeSplash, 1)
      
+     if (not commonData.gameData) then 
+         loadRemoteTable(GAME_DATA_FILE , loadGameData)        
+
+          commonData.loadAfterLogin = function ( )
+            
+            loadRemoteTable(GAME_DATA_FILE , loadGameData)        
+          end
+
+
+          local appodealInitDelay = 5000
+          if commonData.gameData and  commonData.gameData.gamesCount > 5 then
+            appodealInitDelay = 100
+          end  
+
+          if not isAppodealInitCalled then
+             isAppodealInitCalled = true 
+             timer.performWithDelay(appodealInitDelay, 
+                   function()                                      
+                        commonData.appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03", 
+                        disableWriteExternalPermissionCheck=true, 
+                        supportedAdTypes={"interstitial", "rewardedVideo"} } )
+                                                   
+                   end, 1)  
+          end            
+     end 
+
      
    elseif ( phase == "did" ) then
     
@@ -2235,13 +2253,9 @@ function scene:show( event )
           
        else 
 
-          
-          loadRemoteTable(GAME_DATA_FILE , loadGameData)        
+         
 
-          commonData.loadAfterLogin = function ( )
-            
-            loadRemoteTable(GAME_DATA_FILE , loadGameData)        
-          end
+         
        end -- end common data not exists
 
       

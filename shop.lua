@@ -42,6 +42,8 @@ local cancelBuyButton = nil
 local backButton = nil
 
 local skillsGroup = nil
+local skillsDynamicGroup = nil
+
 
 -- local useDisabled = nil
 -- local buyDisabled = nil
