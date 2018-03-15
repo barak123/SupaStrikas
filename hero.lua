@@ -741,10 +741,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			if not isPaused  then
 		 		replayHandle = timer.performWithDelay(animation.duration * 1000, idle1, 1)
 		 	end
-
-		 	local memUsed = (collectgarbage("count"))
-             local texUsed = system.getInfo( "textureMemoryUsed" ) / 1048576 -- Reported in Bytes
-           
+  
             
    --         print( string.format("%.00f", texUsed) .. " / " .. memUsed)
 

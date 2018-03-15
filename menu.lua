@@ -15,6 +15,7 @@ local isFlurryReady = false
 local shouldLogOpens = false
 local packsButton = nil
 local playButton = nil
+local multiplayerButton = nil
 local shopButton = nil 
 local iCloud = nil
 local dailyRewardBlocker = nil
@@ -67,6 +68,9 @@ end
 
 if ( system.getInfo("platformName") == "Android" ) then
   commonData.gpgs = require( "plugin.gpgs" )
+
+  --commonData.gpgs.enableDebug()
+
 else
   iCloud = require( "plugin.iCloud" )  
 end
@@ -93,6 +97,16 @@ local function printTable( t, label, level )
     end
   end
 end
+ 
+-- commonData.isMultiplayer = true
+-- commonData.opponents = {
+-- {formattedRank="11",formattedScore="50,000",speed=4,skin="CoolJoe"},
+--                                       {player={name="moshe",id="124"},formattedRank="12",formattedScore="40,000",speed=5,skin="Shakes"},
+--                                       {player={name="moshe2",id="125"},formattedRank="13",formattedScore="30,000",speed=6,skin="CoolJoe"},
+--                                       {player={name="moshe3",id="126"},formattedRank="14",formattedScore="20,000",speed=7,skin="CoolJoe"},
+--                                       {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",speed=7.5,skin="ElMatador"},
+--                                       {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",speed=8,skin="Blok"}  
+--                                     }
 
 commonData.leaderboard = {}
 commonData.reloadLeaderboard =  function(callback)
@@ -1369,6 +1383,8 @@ Runtime:addEventListener( "system", systemEvents )
             if isTutorial then
              if isFirstGame then 
               commonData.analytics.logEvent( "startTutorial" )
+              commonData.isFirstSession =  true
+
               commonData.gameData.gamesCountForInstruct = 7
              else
               commonData.gameData.gamesCountForInstruct = commonData.gameData.gamesCount
@@ -1489,6 +1505,81 @@ Runtime:addEventListener( "system", systemEvents )
           end
            return true
      end
+
+
+     function triggerMultiplayer( )
+        
+        if 1==1 then
+          return
+        end  
+        local function handleRealtime( event )
+            if (event.phase == "created") then
+
+              commonData.gpgs.multiplayer.realtime.show({roomId= event.roomId, minPlayersRequired = 1, listener = function ( e )
+                print("-------------")
+                print(json.encode(e))
+                print("-------------")
+                if (e.isError == false) then
+                  print("user quit show")
+                else
+
+                end
+              end})
+            end
+              if event.phase == "connected" then
+                roomId = event.roomId
+                commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= tostring(myPlayerNum)})
+              end
+        end
+        local function dataHandle( event )
+          if( event.payload ) then
+              if (tonumber(event.payload )) then -- handle
+                if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
+                    otherPlayerNum = tonumber(event.payload)
+                  end
+                  if (otherPlayerNum < myPlayerNum) then
+                    myType = "X"
+                  canPlay= true
+                  end
+                  display.remove( playerLetterText )
+                  playerLetterText = display.newText( sceneGroup, myType, display.contentCenterX, 20, native.systemFontBold, 15 )
+                else -- is table data
+                  if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
+                    gameTable = json.decode( event.payload)
+                    updateBoard()
+                    canPlay= true
+                    if (gameTable.winner and gameTable.winner ~= "") then
+                      canPlay = false
+                      playerLetterText.text = "you lose, reset app to play again"
+                    end
+                  else -- my data
+                    gameTable = json.decode( event.payload )
+                    updateBoard()
+                  end
+              end
+              end
+        end
+        commonData.gpgs.multiplayer.realtime.setListeners({message=dataHandle, room = handleRealtime})
+        commonData.gpgs.multiplayer.realtime.create({automatch = {minPlayers = 0, maxPlayers = 3}})
+      end
+      function sendMyData( )
+        commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= json.encode( gameTable )})
+      end
+
+     local function multiplayerListener( event )
+          
+
+         if ( "ended" == event.phase  and commonData.gpgsConnected) then
+              print("triggerMultiplayer")
+               triggerMultiplayer()
+          
+          end
+           return true
+
+     end
+
+
+     
  
       local gradient = {
           type="gradient",
@@ -1524,7 +1615,32 @@ Runtime:addEventListener( "system", systemEvents )
       -- playButton:scale( playButton.contentWidth / display.actualContentWidth  , 0.5)
       playButton.x = playButton.x - (display.actualContentWidth - display.contentWidth)/2
 
+      multiplayerButton= widget.newButton
+      {
+          x = 160, 
+          y = 210,
+          id = "playButton",
+          -- defaultFile = "MainMenu/PlayBtnUp.png",
+          -- overFile = "MainMenu/PlayBtnDown.png",
+          onEvent = multiplayerListener,
+          defaultFile = "MainMenu/EmptyBtnUp.png",          
+         overFile = "MainMenu/EmptyBtnDown.png",
+          
+          label = getTransaltedText("Play"),
+          --labelAlign = "left",
+          font = "UnitedItalicRgHv",  
+          fontSize = 80 , 
+          labelXOffset = -80,
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
 
+      }
+
+       multiplayerButton.xScale =  (display.actualContentWidth*0.25) / multiplayerButton.width
+       multiplayerButton.yScale = multiplayerButton.xScale  
+
+      -- playButton:scale( playButton.contentWidth / display.actualContentWidth  , 0.5)
+      multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
+      multiplayerButton.alpha = 0
       shopButton = widget.newButton
       {
           x = 160,
@@ -1577,7 +1693,8 @@ Runtime:addEventListener( "system", systemEvents )
        packsButton.x = packsButton.x - (display.actualContentWidth - display.contentWidth)/2
        packsButton.y =  shopButton.y + packsButton.contentHeight /2  + shopButton.contentHeight /2 + 5
 
-    
+       multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
+       multiplayerButton.y =  packsButton.y + packsButton.contentHeight /2  + multiplayerButton.contentHeight /2 + 5
 
       local leaderButton = widget.newButton
       {
@@ -1701,8 +1818,11 @@ Runtime:addEventListener( "system", systemEvents )
                playButton:setLabel(getTransaltedText("Play")) 
                shopButton:setLabel(getTransaltedText("Shop")) 
                packsButton:setLabel(getTransaltedText("Packs")) 
+               multiplayerButton:setLabel(getTransaltedText("Multi")) 
 
                playButton.labelAlign = "left"
+               multiplayerButton.labelAlign = "left"
+
                commonData.saveTable(commonData.gameData, GAME_DATA_FILE , nil , true)
           end
            return true
@@ -1732,6 +1852,7 @@ Runtime:addEventListener( "system", systemEvents )
       leaderButton.x =  statsButton.x + statsButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       achivButton.x =  leaderButton.x + achivButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       playButton.x = leaderButton.x 
+      multiplayerButton.x = leaderButton.x 
       shopButton.x = leaderButton.x
       packsButton.x = leaderButton.x
       
@@ -1751,10 +1872,12 @@ Runtime:addEventListener( "system", systemEvents )
       playButton.y = display.actualContentHeight * 0.25 - (display.actualContentHeight - display.contentHeight)/2 
       shopButton.y =  playButton.y + (playButton.contentHeight + shopButton.contentHeight)/2 + 10
       packsButton.y =  shopButton.y + (packsButton.contentHeight + shopButton.contentHeight)/2 + 10
+      multiplayerButton.y =  packsButton.y + (packsButton.contentHeight + multiplayerButton.contentHeight)/2 + 10
     
        playButton.x =  240 - display.actualContentWidth/2  + playButton.contentWidth/2
        shopButton.x =  240 - display.actualContentWidth/2  + shopButton.contentWidth/2
        packsButton.x =  240 - display.actualContentWidth/2  + packsButton.contentWidth/2
+       multiplayerButton.x =  240 - display.actualContentWidth/2  + multiplayerButton.contentWidth/2
        statsButton.x = 240 - display.actualContentWidth/2  + statsButton.contentWidth/2
        leaderButton.x = statsButton.x + (leaderButton.contentWidth*0.75)/2 
        achivButton.x = leaderButton.x + (leaderButton.contentWidth )/2  + 10
@@ -1898,6 +2021,8 @@ Runtime:addEventListener( "system", systemEvents )
      
      
      sceneGroup:insert(playButton)
+     sceneGroup:insert(multiplayerButton)
+     
      
      sceneGroup:insert(achivButton)
      sceneGroup:insert(leaderButton) 

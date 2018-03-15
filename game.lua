@@ -201,6 +201,7 @@ local blocks = {}
 local coins = {}
 
 local obstecales = {}
+local opponentsSpines = {}
 local gameStats = {}
 local kickToStart = nil
 --local gameStatus.sombreroCount = 0
@@ -209,8 +210,6 @@ local consecutivePerfects = 0
 local pauseButton = nil
 
 local backgrounds = nil
-
-
 
 
 local touchIDs = {}
@@ -225,7 +224,8 @@ local fire = nil
 local ballSkinGroup = nil
 local newChallengeGroup = nil
 local continueGroup = nil
-local houses =nil
+local opponentsGroup = nil
+
 local dirt = nil
 local scoreText = nil
 local coinsCountText = nil
@@ -274,15 +274,15 @@ local function appodealContinueGame()
     if commonData.gameData then
       local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
 
-       -- if not commonData.gameData.continueProb then
-       --  commonData.gameData.continueProb = 5
-       -- end 
+       if not commonData.gameData.continueProb then
+        commonData.gameData.continueProb = 6
+       end 
 
-       -- commonData.gameData.continueProb = commonData.gameData.continueProb + 1
+       commonData.gameData.continueProb = commonData.gameData.continueProb + 1
 
-       -- if commonData.gameData.continueProb > 10 then
-       --  commonData.gameData.continueProb  = 10
-       -- end 
+       if commonData.gameData.continueProb > 10 then
+        commonData.gameData.continueProb  = 10
+       end 
 
        
       commonData.analytics.logEvent( "endWatchAd - continueGame" , 
@@ -1232,6 +1232,7 @@ for a = 1, 10, 1 do
 end
 
 dirt = display.newGroup()
+opponentsGroup = display.newGroup()
 --dirt.alpha = 0
 
 local dirtImages = {}
@@ -1945,11 +1946,11 @@ Runtime:addEventListener( "system", onSystemEvent )
 
        
 
-         -- if not commonData.gameData.continueProb then
-         --  commonData.gameData.continueProb = 4
-         -- end 
+         if not commonData.gameData.continueProb then
+          commonData.gameData.continueProb = 6
+         end 
 
-         -- commonData.gameData.continueProb = commonData.gameData.continueProb + 1
+         commonData.gameData.continueProb = commonData.gameData.continueProb + 1
 
         if (not isSimulator)  then
             
@@ -2004,6 +2005,10 @@ Runtime:addEventListener( "system", onSystemEvent )
 
      local function showAdListener( event )
         if ( "ended" == event.phase ) then
+            if gameStatus.continueHandle then
+                timer.cancel( gameStatus.continueHandle )
+                gameStatus.continueHandle = nil
+            end 
             if commonData.gameData then
               if not commonData.gameData.isContinueAdShown then
                  local alert = native.showAlert( "Continue", "Watch video ad to get continue the game?", { "YES", "NO" }, onAdApprove )
@@ -2016,6 +2021,10 @@ Runtime:addEventListener( "system", onSystemEvent )
 
 local function continueCloseListener( event )
          if ( "ended" == event.phase ) then
+            if gameStatus.continueHandle then
+                timer.cancel( gameStatus.continueHandle )
+                gameStatus.continueHandle = nil
+            end 
             if commonData.gameData then
                commonData.analytics.logEvent( "continue offer declined" , 
                      { gamesCount = tostring( commonData.gameData.gamesCount)  ,
@@ -2038,8 +2047,8 @@ local watchAdRect2 = display.newRect(240, 160, 600,400)
 watchAdRect2:setFillColor(0, 0, 0)
 watchAdRect2.alpha = 0.7
 
-watchAdRect2.xScale = display.actualContentWidth / watchAdRect2.contentWidth 
-watchAdRect2.yScale = display.actualContentHeight  / watchAdRect2.contentHeight
+watchAdRect2.xScale = display.actualContentWidth *1.1 / watchAdRect2.contentWidth 
+watchAdRect2.yScale = display.actualContentHeight *1.1  / watchAdRect2.contentHeight
 
 
 
@@ -2082,12 +2091,12 @@ local watchAdClose = widget.newButton
 watchAdClose:scale(0.4,0.4)
 
 
-local continueGlow  = display.newImage("images/Continue/BG Glow.png")
-continueGlow.x = 240
-continueGlow.y = 160
+-- local continueGlow  = display.newImage("images/Continue/BG Glow.png")
+-- continueGlow.x = 240
+-- continueGlow.y = 160
 
-continueGlow.xScale = display.actualContentWidth / continueGlow.contentWidth 
-continueGlow.yScale = display.actualContentHeight  / continueGlow.contentHeight
+-- continueGlow.xScale = display.actualContentWidth / continueGlow.contentWidth 
+-- continueGlow.yScale = display.actualContentHeight  / continueGlow.contentHeight
 
 local coachImg  = display.newImage("images/Continue/CoachImg.png")
 coachImg.x = 240
@@ -2099,12 +2108,12 @@ coachImg.xScale = coachImg.yScale
 coachImg.y = display.actualContentHeight/2 + 160 - coachImg.contentHeight/2
 coachImg.x = display.actualContentWidth/2 + 240 - coachImg.contentWidth/2  - 15
 
-local continueImg  = display.newImage("images/Continue/CONTINUE.png")
-continueImg.x = 240
-continueImg.y = 80
+-- local continueImg  = display.newImage("images/Continue/CONTINUE.png")
+-- continueImg.x = 240
+-- continueImg.y = 80
 
-continueImg.xScale = display.actualContentWidth * 0.35 / continueImg.contentWidth
-continueImg.yScale = continueImg.xScale
+-- continueImg.xScale = display.actualContentWidth * 0.35 / continueImg.contentWidth
+-- continueImg.yScale = continueImg.xScale
 
 
 local watchAdIcon  = display.newImage("images/Continue/AdIcon.png")
@@ -2121,11 +2130,18 @@ closeIcon.y = 225
 closeIcon.xScale = watchAdClose.contentWidth * 0.3 / closeIcon.contentWidth
 closeIcon.yScale = closeIcon.xScale
 
+local continueGameSpine =  require ("continueGame")
 
+ob.continueAnima = continueGameSpine.new(0.3)
+
+ob.continueAnima.skeleton.group.x = 240
+ob.continueAnima.skeleton.group.y = 160
 continueGroup:insert(watchAdRect2)
-continueGroup:insert(continueGlow)
+--continueGroup:insert(continueGlow)
+
+--continueGroup:insert(continueImg)
+continueGroup:insert(ob.continueAnima.skeleton.group)
 continueGroup:insert(coachImg)
-continueGroup:insert(continueImg)
 continueGroup:insert(showAd)
 continueGroup:insert(watchAdClose)
 continueGroup:insert(watchAdIcon)
@@ -2190,6 +2206,8 @@ sceneGroup:insert(ob.redRect)
 
 
 sceneGroup:insert(ob.coach.skeleton.group)
+sceneGroup:insert(opponentsGroup)
+
 sceneGroup:insert(ob.bubble.skeleton.group)
 
 
@@ -3302,6 +3320,31 @@ ob.restartGame = function ()
              
      end 
 
+     if commonData.isMultiplayer then
+        
+       for j = 1, opponentsGroup.numChildren do
+             if (opponentsGroup[1]) then
+              opponentsGroup[1]:removeSelf()
+             end 
+       end
+
+       for i = 1, #commonData.opponents do
+
+        local heroSpine =  require ("hero")
+
+        local opp = heroSpine.new(0.2 , false,false,commonData.opponents[i].skin)
+         opp:init()
+         opp:stand(true)
+         opponentsSpines[i] = {}
+         opponentsSpines[i] = opp
+
+        opponentsGroup:insert(opp.skeleton.group)
+        opp.skeleton.group.y = ob.coach.skeleton.group.y
+        opp.skeleton.group.x = hero.skeleton.group.x - i*5
+             
+       end 
+     end 
+
       timer.resume(gameStatus.mainTimer)
     
     end
@@ -4032,6 +4075,34 @@ function scene:show( event )
     
     --check to see if the cones are alive or not, if they are
     --then update them appropriately
+
+    local function updateOpponents()
+
+    if commonData.isMultiplayer then
+       
+       for i = 1, #commonData.opponents do
+
+        -- (opponentsGroup[i]):translate(commonData.opponents[i].speed - gameStatus.speed , 0)       
+
+         -- opponentsSpines[i].location = opponentsGroup[i].x + commonData.opponents[i].speed - gameStatus.speed
+
+         if not opponentsSpines[i].location then
+            opponentsSpines[i].location = opponentsGroup[i].x
+         end
+
+         opponentsSpines[i].location =opponentsSpines[i].location + commonData.opponents[i].speed - gameStatus.speed
+
+         if opponentsSpines[i].location > -400 and opponentsSpines[i].location < 800 then
+            opponentsGroup[i].x = opponentsSpines[i].location
+            opponentsSpines[i]:setWalkSpeed(commonData.opponents[i].speed)
+
+         end 
+        
+             
+       end 
+     end 
+    end 
+
     local function updateObstecales()
 
         
@@ -4380,7 +4451,16 @@ gameStatus.isGameActive = true
                       obstecales[a].spine:pause()
                   end                      
           end
+            if commonData.isMultiplayer then            
+            for i = 1, #commonData.opponents do
+
+                opponentsSpines[i]:pause()
+
+             end 
             
+                 
+           end 
+
     end
 
     ob.goToGameOver= function ()
@@ -4410,7 +4490,7 @@ gameStatus.isGameActive = true
 
          --showAdButton.alpha = 0
              continueGroup.alpha = 0 
-
+             ob.continueAnima:pause()
       local currentSceneName = composer.getSceneName( "current" )
         
          if ( currentSceneName== "game" ) then
@@ -4467,22 +4547,30 @@ gameStatus.isGameActive = true
                end
 
               gameStatus.conitnueCounter = gameStatus.conitnueCounter - 1
+
+              if not commonData.gameData.continueProb then
+                  commonData.gameData.continueProb = 7
+               end 
+
                 -- if  gameStatus.canContinue and gameStatus.newScore > avgScore and continueRnd <= commonData.gameData.continueProb and
                 --   (commonData.appodeal.isLoaded( "rewardedVideo" ) or
-                --   (system.getInfo("environment") == "simulator")) then
-                 if  lowerScoresCnt > 5 and gameStatus.conitnueCounter <=0 and
+                --   (system.getInfo("environment") == "simulator")) then gameStatus.conitnueCounter <=0
+                 if lowerScoresCnt > 5 and continueRnd <= commonData.gameData.continueProb and
                    (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) or
                    (system.getInfo("environment") == "simulator")) then
                   
                    -- showAdButton.alpha = 1
                     continueGroup.alpha = 1
+                    ob.continueAnima:init()
+                    local duration = ob.continueAnima:count()
                     gameStatus.conitnueCounter = 3
                     
-                    -- commonData.gameData.continueProb = commonData.gameData.continueProb - 1
+                    gameStatus.continueHandle =  timer.performWithDelay(duration, ob.goToGameOver, 1)
+                    commonData.gameData.continueProb = commonData.gameData.continueProb - 1
 
-                    -- if commonData.gameData.continueProb < 1 then
-                    --   commonData.gameData.continueProb = 1
-                    -- end  
+                    if commonData.gameData.continueProb < 3 then
+                      commonData.gameData.continueProb = 3
+                    end  
 
                     local avgScore = commonData.gameData.totalScore / math.max(commonData.gameData.gamesCount, 1)
  
@@ -5956,7 +6044,8 @@ gameStatus.isGameActive = true
             updateCoins()
             updateReferee()
             checkCollisions()
-            updateKids()           
+            updateKids()      
+            --updateOpponents()     
             end  
 
 

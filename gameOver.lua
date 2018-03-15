@@ -1844,7 +1844,7 @@ local function showGameOver( gameResult, isFirstLoad)
 
             showActiveScreen()
 
-            collectgarbage("step")
+            
 
       end    
 end
@@ -1852,7 +1852,13 @@ end
 
 local function showFinishGame()
 
-    if not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  system.getInfo("environment") ~= "simulator" then
+  timer.performWithDelay(100,function()
+         collectgarbage("step")
+  end, 1)
+ 
+ 
+    if (not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  
+        system.getInfo("environment") ~= "simulator" ) or commonData.isFirstSession then
         finishGameGroup.alpha =0
         showGameOver(ob.priceResult)
 
