@@ -4,7 +4,7 @@
 local spine = require "spine-corona.spine"
 
 local coin = {}
-function coin.new (skeletonData)
+function coin.new (letter)
 
 	local self = {	
 		skeleton = {} ,
@@ -27,7 +27,24 @@ function coin.new (skeletonData)
 	function self.skeleton:createImage (attachment)
 		-- Customize where images are loaded.
 		
-		local newPart =  display.newImage("Coin/" .. attachment.name .. ".png")
+		--local newPart =  display.newImage("Coin/" .. attachment.name .. ".png")
+		local newPart = nil
+		if attachment.name == "Coin" and letter then
+			-- newPart = display.newText({text=letter , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 35,align = "center"})
+			--  local gradient = {
+		 --          type="gradient",
+		 --          color3={ 255/255,1,1,1}, color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+		 --      }
+
+
+		 --      newPart:setFillColor(gradient)
+		    newPart = display.newImage("images/album/" .. letter .. ".png")  
+		else				
+			newPart = display.newImage("Coin/" .. attachment.name .. ".png")
+		end
+
+		
+		--print(attachment.name)
 
 		
 	--	end

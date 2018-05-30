@@ -68,6 +68,7 @@ local leadersData = nil
 local leadersBox = nil
 local gameOverGroup = nil
 local newLevelGroup = nil
+local victoryGroup = nil
 local finishGameGroup = nil
 local promotionGroup = nil
 local newItemsGroup = nil
@@ -953,6 +954,7 @@ local function showGameOver( gameResult, isFirstLoad)
         isGameOverActive = true
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        victoryGroup.alpha =0 
         finishGameGroup.alpha =0 
         promotionGroup.alpha =0 
         
@@ -1561,7 +1563,7 @@ local function showGameOver( gameResult, isFirstLoad)
             end 
             scoreTitleText.alpha = 1
             scoreTitleTextS.alpha = 1
-        
+            
             commonData.gameData.coins = commonData.gameData.coins + gameResult.coins
             commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
             commonData.gameData.totalScore = commonData.gameData.totalScore + gameResult.gameScore
@@ -1574,6 +1576,14 @@ local function showGameOver( gameResult, isFirstLoad)
             commonData.gameData.jumps  = commonData.gameData.jumps + gameResult.jumps
             commonData.gameData.unlockedAchivments = getUnlockedAchivments()
             commonData.gameData.unlockedChallenges = getUnlockedChallenges()
+
+            if gameResult.letterS and gameResult.letterU and gameResult.letterP and gameResult.letterA then
+              if gameResult.isSpecialPrize then
+                commonData.gameData.rarePacks = commonData.gameData.rarePacks + 1
+              else  
+                commonData.gameData.commonPacks = commonData.gameData.commonPacks + 1
+              end
+            end  
 
             parent:outerRefreshCoins()
             -- local newLevelScene = composer.getScene( "newLevel"  )
@@ -1855,11 +1865,26 @@ local function showFinishGame()
   timer.performWithDelay(100,function()
          collectgarbage("step")
   end, 1)
- 
+     
+    
+    if commonData.gameData.gamesCount < 2 then
+        victoryGroup.alpha= 1 
+        gameOverGroup.alpha =0 
+        newLevelGroup.alpha =0       
+        finishGameGroup.alpha =0
+        promotionGroup.alpha =0 
+        commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
+        commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
+
+
+      return
+    end  
+    
  
     if (not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  
         system.getInfo("environment") ~= "simulator" ) or commonData.isFirstSession then
         finishGameGroup.alpha =0
+        
         showGameOver(ob.priceResult)
 
     else
@@ -1870,12 +1895,21 @@ local function showFinishGame()
 
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        victoryGroup.alpha =0 
         finishGameGroup.alpha =1
         promotionGroup.alpha =0 
 
         ob.normalCoins.text = ob.priceResult.coins
         ob.specialCoins.text = ob.priceResult.coins * 2
 
+
+        if ob.priceResult.letterA then
+          ob.normalPacks.text = "1"
+          ob.specialPacks.text = "1"
+        else  
+          ob.normalPacks.text = "0"
+          ob.specialPacks.text = "0"
+        end  
         if ob.priceResult.coins < 10 then 
           ob.specialCoins.text = 20
         end
@@ -1905,6 +1939,7 @@ function scene:create( event )
 
      gameOverGroup = display.newGroup()
      newLevelGroup = display.newGroup()
+     victoryGroup = display.newGroup()
      finishGameGroup = display.newGroup()
      promotionGroup = display.newGroup()
      newItemsGroup = display.newGroup()
@@ -1980,6 +2015,7 @@ function scene:create( event )
 
             gameOverGroup.alpha = 1
             newLevelGroup.alpha = 0
+            victoryGroup.alpha = 0
             finishGameGroup.alpha = 0
             promotionGroup.alpha = 0
             
@@ -2023,6 +2059,101 @@ function scene:create( event )
 
 
      
+
+
+     --- VICTORY
+           local victoryBackground = display.newRect(240, 160, 700,400)
+      victoryBackground.fill.effect = "generator.radialGradient"
+ 
+      victoryBackground.fill.effect.color2 = { 0.8, 0, 0.2, 0.7 }
+      victoryBackground.fill.effect.color1 = { 0.2, 0.2, 0.2, 0.7 }
+      victoryBackground.fill.effect.center_and_radiuses  =  { 0.5, 0.5, 0.25, 0.75 }
+      victoryBackground.fill.effect.aspectRatio  = 1
+
+      local victoryBackground2 =  display.newImage("images/EndGameBG.png")
+       victoryBackground2.xScale =  (display.actualContentWidth*0.7) / victoryBackground2.contentWidth
+     victoryBackground2.yScale =  (display.actualContentHeight*0.7) / victoryBackground2.contentHeight
+     victoryBackground2.x = 240
+     victoryBackground2.y = 160 
+     
+      local victoryBackground3 =  display.newImage("images/LevelUpShwing.png")
+       victoryBackground3.xScale =  (display.actualContentWidth*0.75) / victoryBackground3.contentWidth
+     victoryBackground3.yScale =  victoryBackground3.xScale
+     victoryBackground3.x = 240
+     victoryBackground3.y = 160 
+        
+
+      local victoryHeader = display.newText({text = "VICTORY", font = "UnitedSansRgHv", fontSize = 25 }  )
+      
+      
+      
+      local victoryText = display.newText({text = "You won card pack" , font = "UnitedItalicRgHv", fontSize = 15}  )
+      victoryHeader.x = 240
+      victoryHeader.y = victoryBackground2.y - victoryBackground2.contentHeight/2  +  victoryHeader.contentHeight /2  + 3
+
+      victoryText.x = 240
+      victoryText.y = 170
+
+      victoryBackground3.y = victoryText.y - victoryBackground3.contentHeight/2 + 12
+      
+      local function victoryOkBtnListener( event )
+          
+          if ( "ended" == event.phase ) then
+            
+            commonData.buttonSound()
+            local options = { isModal = false,
+                                       effect = "fade", 
+                                       time = 400,
+                                       params = {packType="tutorial", cardIdx=commonData.gameData.gamesCount}}
+                 
+            composer.showOverlay( "openPack" , options)  
+    
+          end
+          return true
+     end
+
+     local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
+      local victoryOkBtn = widget.newButton
+      {
+          x = 240,
+          y = 280,
+          id = "boosterButton",
+          defaultFile = buttonsSet .. "/End/EGMainMenuUp.png",
+          overFile = buttonsSet .. "/End/EGMainMenuDown.png",
+          onEvent = victoryOkBtnListener,
+          label = getTransaltedText("OK"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      }
+     victoryOkBtn.xScale =  (display.actualContentWidth*0.3) / victoryOkBtn.width
+      victoryOkBtn.yScale = victoryOkBtn.xScale  
+
+      local  openPack1 = display.newImage("images/album/PackCommon.png")
+      openPack1:scale(0.4,0.4)
+      openPack1.y = 225
+      openPack1.x =240 
+      openPack1.rotation = 20
+      
+      
+     victoryGroup:insert(victoryBackground)
+     victoryGroup:insert(victoryBackground2)
+     victoryGroup:insert(openPack1)
+     victoryGroup:insert(victoryBackground3)
+     
+     victoryGroup:insert(victoryHeader)     
+     victoryGroup:insert(victoryText)
+     
+     
+     victoryGroup:insert(victoryOkBtn)
+
+
+     -- END VICTORY
       local blackRect2 = display.newRect(240, 170, 800,600)
     blackRect2:setFillColor(0, 0, 0)
     blackRect2.alpha = 0.7
@@ -2073,6 +2204,8 @@ function scene:create( event )
           if ob.priceResult.coins < 10 then 
             ob.priceResult.coins = 20
           end
+
+          ob.priceResult.isSpecialPrize = true
           showGameOver(ob.priceResult)
           --parent:outerRefreshCoins()
 
@@ -2234,6 +2367,13 @@ function scene:create( event )
     ob.specialCoins = display.newText(boosterHeaderTextOptions)
     ob.specialCoins:setFillColor(gradient)
 
+    ob.normalPacks = display.newText(boosterHeaderTextOptions)
+    ob.normalPacks:setFillColor(gradient)
+
+    ob.specialPacks = display.newText(boosterHeaderTextOptions)
+    ob.specialPacks:setFillColor(gradient)
+
+
      ob.normalXp = display.newText(boosterHeaderTextOptions)
     ob.normalXp:setFillColor(gradient)
 
@@ -2254,12 +2394,12 @@ function scene:create( event )
 
      local rewardXpImg  = display.newImage("images/XPIcon.png")
     rewardXpImg.x = regularPriceBtn.x  -40
-    rewardXpImg.y = 200
+    rewardXpImg.y = 190
     rewardXpImg:scale(0.5,0.5)
 
     local rewardXpImg2  = display.newImage("images/XPIcon.png")
     rewardXpImg2.x = specialPriceBtn.x  -40
-    rewardXpImg2.y = 200
+    rewardXpImg2.y = rewardXpImg.y
     rewardXpImg2:scale(0.5,0.5)
 
 
@@ -2285,6 +2425,8 @@ function scene:create( event )
     ob.specialCoins.x = rewardCoinImg2.x + rewardCoinImg2.contentWidth / 2 + ob.specialCoins.contentWidth / 2 + 40
     ob.specialCoins.y = rewardCoinImg2.y 
 
+
+
      ob.normalXp.x = ob.normalCoins.x
     ob.normalXp.y = rewardXpImg.y 
 
@@ -2296,6 +2438,29 @@ function scene:create( event )
 
     specialHeader.x  = ob.specialCoins.x -20
     specialHeader.y = 85
+
+    local packCommonImage  = display.newImage("images/album/PackCommon.png")
+    packCommonImage:scale(0.17,0.17)
+    packCommonImage.rotation = 75
+    packCommonImage.x = rewardXpImg.x
+    packCommonImage.y = 230
+
+     local packRareImage  = display.newImage("images/album/PackRare.png")
+    packRareImage:scale(0.17,0.17)
+    packRareImage.rotation = 75
+    packRareImage.x = rewardXpImg2.x
+    packRareImage.y = 230
+
+    ob.normalPacks.x = rewardCoinImg.x + rewardCoinImg.contentWidth / 2 + ob.normalCoins.contentWidth / 2 + 40
+    ob.normalPacks.y = packCommonImage.y 
+
+    ob.specialPacks.x = rewardCoinImg2.x + rewardCoinImg2.contentWidth / 2 + ob.specialCoins.contentWidth / 2 + 40
+    ob.specialPacks.y = packCommonImage.y 
+
+    ob.normalPacks.text = 1
+    ob.specialPacks.text = 1
+
+
 
      finishGameGroup:insert(blackRect2)
      finishGameGroup:insert(cardDecline)
@@ -2314,6 +2479,10 @@ function scene:create( event )
      finishGameGroup:insert(ob.specialCoins)
      finishGameGroup:insert(ob.normalXp)
      finishGameGroup:insert(ob.specialXp)
+     finishGameGroup:insert(packCommonImage)
+     finishGameGroup:insert(packRareImage)
+     finishGameGroup:insert(ob.specialPacks)
+     finishGameGroup:insert(ob.normalPacks)
 
      finishGameGroup:insert(watchAdIcon)
      finishGameGroup:insert(closeIcon)
@@ -2572,7 +2741,7 @@ function scene:create( event )
             commonData.buttonSound()
           
             local options = {params = {gameData = commonData.gameData}}
-            composer.gotoScene( "packs" , options )
+            composer.gotoScene( "album" , options )
           end  
 
            return true
@@ -3268,6 +3437,7 @@ function scene:create( event )
 
      sceneGroup:insert(gameOverGroup) 
      sceneGroup:insert(newLevelGroup) 
+     sceneGroup:insert(victoryGroup) 
      sceneGroup:insert(finishGameGroup) 
      
      
@@ -3302,6 +3472,7 @@ function scene:show( event )
       -- playButton.alpha = 0
         gameOverGroup.alpha =0 
         newLevelGroup.alpha =0 
+        victoryGroup.alpha =0 
         promotionGroup.alpha =0 
         xp.xpEmiter:start()
 
@@ -3321,6 +3492,7 @@ function scene:show( event )
        
       if(event.params and event.params.results) then
         ob.priceResult = event.params.results
+        ob.priceResult.specialPrize = false
         showFinishGame()
         --showGameOver(event.params.results , true)
       end  

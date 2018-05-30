@@ -147,6 +147,7 @@ local ob = {
   
   nextObsecalePos = 0,
   nextCoinPos = 0,
+  nextLetterPos = 0,
   coinsCount = 0 ,
   wasOnGround = true,
   onGround = true,
@@ -169,6 +170,10 @@ local ob = {
   
   scoreTextMove = nil,
   scoreBg = nil, 
+  letterS = nil,
+  letterU = nil,
+  letterP = nil,
+  letterA = nil
   
 }
 
@@ -397,7 +402,8 @@ function scene:create( event )
 display.setStatusBar(display.HiddenStatusBar)
 
  local heroSpine =  require ("hero")
- hero = heroSpine.new(0.33 , false)
+ hero = heroSpine.new(0.33 , false, false ,nil, false, true)
+ 
  ob.chaser =  require ("chaser")
  ob.coach =  require ("coach")
  ob.bubble =  require ("bubble").new()
@@ -474,6 +480,7 @@ ob.boosterButton = widget.newButton
  ob.jumpOverImg = display.newImage("images/JumpOver.png")
  ob.kickOverImg = display.newImage("images/KickBallOver.png")
  ob.tipCircle = display.newImage("images/TipCircle.png")
+ ob.collectCardsImg = display.newImage("images/album/TipSupa.jpg")
 
 ob.tipCircle:scale(0.5,0.5)
 ob.tipCircle.x = 200
@@ -532,12 +539,19 @@ ob.jumpOverImg:scale(0.7,0.7)
 ob.jumpOverImg.x = 200
 ob.jumpOverImg.y = 140
 
+
+ob.collectCardsImg:scale(0.6,0.6)
+ob.collectCardsImg.x = 200
+ob.collectCardsImg.y = 140
+
+
                     
 
 ob.notification:insert(notificationRect)
 ob.notification:insert(ob.boosterMsg.skeleton.group)
 ob.notification:insert(ob.jumpOverImg)
 ob.notification:insert(ob.kickOverImg)
+ob.notification:insert(ob.collectCardsImg)
 ob.notification:insert(ob.tipCircle)
 ob.notification:insert(ob.boosterText)
 ob.notification:insert(ob.boosterHeaderText)
@@ -1157,6 +1171,21 @@ local coinTextOptions =
 
 coinsCountText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
 coinsShadowText = display.newText(coinTextOptions) -- "",0,0, "troika" , 24)
+-- ob.letterS = display.newText({text="S" , x = 320, y = 80, font = "UnitedSansRgHv", fontSize = 25,align = "center"})
+-- ob.letterU = display.newText({text="U" , x = 320, y = 80, font = "UnitedSansRgHv", fontSize = 25,align = "center"})
+-- ob.letterP = display.newText({text="P" , x = 320, y = 80, font = "UnitedSansRgHv", fontSize = 25,align = "center"})
+-- ob.letterA = display.newText({text="A" , x = 320, y = 80, font = "UnitedSansRgHv", fontSize = 25,align = "center"})
+
+ob.letterS = display.newImage("images/album/S.png")
+ob.letterU = display.newImage("images/album/U.png")
+ob.letterP = display.newImage("images/album/P.png")
+ob.letterA = display.newImage("images/album/A.png")
+
+ob.letterS:scale(0.2,0.2)
+ob.letterU:scale(0.2,0.2)
+ob.letterP:scale(0.2,0.2)
+ob.letterA:scale(0.2,0.2)
+
 
 --coinsCount = 0
 coinsCountText:setFillColor(1,206/255,0)
@@ -1166,6 +1195,17 @@ coinsShadowText.y = coinsCountText.y + 2
 coinImg.x = coinImg.x - (displayActualContentWidth - display.contentWidth) /2
 coinsCountText.x = coinsCountText.x - (displayActualContentWidth - display.contentWidth) /2
 coinsShadowText.x = coinsShadowText.x - (displayActualContentWidth - display.contentWidth) /2
+
+ob.letterS.x = coinImg.x
+ob.letterU.x = ob.letterS.x + ob.letterS.contentWidth/2 + ob.letterU.contentWidth/2 + 2
+ob.letterP.x = ob.letterU.x + ob.letterP.contentWidth/2 + ob.letterU.contentWidth/2 + 2
+ob.letterA.x = ob.letterP.x + ob.letterP.contentWidth/2 + ob.letterA.contentWidth/2 + 2
+
+ob.letterS.y = 80
+ob.letterU.y = 80
+ob.letterP.y = 80
+ob.letterA.y = 80
+
 
 trophieImg  = display.newImage("TrophieReward/Trophie.png")
 trophieImg.x = coinImg.x
@@ -1395,6 +1435,17 @@ monster.alpha = ob.defualtAlpha
 
   for a = 1, 10, 1 do
       local coin = display.newImage("images/coin.png")
+      local letter = nil
+
+      if a== 1 then
+        letter = "S"
+      elseif  a== 2 then
+        letter = "U"
+      elseif  a== 3 then
+        letter = "P"
+      elseif  a== 4 then
+        letter = "A"
+      end
 
       coin.name = "coin"
       
@@ -1402,6 +1453,7 @@ monster.alpha = ob.defualtAlpha
       coin.x = 900
       coin.y = 500
       coin.alpha = 0 
+      coin.letter = letter
       --coin.spine = coinSpine
 
       coin.isAlive = false
@@ -1410,7 +1462,7 @@ monster.alpha = ob.defualtAlpha
       coins:insert(coin)
 
       
-      coin.spine =  coinSpineAn.new()
+      coin.spine =  coinSpineAn.new(letter)
       
       coinsSpine:insert(coin.spine.skeleton.group)
       
@@ -1688,7 +1740,10 @@ commonData.resumeGame = function ()
 
         hero:resume()
         ob.chaser:resume()
-        ob.coach:resume()
+
+        if not commonData.isMultiplayer then
+          ob.coach:resume()
+        end
 
         if ob.activeMusicHdl and not commonData.isMute then
           audio.resume(ob.activeMusicHdl)
@@ -2318,6 +2373,10 @@ sceneGroup:insert(trophieCountText)
 
 sceneGroup:insert(coinImg)
 sceneGroup:insert(trophieImg)
+sceneGroup:insert(ob.letterS)
+sceneGroup:insert(ob.letterU)
+sceneGroup:insert(ob.letterP)
+sceneGroup:insert(ob.letterA)
 sceneGroup:insert(newChallengeGroup)
 
 
@@ -2408,6 +2467,8 @@ end
 
 
 ob.nextCoinPos = 0
+ob.nextLetterPos = 0
+
 ob.getNextCoinPos = function(min , range)  
     local gap = randNormal(range ) + min
     if (gameStatus.isUltraMode) then
@@ -2417,82 +2478,20 @@ ob.getNextCoinPos = function(min , range)
      --nextCoinPos = math.floor( score + 2)
 end
 
+ob.getNextLetterPos = function(min , range)  
+    local gap = randNormal(range ) + min
+    if (gameStatus.isUltraMode) then
+       gap = 1 -- math.floor(gap / 3)
+    end
+     ob.nextLetterPos = math.floor( score +  gap )
+     --nextCoinPos = math.floor( score + 2)
+end
+
+
 gameStatus.firstStage = 0
 gameStatus.secondStage = 0
 
-ob.exitUltraMode = function()
-      fire.alpha = 0
-      --ultraBall.alpha = 0 
-      gameStatus.isUltraMode = false
-      ultraWave.alpha = 0
-      
-      --ultraFloor.alpha = 0
-      ob.scoreFull.alpha = 0
-      ob.ultraCoinsCollected = 0
-      ob.ultraGlow.alpha = 0
-      gameStatus.sreeCount = 0
-      ob.updateScoreboard(0)
 
-      if (ballSkin) then             
-            ballSkin.alpha = 1
-      else 
-            ballon.alpha = 1
-      
-      end  
-
-
-      if ob.activeMusicHdl and not commonData.isMute then
-          audio.resume(ob.activeMusicHdl)
-      end
-
-      ob.ultraMusicHdl = nil
-      ob.ultraMusicHdl4 = nil
-
-      --ultraWave:pause()
-      --ultraFloor:pause()
-      
-       for j = 1, fire.numChildren do
-            if fire[j].isEmitter then 
-             fire[j]:stop()          
-            end    
-        end
-
-       if (exitUltraModeHandle) then
-         timer.cancel( exitUltraModeHandle )
-         exitUltraModeHandle = nil
-       end 
-
-
-       if (advanceUltraModeHandle) then
-         timer.cancel( advanceUltraModeHandle )
-         advanceUltraModeHandle = nil
-       end 
-
-       
-       for a = 1, coins.numChildren, 1 do
-            if(coins[a].isAlive == true and coins[a].ultra) then
-          
-              coins[a].x = -100
-              coins[a].ultra = false              
-               
-            end
-       end
-
-
-       for a = 1, obstecales.numChildren, 1 do
-            if(obstecales[a].isAlive and obstecales[a].name ~= "goal") then
-            
-              obstecales[a].isSensor  = false 
-            end
-       end
-       
-       if (gameStatus.inEvent == 14) then
-        gameStatus.inEvent = 0
-       end
-       ob.getNextCoinPos(10,10)
-
-       
-    end
     
     local function advanceUltraMode()
        -- ultraWave:setSequence("advance")
@@ -2653,6 +2652,8 @@ local function showNewTip(tipCode)
      ob.boosterButton.alpha = 0
         ob.kickOverImg.alpha = 0
         ob.jumpOverImg.alpha = 0
+        ob.collectCardsImg.alpha = 0
+        
         ob.tipCircle.alpha = 0
         ob.boosterHeaderText.alpha = 0
         ob.boosterText.alpha = 0
@@ -2878,8 +2879,10 @@ ob.continueGame = function ()
       ob.chaser:init()
       ob.chaser:stand()
 
-      ob.coach:init()
-      ob.coach:stand()
+      if not commonData.isMultiplayer then
+        ob.coach:init()
+        ob.coach:stand()
+      end
 
        ob.bubble:init()
 
@@ -2897,8 +2900,18 @@ ob.restartGame = function ()
 
 -- --      showNewTip
 
+
         continueGroup.alpha = 0    
-        
+        ob.letterS:setFillColor(0.4,0.4,0.4)
+        ob.letterU:setFillColor(0.4,0.4,0.4)      
+        ob.letterP:setFillColor(0.4,0.4,0.4)      
+        ob.letterA:setFillColor(0.4,0.4,0.4)      
+
+        --ob.letterS.fill.effect = "filter.grayscale"
+        -- ob.letterU.fill.effect = "filter.grayscale"
+        -- ob.letterP.fill.effect = "filter.grayscale"
+        -- ob.letterA.fill.effect = "filter.grayscale"
+
         MAX_SPEED = 4 + commonData.catalog.skills[commonData.selectedSkin].speed  
         if MAX_SPEED >  11 then
           START_SPEED =  8
@@ -2939,6 +2952,37 @@ ob.restartGame = function ()
             if (commonData.gameData.gamesCount % 20 == 0 and commonData.gameData.highScore < 3000) then
               commonData.gameData.tipCircleShown = false
             end   
+
+            print(commonData.gameData.collectCardsShowed )
+            if commonData.gameData.gamesCount > 2 and not commonData.gameData.collectCardsShowed then
+                  ob.boosterMsg:init()  
+
+                timer.performWithDelay(100 , function ()                          
+                   ob.notification.alpha = 1
+                 end , 1)     
+                   
+                 commonData.gameData.collectCardsShowed = true
+                 print(commonData.gameData.collectCardsShowed )
+                
+                ob.boosterButton.alpha = 0
+                ob.kickOverImg.alpha = 0
+                ob.jumpOverImg.alpha = 0
+                ob.collectCardsImg.alpha = 0
+                
+                ob.tipCircle.alpha = 0
+                ob.boosterHeaderText.alpha = 0
+                ob.boosterText.alpha = 0
+                
+                gameStatus.isAnyLeg = true
+                gameStatus.ignoreClick = true
+              timer.performWithDelay(1500 , function ()                          
+                                  ob.collectCardsImg.alpha = 1
+                                  
+                                end , 1)
+                                timer.performWithDelay(2500 , function ()
+                                  ob.boosterButton.alpha = 1                          
+                                end , 1)
+            end                    
         else
           commonData.analytics.logEvent("restartGame without gameData")     
         end
@@ -2985,7 +3029,7 @@ ob.restartGame = function ()
  
       physics.start()       
       touchIDs = {} 
-      gameStatus.isGameActive = true
+      
       gameStatus.isAnyLeg = true
       gameStatus.isGamePaused = false
       gameStatus.isConfirmationRequired = false
@@ -3165,7 +3209,7 @@ ob.restartGame = function ()
 
       if commonData.gameData and commonData.gameData.gamesCount == 0 then 
       -- TODO: cahnge
-        ob.getNextObstecalePos(40,3)
+        ob.getNextObstecalePos(8,1)
       else
         ob.getNextObstecalePos(10,15)
       end
@@ -3173,6 +3217,7 @@ ob.restartGame = function ()
       
       
       ob.getNextCoinPos(5,25)
+      ob.getNextLetterPos(5,25)
 
       gameStats = {}
       gameStats.coins = 0
@@ -3235,8 +3280,12 @@ ob.restartGame = function ()
         kickToStart.alpha = 1
 
         ob.chaser.skeleton.group.alpha = 1
-        ob.coach.skeleton.group.alpha = 1
-        
+
+        if  commonData.isMultiplayer then
+          ob.coach.skeleton.group.alpha = 0
+        else
+          ob.coach.skeleton.group.alpha = 1
+        end
 
            -- Start standing
           ballon.isSleepingAllowed = false
@@ -3304,8 +3353,10 @@ ob.restartGame = function ()
       ob.chaser:init()
       ob.chaser:stand()
 
-      ob.coach:init()
-      ob.coach:stand()
+      if not commonData.isMultiplayer then
+        ob.coach:init()
+        ob.coach:stand()
+      end
 
        ob.bubble:init()
 
@@ -3332,7 +3383,7 @@ ob.restartGame = function ()
 
         local heroSpine =  require ("hero")
 
-        local opp = heroSpine.new(0.2 , false,false,commonData.opponents[i].skin)
+        local opp = heroSpine.new(0.2 , false,false,commonData.opponents[i].skin,false)
          opp:init()
          opp:stand(true)
          opponentsSpines[i] = {}
@@ -3341,10 +3392,12 @@ ob.restartGame = function ()
         opponentsGroup:insert(opp.skeleton.group)
         opp.skeleton.group.y = ob.coach.skeleton.group.y
         opp.skeleton.group.x = hero.skeleton.group.x - i*5
+
+
              
        end 
      end 
-
+     gameStatus.isGameActive = true
       timer.resume(gameStatus.mainTimer)
     
     end
@@ -3359,7 +3412,7 @@ function scene:show( event )
 
    if ( phase == "will" ) then
       -- Called when the scene is still off screen (but is about to come on screen).
-      
+       gameStatus.isGameActive = false 
        if commonData.selectedSkin == "Shakes" then
           sounds.jumpSound  = audio.loadSound( "sounds/players/ShakesJump01.mp3" )
           sounds.heroFallSound  = audio.loadSound( "sounds/players/ShakesFall01.mp3" )
@@ -3494,6 +3547,13 @@ function scene:show( event )
     local function getObstecaleIndexes()
       local newIndexes = {}
       local goalRnd = mRandom(100)
+
+      if commonData.gameData.gamesCount > 0 and commonData.gameData.kickOverShowed and not commonData.gameData.jumpOverShowed then
+        newIndexes[1]  = ob.CAN_INDEX
+        gameStatus.forceHard = true
+        return newIndexes
+      end  
+      gameStatus.forceHard = false
 
       if (goalRnd < P_GOAL and isGoalExists > 0) then
           newIndexes[1] = ob.GOAL_INDEX
@@ -3663,6 +3723,14 @@ function scene:show( event )
                       ob.getNextCoinPos(10 ,10)
 
               end
+
+              if (score >= ob.nextLetterPos) then
+                      gameStatus.inEvent = 15
+                      gameStatus.eventRun = 1
+                      ob.getNextLetterPos(1 ,1)
+
+              end
+              
                         --the more frequently you want events to happen then
               --greater you should make the checks
               if(score >= ob.nextObsecalePos) then
@@ -3917,7 +3985,7 @@ function scene:show( event )
                           
                                  for i=1,4 do                                 
                                   -- todo: 70 
-                                   if (obstecales[obsIndex].isAlive or (score < 70 and obstecales[obsIndex].isHard)) then
+                                   if (obstecales[obsIndex].isAlive or (score < 70 and obstecales[obsIndex].isHard and not gameStatus.forceHard)) then
                                       obsIndex = obsIndex - 1
                                       if ( obsIndex == 0) then
                                         obsIndex = 4
@@ -3943,11 +4011,54 @@ function scene:show( event )
 
                     end
                              -- create new coin
+                    if(gameStatus.inEvent == 15) then 
+                       local  letterIdx = nil
+                           if not gameStats.letterS  then                            
+                              letterIdx = 1
+                           elseif not gameStats.letterU then
+                            letterIdx = 2
+                           elseif not gameStats.letterP then
+                            letterIdx = 3
+                           elseif not gameStats.letterA then
+                            letterIdx = 4
+                           end 
+
+                            if letterIdx and not coins[letterIdx].isAlive then
+                              
+                               
+                                   coins[letterIdx].isAlive = true
+                                   coins[letterIdx].isEnabled = true
+                                   coins[letterIdx].y = mRandom(200)
+                                   coins[letterIdx].x = newX
+                                   coins[letterIdx].ultra  = false
+                                   
+                                   coinsSpine[letterIdx].y = coins[letterIdx].y
+                                   coinsSpine[letterIdx].x = coins[letterIdx].x
+                                   coins[letterIdx].spine:init()
+                            end       
+
+
+                    end  
                     if(gameStatus.inEvent == 14) then
-                           for a=1, coins.numChildren, 1 do
-                               if(coins[a].isAlive == true) then
-                                   --do nothing
-                               else
+                          local availableCoins = {}
+                          local avIdx = 1
+                           for a=5, coins.numChildren, 1 do
+
+
+                               if(not coins[a].isAlive ) then
+                                   availableCoins[avIdx] = a
+                                   avIdx = avIdx + 1
+                               end
+                           end
+
+                          
+                            if #availableCoins > 0 then
+                              coinIdx = availableCoins[math.random(#availableCoins)]
+                            end
+                            
+                           if coinIdx then
+                              
+                               local a = coinIdx
                                    coins[a].isAlive = true
                                    coins[a].isEnabled = true
                                    coins[a].y = mRandom(200)
@@ -3982,10 +4093,7 @@ function scene:show( event )
                                        coins[a + 2].spine:init()
 
                                      end 
-                                   end
-
-                                   break
-                               end
+                                   end                               
                            end
                    end
 
@@ -4011,8 +4119,9 @@ function scene:show( event )
       
       ob.chaser:stand()
 
-      
-      ob.coach:stand()
+      if not commonData.isMultiplayer then
+        ob.coach:stand()
+      end
       
 
       collisionRect.isSensor = false
@@ -4039,8 +4148,9 @@ function scene:show( event )
       
       ob.chaser:stand()
 
-      
-      ob.coach:stand()
+      if not commonData.isMultiplayer then  
+        ob.coach:stand()
+      end
       
 
 
@@ -4065,6 +4175,8 @@ function scene:show( event )
     ob.boosterButton.alpha = 0
     ob.kickOverImg.alpha = 0
     ob.jumpOverImg.alpha = 0
+    ob.collectCardsImg.alpha = 0
+    
     ob.tipCircle.alpha = 0
     ob.boosterHeaderText.alpha = 0
     ob.boosterText.alpha = 0
@@ -4406,7 +4518,7 @@ function scene:show( event )
 
      
     
-gameStatus.isGameActive = true
+gameStatus.isGameActive = false
     
     ob.stopGameElements =  function () 
 
@@ -4593,6 +4705,82 @@ gameStatus.isGameActive = true
           
    end
     
+    ob.exitUltraMode = function()
+      fire.alpha = 0
+      --ultraBall.alpha = 0 
+      gameStatus.isUltraMode = false
+      ultraWave.alpha = 0
+      
+      --ultraFloor.alpha = 0
+      ob.scoreFull.alpha = 0
+      ob.ultraCoinsCollected = 0
+      ob.ultraGlow.alpha = 0
+      gameStatus.sreeCount = 0
+      ob.updateScoreboard(0)
+
+      if (ballSkin) then             
+            ballSkin.alpha = 1
+      else 
+            ballon.alpha = 1
+      
+      end  
+
+
+      if ob.activeMusicHdl and not commonData.isMute then
+          audio.resume(ob.activeMusicHdl)
+      end
+
+      ob.ultraMusicHdl = nil
+      ob.ultraMusicHdl4 = nil
+
+      --ultraWave:pause()
+      --ultraFloor:pause()
+      
+       for j = 1, fire.numChildren do
+            if fire[j].isEmitter then 
+             fire[j]:stop()          
+            end    
+        end
+
+       if (exitUltraModeHandle) then
+         timer.cancel( exitUltraModeHandle )
+         exitUltraModeHandle = nil
+       end 
+
+
+       if (advanceUltraModeHandle) then
+         timer.cancel( advanceUltraModeHandle )
+         advanceUltraModeHandle = nil
+       end 
+
+       
+       for a = 1, coins.numChildren, 1 do
+            if(coins[a].isAlive == true and coins[a].ultra) then
+          
+              coins[a].x = -100
+              coins[a].ultra = false              
+               
+            end
+       end
+
+
+       for a = 1, obstecales.numChildren, 1 do
+            if(obstecales[a].isAlive and obstecales[a].name ~= "goal") then
+            
+              obstecales[a].isSensor  = false 
+            end
+       end
+       
+       if (gameStatus.inEvent == 14) then
+        gameStatus.inEvent = 0
+       end
+       ob.getNextCoinPos(10,10)
+
+
+       if gameStatus.isGameActive and  commonData.gameData.gamesCount == 0 then
+        stopGame()
+       end 
+    end  
    
     local function checkCollisions()
          ob.wasOnGround = ob.onGround
@@ -5252,7 +5440,9 @@ gameStatus.isGameActive = true
                 hero:walk()
               end
               ob.chaser:walk()
-              ob.coach:walk()
+              if not commonData.isMultiplayer then
+                ob.coach:walk()
+              end
               
               
               kickToStart.alpha = 0
@@ -5688,36 +5878,59 @@ gameStatus.isGameActive = true
           local params = event.source.params    
           if (params.coinObj.isEnabled and gameStatus.isGameActive) then
             params.coinObj.isEnabled = false
-            ob.coinsCount = ob.coinsCount  + 1            
             
             params.coinObj.spine:collect()
             local ts = timer.performWithDelay(500, removeCoin, 1)
             ts.params = {coinObj =  params.coinObj}
             commonData.playSound( sounds.coinSound )   
 
-            gameStats.coins = gameStats.coins + 1
-            
-            reportChallenge("collectCoin")
-            setCoinsCount()
-
-
-            if params.coinObj.ultra then
-              ob.ultraCoinsCollected = ob.ultraCoinsCollected  + 1
-              if (ob.ultraCoinsCollected == 4 ) then
-                reportChallenge("collectSpreeCoins")
-              end  
-
-              if (ob.ultraCoinsCollected == 6 ) then
-                reportChallenge("collectSpreeCoins2")
-              end  
+            if params.coinObj.letter then
+              if params.coinObj.letter == "S" then
+                ob.letterS.fill.effect = nil
+                ob.letterS:setFillColor(1,1,1)      
+                gameStats.letterS = true
+              elseif params.coinObj.letter == "U" then
+                ob.letterU.fill.effect = nil
+                ob.letterU:setFillColor(1,1,1)      
+                gameStats.letterU = true
+              elseif params.coinObj.letter == "P" then
+                ob.letterP.fill.effect = nil
+                ob.letterP:setFillColor(1,1,1)      
+                gameStats.letterP = true
+              elseif params.coinObj.letter == "A" then
+                ob.letterA.fill.effect = nil
+                ob.letterA:setFillColor(1,1,1)      
+                gameStats.letterA = true
+              end
             else  
+              -- params.coinObj.alpha = 1
+              -- transition.to(params.coinObj, {x =20 , y = 20 , time = 300})
+
+              ob.coinsCount = ob.coinsCount  + 1                        
+              gameStats.coins = gameStats.coins + 1
+              
+              reportChallenge("collectCoin")
+              setCoinsCount()
 
 
-                if params.coinObj.y <= 30 then
-                  reportChallenge("goldDigger")
-                end
-            
-            end  
+              if params.coinObj.ultra then
+                ob.ultraCoinsCollected = ob.ultraCoinsCollected  + 1
+                if (ob.ultraCoinsCollected == 4 ) then
+                  reportChallenge("collectSpreeCoins")
+                end  
+
+                if (ob.ultraCoinsCollected == 6 ) then
+                  reportChallenge("collectSpreeCoins2")
+                end  
+              else  
+
+
+                  if params.coinObj.y <= 30 then
+                    reportChallenge("goldDigger")
+                  end
+              
+              end  
+             end 
 
           end
       end
@@ -6045,7 +6258,7 @@ gameStatus.isGameActive = true
             updateReferee()
             checkCollisions()
             updateKids()      
-            --updateOpponents()     
+            updateOpponents()     
             end  
 
 

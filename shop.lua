@@ -983,7 +983,9 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
              icons[i].equipped.alpha = 0
           end
           
-          icons[selectedItemIdx].equipped.alpha = 1
+          if (seletedCategory ~= "cards") then
+            icons[selectedItemIdx].equipped.alpha = 1
+          end
 
 
           commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
@@ -1511,18 +1513,32 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
 
                   commonData.analytics.logEvent( "buyWithGems", {  item = tostring(  commonData.catalog.items[seletedCategory][selectedItemIdx].id ) } ) 
 
-            
+                  if seletedCategory == "cards" then
+                    if commonData.catalog.items[seletedCategory][selectedItemIdx].commonPacks then
+                        commonData.gameData.commonPacks = commonData.gameData.commonPacks + commonData.catalog.items[seletedCategory][selectedItemIdx].commonPacks 
+                    end    
+                    if commonData.catalog.items[seletedCategory][selectedItemIdx].rarePacks then
+                        commonData.gameData.rarePacks = commonData.gameData.rarePacks + commonData.catalog.items[seletedCategory][selectedItemIdx].rarePacks 
+                    end
+                    if commonData.catalog.items[seletedCategory][selectedItemIdx].epicPacks then
+                        commonData.gameData.epicPacks = commonData.gameData.epicPacks + commonData.catalog.items[seletedCategory][selectedItemIdx].epicPacks 
+                    end
+                  else
+                    commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] = true  
+                    icons[selectedItemIdx].owned.alpha = 1
+                    useButton.alpha = 1
+                    buyButton.alpha = 0
+                  end  
                   gemsCount = gemsCount - commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
-                  commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] = true
+                  
                   commonData.gameData.gems  = gemsCount
                   commonData.gameData.usedgems =  commonData.gameData.usedgems + commonData.catalog.items[seletedCategory][selectedItemIdx].gemsCost
                   setCoinsCount()
-                  icons[selectedItemIdx].owned.alpha = 1
+                  
 
                   setSelectedItems()
                   areYouSurePopup.alpha = 0
-                  useButton.alpha = 1
-                  buyButton.alpha = 0
+                  
                   watchAdButton.alpha = 0
                   watchAdDisabledButton.alpha = 0
                   setSlidesLocked(false)

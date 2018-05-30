@@ -15,7 +15,7 @@ local isFlurryReady = false
 local shouldLogOpens = false
 local packsButton = nil
 local playButton = nil
-local multiplayerButton = nil
+-- local multiplayerButton = nil
 local shopButton = nil 
 local iCloud = nil
 local dailyRewardBlocker = nil
@@ -28,6 +28,28 @@ local coinsCountText = nil
 local coinsShadowText = nil
 local isDoubleBonusClaimed = false
 local  isAppodealInitCalled = false
+
+local function printTable( t, label, level )
+  if label then print( label ) end
+  level = level or 1
+
+  if t then
+    for k,v in pairs( t ) do
+      local prefix = ""
+      for i=1,level do
+        prefix = prefix .. "\t"
+      end
+
+      print( prefix .. "[" .. tostring(k) .. "] = " .. tostring(v) )
+      if type( v ) == "table" then
+        print( prefix .. "{" )
+        printTable( v, nil, level + 1 )
+        print( prefix .. "}" )
+      end
+    end
+  end
+end
+
 
 commonData.catalog = require("catalog")
       local levelTextOptions23 = 
@@ -44,6 +66,96 @@ commonData.catalog = require("catalog")
 
       --debugText = display.newText(levelTextOptions23) -- "",0,0, "UnitedSansRgHv" , 24)
 commonData.sessionGames = 0
+
+  commonData.collection = {} 
+      for i=1,180 do
+              --if (collection[i].id == "shakes1" or collection[i].id == "shakes2" or collection[i].id == "shakes3" or  collection[i].id == "shakes4" ) then
+            commonData.collection[i] = {} 
+            commonData.collection[i].id = "temp" .. i
+      end    
+
+      local packTypes = {{0,0},{0,0},{0,0},{0,1},{0,2},{0,3},{0,4},{0,4},{0,5},{1,4},{1,5},
+                        {1,4},{2,2},{3,2},{3,3},{3,1},{4,2},{4,3},{4,4},{5,2},{5,3}}
+
+                        
+      for i=1,180 do
+        --if (collection[i].id == "shakes1" or collection[i].id == "shakes2" or collection[i].id == "shakes3" or  collection[i].id == "shakes4" ) then
+       
+            local j= i % 9
+            if j == 0  then
+              j = 9
+            end  
+
+            local c = j % 5
+            if c == 0  then
+              c = 5
+            end  
+            commonData.collection[i].col =  c
+            commonData.collection[i].row =  math.floor((i-1) / 9) * 2 + math.floor((j-1) / 5) + 2
+            commonData.collection[i].iconColor = {a}
+
+            commonData.collection[i].type = "common"
+            commonData.collection[i].group = math.floor((i-1) / 9) + 2
+
+            --3 3 3 2 2 2 1 1 1 
+            -- 5 5 4 4 4 3 3 3 2 1 1 1 -> 36
+            -- 3 2 4 3 2 1 3 2 2 4 5 4 3 5 4 3 2 1 1 -> 54
+            
+            if 9 - packTypes[commonData.collection[i].group][1] < j then
+              commonData.collection[i].type = "epic"
+
+            elseif  9 - packTypes[commonData.collection[i].group][1] - packTypes[commonData.collection[i].group][2] < j then
+              commonData.collection[i].type = "rare"
+            else  
+              commonData.collection[i].type = "common"
+            end  
+            -- if (commonData.collection[i].group > 8 and j==9 ) or 
+            --    (commonData.collection[i].group > 11 and j==8 ) or 
+            --    (commonData.collection[i].group > 12 and j==7 ) or 
+            --    (commonData.collection[i].group > 15 and j==6 ) or                
+            --    (commonData.collection[i].group > 19 and j==5 )  
+            -- then
+            --   commonData.collection[i].type = "epic"
+            -- end  
+
+            -- --3 3 3 3 3 2 2 2 1 1 1 
+            -- if (commonData.collection[i].type ~= "epic") and 
+            --    ((commonData.collection[i].group > 2 and j==9 ) or -- 16
+            --     (commonData.collection[i].group > 8 and j==8 ) or -- 10
+            --    (commonData.collection[i].group > 12 and j==7 )) -- 6
+            -- then
+            --   commonData.collection[i].type = "rare"
+
+            -- end
+       -- end
+      end  
+
+      commonData.collection[1].row = 1
+      commonData.collection[2].row = 1
+      commonData.collection[3].col = 1
+      commonData.collection[4].col = 2
+      commonData.collection[5].col = 3
+      commonData.collection[6].col = 4
+      commonData.collection[6].row = 2
+      commonData.collection[7].col = 1
+      commonData.collection[8].col = 2
+      commonData.collection[9].col = 3
+
+      commonData.collection[1].group = 1
+      commonData.collection[2].group = 1
+
+      commonData.packByType = {}
+      commonData.packByType["epic"] = {}
+      commonData.packByType["rare"] = {}
+      commonData.packByType["common"] = {}
+
+      for i=1,180 do
+              --if (collection[i].id == "shakes1" or collection[i].id == "shakes2" or collection[i].id == "shakes3" or  collection[i].id == "shakes4" ) then
+            
+            commonData.packByType[commonData.collection[i].type][#commonData.packByType[commonData.collection[i].type] + 1] = i
+
+      end    
+
 
 local notifications = require( "plugin.notifications.v2" )
   
@@ -77,36 +189,13 @@ end
  
 
  --local clouds = nil
-local function printTable( t, label, level )
-  if label then print( label ) end
-  level = level or 1
-
-  if t then
-    for k,v in pairs( t ) do
-      local prefix = ""
-      for i=1,level do
-        prefix = prefix .. "\t"
-      end
-
-      print( prefix .. "[" .. tostring(k) .. "] = " .. tostring(v) )
-      if type( v ) == "table" then
-        print( prefix .. "{" )
-        printTable( v, nil, level + 1 )
-        print( prefix .. "}" )
-      end
-    end
-  end
-end
  
--- commonData.isMultiplayer = true
--- commonData.opponents = {
--- {formattedRank="11",formattedScore="50,000",speed=4,skin="CoolJoe"},
---                                       {player={name="moshe",id="124"},formattedRank="12",formattedScore="40,000",speed=5,skin="Shakes"},
---                                       {player={name="moshe2",id="125"},formattedRank="13",formattedScore="30,000",speed=6,skin="CoolJoe"},
---                                       {player={name="moshe3",id="126"},formattedRank="14",formattedScore="20,000",speed=7,skin="CoolJoe"},
---                                       {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",speed=7.5,skin="ElMatador"},
---                                       {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",speed=8,skin="Blok"}  
---                                     }
+-- commonData.isMultiplayer = false
+commonData.opponents = {
+                                         {formattedRank="11",formattedScore="50,000",speed=5,skin="CoolJoe"},
+                                         {player={name="moshe4",id="127"},formattedRank="15",formattedScore="10,000",speed=7.5,skin="ElMatador"},
+                                      {player={name="moshe5",id="128"},formattedRank="16",formattedScore="5,000",speed=8,skin="Blok"}  
+                                    }
 
 commonData.leaderboard = {}
 commonData.reloadLeaderboard =  function(callback)
@@ -1013,6 +1102,11 @@ local function loadGameScene()
          -- timer.performWithDelay(100, function ()
          --  collectgarbage()   
          -- end, 1)
+          if isFirstGame then
+            local options = {params = {gameData = commonData.gameData, isTutorial=false}}
+            composer.gotoScene( "game" , options )
+          end   
+          
 
       end
      
@@ -1377,6 +1471,7 @@ Runtime:addEventListener( "system", systemEvents )
           
           if ( "ended" == event.phase ) then
           --collectgarbage()   
+            commonData.gameData.isPlayPressed = true
             commonData.playSound( selectMenuSound ) 
             local isTutorial = (event.target.id == "tutorialButton") or isFirstGame
 
@@ -1449,6 +1544,7 @@ Runtime:addEventListener( "system", systemEvents )
     local function shopListener( event )
          if ( "ended" == event.phase ) then
           commonData.playSound( selectMenuSound ) 
+          commonData.gameData.isShopPressed = true
           
           local options = {params = {gameData = commonData.gameData}}
           composer.gotoScene( "shop" , options )
@@ -1459,9 +1555,10 @@ Runtime:addEventListener( "system", systemEvents )
 
      local function packsListener( event )
          if ( "ended" == event.phase ) then
+         commonData.gameData.isPacksPressed = true
           local options = {params = {gameData = commonData.gameData}}
           commonData.playSound( selectMenuSound ) 
-          composer.gotoScene( "packs" , options )
+          composer.gotoScene( "album" , options )
          end 
            return true
      end
@@ -1507,76 +1604,76 @@ Runtime:addEventListener( "system", systemEvents )
      end
 
 
-     function triggerMultiplayer( )
+     -- function triggerMultiplayer( )
         
-        if 1==1 then
-          return
-        end  
-        local function handleRealtime( event )
-            if (event.phase == "created") then
+        
+     --    local function handleRealtime( event )  
+     --        printTable(event)
+     --        if (event.phase == "created") then
 
-              commonData.gpgs.multiplayer.realtime.show({roomId= event.roomId, minPlayersRequired = 1, listener = function ( e )
-                print("-------------")
-                print(json.encode(e))
-                print("-------------")
-                if (e.isError == false) then
-                  print("user quit show")
-                else
+     --          commonData.gpgs.multiplayer.realtime.show({roomId= event.roomId, minPlayersRequired = 1, listener = function ( e )
+     --            print("-------------")
+     --            print(json.encode(e))
+     --            print("-------------")
+     --            if (e.isError == false) then
+     --              print("user quit show")
+     --            else
 
-                end
-              end})
-            end
-              if event.phase == "connected" then
-                roomId = event.roomId
-                commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= tostring(myPlayerNum)})
-              end
-        end
-        local function dataHandle( event )
-          if( event.payload ) then
-              if (tonumber(event.payload )) then -- handle
-                if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
-                    otherPlayerNum = tonumber(event.payload)
-                  end
-                  if (otherPlayerNum < myPlayerNum) then
-                    myType = "X"
-                  canPlay= true
-                  end
-                  display.remove( playerLetterText )
-                  playerLetterText = display.newText( sceneGroup, myType, display.contentCenterX, 20, native.systemFontBold, 15 )
-                else -- is table data
-                  if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
-                    gameTable = json.decode( event.payload)
-                    updateBoard()
-                    canPlay= true
-                    if (gameTable.winner and gameTable.winner ~= "") then
-                      canPlay = false
-                      playerLetterText.text = "you lose, reset app to play again"
-                    end
-                  else -- my data
-                    gameTable = json.decode( event.payload )
-                    updateBoard()
-                  end
-              end
-              end
-        end
-        commonData.gpgs.multiplayer.realtime.setListeners({message=dataHandle, room = handleRealtime})
-        commonData.gpgs.multiplayer.realtime.create({automatch = {minPlayers = 0, maxPlayers = 3}})
-      end
-      function sendMyData( )
-        commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= json.encode( gameTable )})
-      end
+     --            end
+     --          end})
+     --        end
+     --          if event.phase == "connected" then
+     --            roomId = event.roomId
+     --            commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= tostring(myPlayerNum)})
+     --          end
+     --    end
+     --    local function dataHandle( event )
+     --      printTable(event)
+     --      if( event.payload ) then
+     --          if (tonumber(event.payload )) then -- handle
+     --            if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
+     --                otherPlayerNum = tonumber(event.payload)
+     --              end
+     --              if (otherPlayerNum < myPlayerNum) then
+     --                myType = "X"
+     --              canPlay= true
+     --              end
+     --              display.remove( playerLetterText )
+     --              playerLetterText = display.newText( sceneGroup, myType, display.contentCenterX, 20, native.systemFontBold, 15 )
+     --            else -- is table data
+     --              if (event.fromPlayerID ~= commonData.googlePlayerId) then -- not my data
+     --                gameTable = json.decode( event.payload)
+                    
+     --                canPlay= true
+     --                if (gameTable.winner and gameTable.winner ~= "") then
+     --                  canPlay = false
+     --                  playerLetterText.text = "you lose, reset app to play again"
+     --                end
+     --              else -- my data
+     --                gameTable = json.decode( event.payload )
+                    
+     --              end
+     --          end
+     --          end
+     --    end
+     --    commonData.gpgs.multiplayer.realtime.setListeners({message=dataHandle, room = handleRealtime})
+     --    commonData.gpgs.multiplayer.realtime.create({automatch = {minPlayers = 0, maxPlayers = 3}})
+     --  end
+     --  function sendMyData( )
+     --    commonData.gpgs.multiplayer.realtime.sendReliably({roomId = roomId, payload= json.encode( gameTable )})
+     --  end
 
-     local function multiplayerListener( event )
+     -- local function multiplayerListener( event )
           
 
-         if ( "ended" == event.phase  and commonData.gpgsConnected) then
-              print("triggerMultiplayer")
-               triggerMultiplayer()
+     --     if ( "ended" == event.phase  and commonData.gpgsConnected) then
+     --          print("triggerMultiplayer")
+     --           triggerMultiplayer()
           
-          end
-           return true
+     --      end
+     --       return true
 
-     end
+     -- end
 
 
      
@@ -1615,32 +1712,32 @@ Runtime:addEventListener( "system", systemEvents )
       -- playButton:scale( playButton.contentWidth / display.actualContentWidth  , 0.5)
       playButton.x = playButton.x - (display.actualContentWidth - display.contentWidth)/2
 
-      multiplayerButton= widget.newButton
-      {
-          x = 160, 
-          y = 210,
-          id = "playButton",
-          -- defaultFile = "MainMenu/PlayBtnUp.png",
-          -- overFile = "MainMenu/PlayBtnDown.png",
-          onEvent = multiplayerListener,
-          defaultFile = "MainMenu/EmptyBtnUp.png",          
-         overFile = "MainMenu/EmptyBtnDown.png",
+      -- multiplayerButton= widget.newButton
+      -- {
+      --     x = 160, 
+      --     y = 210,
+      --     id = "playButton",
+      --     -- defaultFile = "MainMenu/PlayBtnUp.png",
+      --     -- overFile = "MainMenu/PlayBtnDown.png",
+      --     onEvent = multiplayerListener,
+      --     defaultFile = "MainMenu/EmptyBtnUp.png",          
+      --    overFile = "MainMenu/EmptyBtnDown.png",
           
-          label = getTransaltedText("Play"),
-          --labelAlign = "left",
-          font = "UnitedItalicRgHv",  
-          fontSize = 80 , 
-          labelXOffset = -80,
-          labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
+      --     label = getTransaltedText("Play"),
+      --     --labelAlign = "left",
+      --     font = "UnitedItalicRgHv",  
+      --     fontSize = 80 , 
+      --     labelXOffset = -80,
+      --     labelColor = { default={ gradient }, over={ 255/255,241/255,208/255 } }
 
-      }
+      -- }
 
-       multiplayerButton.xScale =  (display.actualContentWidth*0.25) / multiplayerButton.width
-       multiplayerButton.yScale = multiplayerButton.xScale  
+      --  multiplayerButton.xScale =  (display.actualContentWidth*0.25) / multiplayerButton.width
+      --  multiplayerButton.yScale = multiplayerButton.xScale  
 
-      -- playButton:scale( playButton.contentWidth / display.actualContentWidth  , 0.5)
-      multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
-      multiplayerButton.alpha = 0
+      -- -- playButton:scale( playButton.contentWidth / display.actualContentWidth  , 0.5)
+      -- multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
+      -- --multiplayerButton.alpha = 0
       shopButton = widget.newButton
       {
           x = 160,
@@ -1693,8 +1790,8 @@ Runtime:addEventListener( "system", systemEvents )
        packsButton.x = packsButton.x - (display.actualContentWidth - display.contentWidth)/2
        packsButton.y =  shopButton.y + packsButton.contentHeight /2  + shopButton.contentHeight /2 + 5
 
-       multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
-       multiplayerButton.y =  packsButton.y + packsButton.contentHeight /2  + multiplayerButton.contentHeight /2 + 5
+       -- multiplayerButton.x = multiplayerButton.x - (display.actualContentWidth - display.contentWidth)/2
+       -- multiplayerButton.y =  packsButton.y + packsButton.contentHeight /2  + multiplayerButton.contentHeight /2 + 5
 
       local leaderButton = widget.newButton
       {
@@ -1746,7 +1843,13 @@ Runtime:addEventListener( "system", systemEvents )
       statsButton.x = leaderButton.x - leaderButton.contentWidth/2 - statsButton.contentWidth/2 - 2
      
      
-   
+    
+      local handSpineAn = require "hand" 
+      hand =  handSpineAn.new(0.2)      
+      hand.skeleton.group.x = 60
+      hand.skeleton.group.alpha = 0
+      
+      
      
 
       --backButton.x = display.screenOriginX  + backButton.contentWidth /2
@@ -1818,10 +1921,10 @@ Runtime:addEventListener( "system", systemEvents )
                playButton:setLabel(getTransaltedText("Play")) 
                shopButton:setLabel(getTransaltedText("Shop")) 
                packsButton:setLabel(getTransaltedText("Packs")) 
-               multiplayerButton:setLabel(getTransaltedText("Multi")) 
+               -- multiplayerButton:setLabel(getTransaltedText("Multi")) 
 
                playButton.labelAlign = "left"
-               multiplayerButton.labelAlign = "left"
+               -- multiplayerButton.labelAlign = "left"
 
                commonData.saveTable(commonData.gameData, GAME_DATA_FILE , nil , true)
           end
@@ -1842,17 +1945,12 @@ Runtime:addEventListener( "system", systemEvents )
        
       changeLangButton.yScale = (display.actualContentHeight *0.1) / changeLangButton.height
       changeLangButton.xScale =  changeLangButton.yScale 
-
-
-
-
-    
       
       statsButton.x =  35 +   statsButton.contentWidth / 2 + 10
       leaderButton.x =  statsButton.x + statsButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       achivButton.x =  leaderButton.x + achivButton.contentWidth /2 +   leaderButton.contentWidth / 2 + 10
       playButton.x = leaderButton.x 
-      multiplayerButton.x = leaderButton.x 
+      -- multiplayerButton.x = leaderButton.x 
       shopButton.x = leaderButton.x
       packsButton.x = leaderButton.x
       
@@ -1872,12 +1970,12 @@ Runtime:addEventListener( "system", systemEvents )
       playButton.y = display.actualContentHeight * 0.25 - (display.actualContentHeight - display.contentHeight)/2 
       shopButton.y =  playButton.y + (playButton.contentHeight + shopButton.contentHeight)/2 + 10
       packsButton.y =  shopButton.y + (packsButton.contentHeight + shopButton.contentHeight)/2 + 10
-      multiplayerButton.y =  packsButton.y + (packsButton.contentHeight + multiplayerButton.contentHeight)/2 + 10
+      -- multiplayerButton.y =  packsButton.y + (packsButton.contentHeight + multiplayerButton.contentHeight)/2 + 10
     
        playButton.x =  240 - display.actualContentWidth/2  + playButton.contentWidth/2
        shopButton.x =  240 - display.actualContentWidth/2  + shopButton.contentWidth/2
        packsButton.x =  240 - display.actualContentWidth/2  + packsButton.contentWidth/2
-       multiplayerButton.x =  240 - display.actualContentWidth/2  + multiplayerButton.contentWidth/2
+       -- multiplayerButton.x =  240 - display.actualContentWidth/2  + multiplayerButton.contentWidth/2
        statsButton.x = 240 - display.actualContentWidth/2  + statsButton.contentWidth/2
        leaderButton.x = statsButton.x + (leaderButton.contentWidth*0.75)/2 
        achivButton.x = leaderButton.x + (leaderButton.contentWidth )/2  + 10
@@ -2021,7 +2119,7 @@ Runtime:addEventListener( "system", systemEvents )
      
      
      sceneGroup:insert(playButton)
-     sceneGroup:insert(multiplayerButton)
+     -- sceneGroup:insert(multiplayerButton)
      
      
      sceneGroup:insert(achivButton)
@@ -2029,6 +2127,8 @@ Runtime:addEventListener( "system", systemEvents )
      sceneGroup:insert(statsButton)
      sceneGroup:insert(shopButton)
      sceneGroup:insert(packsButton)
+     sceneGroup:insert(hand.skeleton.group)
+     
      
      sceneGroup:insert(logo)   
 
@@ -2192,6 +2292,7 @@ function scene:show( event )
             commonData.gameData.usedgems = 0
             commonData.gameData.usedpacks = 0 
             commonData.gameData.packs = 0
+
             commonData.gameData.fbPacks = false
             commonData.gameData.packsBought = 0             
             commonData.gameData.gamesCount = 0
@@ -2208,12 +2309,16 @@ function scene:show( event )
             commonData.gameData.daysInARow = false
             commonData.gameData.language = system.getPreference( "locale", "language" )
             commonData.gameData.unlockedAchivments = {}
+            commonData.gameData.cards = {}
             commonData.gameData.unlockedChallenges = {}
             commonData.gameData.selectedSkin = "Klaus"
             commonData.gameData.selectedBall = "NormalBall"
             commonData.gameData.selectedField = "Stadium"
             commonData.gameData.selectedBooster = "fireBall"
             commonData.gameData.continueProb = 5
+            commonData.gameData.isPlayPressed = false
+            commonData.gameData.isPacksPressed = false
+            commonData.gameData.isShopPressed = false
             
             
             commonData.gameData.appOpened = 0  
@@ -2221,7 +2326,14 @@ function scene:show( event )
           end  
 
           isFirstGame = (commonData.gameData.gamesCount==0)
-         
+                    
+          if not commonData.gameData.cards then
+            commonData.gameData.cards = {}
+          end
+
+          if not commonData.gameData.claimedRewards then
+            commonData.gameData.claimedRewards = {}
+          end
           
           if (not commonData.gameData.packs ) then
             commonData.gameData.packs = 0
@@ -2241,6 +2353,12 @@ function scene:show( event )
           shopButton:setLabel(getTransaltedText("Shop")) 
           packsButton:setLabel(getTransaltedText("Packs")) 
 
+          if system.getInfo("environment") == "simulator" then  
+            commonData.gameData.commonPacks = 10
+            commonData.gameData.rarePacks= 10
+            commonData.gameData.epicPacks= 10 
+            
+          end
           if (not commonData.gameData.packsBought ) then
              commonData.gameData.packsBought = 0
           end
@@ -2283,6 +2401,19 @@ function scene:show( event )
 
           if (not commonData.gameData.totalMeters ) then
             commonData.gameData.totalMeters = 0
+          end
+
+          if (not commonData.gameData.commonPacks ) then
+            commonData.gameData.commonPacks = 0
+          end
+          if (not commonData.gameData.rarePacks ) then
+            commonData.gameData.rarePacks = 0
+          end
+          if (not commonData.gameData.epicPacks ) then
+            commonData.gameData.epicPacks = 0
+          end
+          if (not commonData.gameData.doubleCards ) then
+            commonData.gameData.doubleCards = 0
           end
 
           local lvl = commonData.getLevel() 
@@ -2393,7 +2524,32 @@ function scene:show( event )
             levelCostText.text = "LVL " .. lvl
             levelNameText.text =  commonData.getLevelName(lvl)
       end      
-         
+
+      if commonData.gameData then
+        if not commonData.gameData.isPlayPressed then
+          hand.skeleton.group.x = playButton.x + playButton.contentWidth/4
+          hand.skeleton.group.y = playButton.y + playButton.contentHeight/4
+          hand.skeleton.group.alpha = 1
+          hand:init()          
+          hand:tapLeft()
+        elseif not commonData.gameData.isPacksPressed then 
+
+          hand.skeleton.group.x = packsButton.x + packsButton.contentWidth/4
+          hand.skeleton.group.y = packsButton.y + packsButton.contentHeight/4
+          hand.skeleton.group.alpha = 1
+          hand:init()          
+          hand:tapLeft()
+        elseif not commonData.gameData.isShopPressed then   
+          hand.skeleton.group.x = shopButton.x + shopButton.contentWidth/4
+          hand.skeleton.group.y = shopButton.y + shopButton.contentHeight/4
+          hand.skeleton.group.alpha = 1
+          hand:init()          
+          hand:tapLeft()
+        else
+          hand:pause()          
+          hand.skeleton.group.alpha = 0
+        end  
+      end      
       
    end
 
@@ -2412,6 +2568,7 @@ function scene:hide( event )
       -- Example: stop timers, stop animation, stop audio, etc.
        --
         hero:pause()
+        hand:pause()          
 
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.

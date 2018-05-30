@@ -41,12 +41,13 @@ local Event = require "spine-lua.Event"
 local AttachmentType = require "spine-lua.AttachmentType"
 
 local SkeletonJson = {}
-function SkeletonJson.new (attachmentLoader)
+function SkeletonJson.new (attachmentLoader,anim)
 	if not attachmentLoader then attachmentLoader = AttachmentLoader.new() end
 
 	local self = {
 		attachmentLoader = attachmentLoader,
-		scale = 1
+		scale = 1,
+		validAnimations = anim
 	}
 
 	function self:readSkeletonDataFile (fileName, base)
@@ -196,7 +197,11 @@ function SkeletonJson.new (attachmentLoader)
 		-- Animations.
 		if root["animations"] then
 			for animationName,animationMap in pairs(root["animations"]) do
-				readAnimation(animationName, animationMap, skeletonData)
+				if not self.validAnimations or self.validAnimations[animationName] then
+					readAnimation(animationName, animationMap, skeletonData)
+				else
+					--print(animationName)		
+				end
 			end
 		end
 
@@ -429,6 +434,7 @@ function SkeletonJson.new (attachmentLoader)
 						end
 						table.insert(timelines, timeline)
 						duration = math.max(duration, timeline:getDuration())
+					elseif timelineName == "shear" then		
 
 					else
 						error("Invalid timeline type for a bone: " .. timelineName .. " (" .. boneName .. ")")

@@ -36,7 +36,7 @@ local lefttSlots = {}
   
 
 
-function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
+function hero.new (scale, showBall, isFromShop , avatar, isFromMenu, isForGame)
 
 	local self = {	
 		skeleton = {} ,
@@ -52,8 +52,28 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 	}
 
 	local forceShowBall = false
+		local validAnimations = {}
+		validAnimations["Walk"] = isForGame or avatar
+		validAnimations["Run"] = isForGame or avatar
 
-		local json = spine.SkeletonJson.new()
+		validAnimations["Jump"] = isForGame
+		validAnimations["Jump2"] = isForGame
+		validAnimations["Jump3"] = isForGame
+		validAnimations["MenuIdle"] = true
+		validAnimations["MenuDribble"] = isFromShop or isFromMenu
+		validAnimations["MenuDribble2"] = isFromShop or isFromMenu
+		validAnimations["MenuDribble3"] = isFromShop or isFromMenu
+		validAnimations["FallRollOver"] = isForGame
+		validAnimations["FallRollOver2"] = isForGame
+		validAnimations["Bummer01"] = isForGame
+		validAnimations["Bummer02"] = isForGame
+		validAnimations["DribbleRunLeft"] = isForGame
+		validAnimations["DribbleRunRight"] = isForGame
+		validAnimations["DribbleLeft"] = isForGame
+		validAnimations["DribbleRight"] = isForGame
+
+		--table.insert(validAnimations, {Walk=true})
+		local json = spine.SkeletonJson.new(nil,validAnimations)
 		json.scale = scale
 		local skeletonData = nil
 
@@ -74,72 +94,21 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 			
 
-			for i=1,#items.skins do
-				if items.skins[i].id == avatar.skin then
-					skinToDisplay = avatar.skin
+			for i=1,#commonData.catalog.items.skins do
+				if commonData.catalog.items.skins[i].id == avatar then
+					skinToDisplay = avatar
 					break
 				end	
 			end
-
-			local isExists = false
-			for i=1,#items.pants do
-				if items.pants[i].id == avatar.pants then					
-					isExists = true
-					break
-				end	
-			end
-
-			if not isExists then
-				avatar.pants = "defaultPants"
-			end	
-
-			local isExists = false
-			for i=1,#items.shirts do
-				if items.shirts[i].id == avatar.shirt then					
-					isExists = true
-					break
-				end	
-			end
-
-			if not isExists then
-				avatar.shirt = "defaultShirt"
-			end	
-
-			local isExists = false
-			for i=1,#items.shoes do
-				if items.shoes[i].id == avatar.shoes then					
-					isExists = true
-					break
-				end	
-			end
-
-			if not isExists then
-				avatar.shoes = "Default"
-			end	
-
-			local isExists = false
-			for i=1,#items.balls do
-				if items.balls[i].id == avatar.ball then					
-					isExists = true
-					break
-				end	
-			end
-
-			if not isExists then
-				avatar.ball = "Ball001"
-			end	
 
 		end
 
 		if not skinToDisplay then
-			skinToDisplay = "littleDribbler"
-			if avatar then
-				avatar.skin = "littleDribbler"
-			end	
+			skinToDisplay = "Klaus"			
 		end	
 
 		json.scale = scale *  1.05
-		skeletonData = json:readSkeletonDataFile("Hero.json")
+		skeletonData = json:readSkeletonDataFile("jsons/Hero.json")
 		-- print(skinToDisplay)
 		-- if (skinToDisplay == "littleDribbler") then
 		-- 	skeletonData = json:readSkeletonDataFile("Hero.json")
@@ -353,7 +322,7 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			--print(trackIndex.." event: "..state:getCurrent(trackIndex).animation.name..", "..event.data.name..", "..event.intValue..", "..event.floatValue..", '"..(event.stringValue or "").."'")
 		end
 
-		local walkSpeed = 5
+		local walkSpeed = 6
 		local lastTime = 0
 		local touchX = 999999
 		local touchY = 999999
@@ -554,37 +523,22 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 
 		
 
-			if commonData.selectedSkin == "Zombie" then
-					if pIsLeftLeg then
-						self.state:setAnimationByName(0, "ZombieDribbleLeft", true)
-					else
-						self.state:setAnimationByName(0, "ZombieDribbleRight", true)
-					end
-			elseif commonData.selectedSkin == "DribbleBot" then
-					if pIsLeftLeg then
-						self.state:setAnimationByName(0, "BotDribbleLeft", true)
-					else
-						self.state:setAnimationByName(0, "BotDribbleRight", true)
-					end
-			else	
-
-				if walkSpeed > 6 then				
-					if pIsLeftLeg then
-						self.state:setAnimationByName(0, "DribbleRunLeft", true)
-					else
-						self.state:setAnimationByName(0, "DribbleRunRight", true)
-					end
-				else	
-					if pIsLeftLeg then
-						self.state:setAnimationByName(0, "DribbleLeft", true)
-					else
-						self.state:setAnimationByName(0, "DribbleRight", true)
-					end
-				end
-			end
-
 			
 
+			if walkSpeed > 6 then				
+				if pIsLeftLeg then
+					self.state:setAnimationByName(0, "DribbleRunLeft", true)
+				else
+					self.state:setAnimationByName(0, "DribbleRunRight", true)
+				end
+			else	
+				if pIsLeftLeg then
+					self.state:setAnimationByName(0, "DribbleLeft", true)
+				else
+					self.state:setAnimationByName(0, "DribbleRight", true)
+				end
+			end
+	
 			if (walkTime > 0 ) then 			
 				 self.state:update( walkTime )		
 				-- walkTime = 0		 
@@ -609,20 +563,15 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 				self.skeleton.group.x = self.skeleton.group.x  - 3
 				-- end
 
-				if commonData.selectedSkin == "Zombie" then
-					self.state:setAnimationByName(0, "ZombieWalk", true)
-				elseif commonData.selectedSkin == "DribbleBot" then
-					self.state:setAnimationByName(0, "BotWalk", true)
-				else		
+					
 
-					if walkSpeed > 6 then				
-					--self.state:setAnimationByName(0, "Walk", true)
-						self.state:setAnimationByName(0, "Run", true)
-					else
-						self.state:setAnimationByName(0, "Walk", true)
-					end
+				if walkSpeed > 6 then				
+				--self.state:setAnimationByName(0, "Walk", true)
+					self.state:setAnimationByName(0, "Run", true)
+				else
+					self.state:setAnimationByName(0, "Walk", true)
 				end
-
+			
 				legAngle = -82
 				isJumping = false
 				isKicking = false
@@ -658,19 +607,16 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			legAngle = -82
 			
 			local lowDuration = 0
-			if commonData.selectedSkin == "DribbleBot" then
-				self.state:setAnimationByName(0, "BotJump", false)			
-			else	
-				local rnd = 1--math.random(2)
-				if (rnd == 1)  then
-					self.state:setAnimationByName(0, "Jump", false)
-					lowDuration = skeletonData:findAnimation("Jump").duration * 1000
-				else			
-					self.state:setAnimationByName(0, "Jump2", false)			
-					lowDuration = skeletonData:findAnimation("Jump2").duration * 1000
-				end
+			
+			local rnd = 1--math.random(2)
+			if (rnd == 1)  then
+				self.state:setAnimationByName(0, "Jump", false)
+				lowDuration = skeletonData:findAnimation("Jump").duration * 1000
+			else			
+				self.state:setAnimationByName(0, "Jump2", false)			
+				lowDuration = skeletonData:findAnimation("Jump2").duration * 1000
 			end
-
+		
 
 			-- timer.performWithDelay( lowDuration/ 20  , function ()
 		 -- 		self.skeleton.group.x = self.skeleton.group.x -1 
@@ -693,13 +639,10 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			legAngle = -82
 			local lowDuration = 0
 			
-			if commonData.selectedSkin == "DribbleBot" then
-				self.state:setAnimationByName(0, "BotSalta", false)			
-			else	
-				self.state:setAnimationByName(0, "Jump3", false)
-				lowDuration = skeletonData:findAnimation("Jump3").duration * 1000
-			end
 			
+			self.state:setAnimationByName(0, "Jump3", false)
+			lowDuration = skeletonData:findAnimation("Jump3").duration * 1000
+		
 			isJumping = true
 			isKicking = false
 			--skeleton.group.x = display.contentWidth * 0.25 + 10
@@ -774,9 +717,6 @@ function hero.new (scale, showBall, isFromShop , avatar, isFromMenu)
 			replayHandle = nil
 			local animationName = "MenuIdle"
 
-			if commonData.selectedSkin == "DribbleBot" and botAllowed then
-				animationName = "BotIdel"
-			end	
 			
 			self.state:setAnimationByName(0, animationName, true)
 			

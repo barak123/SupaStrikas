@@ -4,7 +4,7 @@
 local spine = require "spine-corona.spine"
 
 local hand = {}
-function hand.new (skeletonData)
+function hand.new (scale)
 
 	local self = {	
 		skeleton = {} ,
@@ -18,7 +18,10 @@ function hand.new (skeletonData)
 
 
 	self.json = spine.SkeletonJson.new()
-	self.json.scale = 0.35
+	if not scale then
+		scale = 0.35
+	end	
+	self.json.scale = scale
 	--self.skeletonData = self.json:readSkeletonDataFile("NewTutorial/TutorialHand.json")
 	self.skeletonData = self.json:readSkeletonDataFile("Tutorialhand/finger.json")
 

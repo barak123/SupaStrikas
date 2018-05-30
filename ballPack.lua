@@ -17,9 +17,10 @@ function ballPack.new (skeletonData)
 	}
 
 
+	
 	self.json = spine.SkeletonJson.new()
 	self.json.scale = 0.5
-	self.skeletonData = self.json:readSkeletonDataFile("PacksScreen/PacksScreen.json")
+	self.skeletonData = self.json:readSkeletonDataFile("jsons/PacksScreen.json")
 
 	self.skeleton = {}
 	self.skeleton = spine.Skeleton.new(self.skeletonData)
