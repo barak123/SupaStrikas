@@ -437,6 +437,7 @@ local function boosterButtonListener( event )
       gameStatus.isConfirmationRequired = false
       gameStatus.ignoreClick = false
 
+      ob.welcomeGroup.alpha = 0
       if (gameStatus.isGamePaused) then
         commonData.resumeGame()
       end
@@ -464,23 +465,87 @@ ob.boosterMsg = ob.boosterMsgSpine.new(0.8, true)
 ob.boosterMsg.skeleton.group.x = 190
 ob.boosterMsg.skeleton.group.y = 320
 
+local gradient = {
+          type="gradient",
+          color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
+      }
+
 ob.boosterButton = widget.newButton
       {
           x = 190,
           y = 280,
           id = "boosterButton",
-          defaultFile = "images/OKUp.png",
-          overFile = "images/OKDown.png",
-          onEvent = boosterButtonListener
+          defaultFile =  "BlueSet/End/EGMainMenuUp.png",
+          overFile = "BlueSet/End/EGMainMenuDown.png",
+          onEvent = boosterButtonListener,
+          label = getTransaltedText("OK"),
+          labelAlign = "center",
+          font = "UnitedSansRgHv",  
+          fontSize = 40 ,           
+          labelColor = { default={ 255/255,241/255,208/255 }, over={ 255/255,241/255,208/255 } }
       }
+  
+  
  ob.boosterButton.xScale =  (display.actualContentWidth*0.2) / ob.boosterButton.width
  ob.boosterButton.yScale = ob.boosterButton.xScale  
  ob.boosterButton.alpha = 0
 
+ local function quitApprove( event )
+        if ( event.action == "clicked" ) then
+            local i = event.index
+            if ( i == 1 ) then
+               native.requestExit()
+            end
+        end
+    end
+
+
+     local function quitListener( event )
+        if ( "ended" == event.phase ) then
+             
+            local alert = native.showAlert( "Quit", "Do you want to leave the game?", { "YES", "NO" }, quitApprove )
+                                  
+            
+        end
+     end
+
+
+ ob.quitButton = widget.newButton
+{
+    x = 380,
+    y = 60,
+    id = "continueCloseBtn",
+    defaultFile = "images/Continue/BtnBg.png",    
+    --label = getTransaltedText("No"),
+    font = "UnitedItalicRgHv",  
+    fontSize = 40 , 
+    labelYOffset = 30,
+    labelColor = { default={ 255/255,241/255,208/255 }, over={ 255/255,241/255,208/255 } },  
+    onEvent = quitListener    
+}
+
+ob.quitButton:scale(0.4,0.4)
+
+ob.quitButtonIcon  = display.newImage("images/Continue/XIcon.png")
+ob.quitButtonIcon.x = ob.quitButton.x
+ob.quitButtonIcon.y = ob.quitButton.y
+
+ob.quitButtonIcon.alpha = 0
+
+
+  
+ ob.quitButton.xScale =  (display.actualContentWidth*0.04) / ob.quitButton.width
+ ob.quitButton.yScale = ob.quitButton.xScale  
+ ob.quitButton.alpha = 0
+
+ ob.quitButtonIcon.xScale = ob.quitButton.contentWidth * 0.7 / ob.quitButtonIcon.contentWidth
+ob.quitButtonIcon.yScale = ob.quitButtonIcon.xScale
+
+
  ob.jumpOverImg = display.newImage("images/JumpOver.png")
  ob.kickOverImg = display.newImage("images/KickBallOver.png")
  ob.tipCircle = display.newImage("images/TipCircle.png")
- ob.collectCardsImg = display.newImage("images/album/TipSupa.jpg")
+ ob.collectCardsImg = display.newImage("images/album/TipSupa.png")
 
 ob.tipCircle:scale(0.5,0.5)
 ob.tipCircle.x = 200
@@ -495,7 +560,7 @@ ob.tipCircle.y = 140
         y = 20,
         width = 300,     --required for multi-line and alignment
         font = "UnitedSansRgHv",   
-        fontSize = 15,
+        fontSize = 12,
         align = "center"  --new alignment parameter
     }
 
@@ -723,6 +788,7 @@ newChallengeGroup = display.newGroup()
 ob.multiGroup = display.newGroup()
 ob.scoreboard = display.newGroup()
 ob.pausedGroup = display.newGroup()
+ob.welcomeGroup = display.newGroup()
 
 ob.leftCtrl =  display.newImage("images/Touchpad.png")
 --ob.leftCtrl:setFillColor(1,0,0)
@@ -1201,10 +1267,10 @@ ob.letterU.x = ob.letterS.x + ob.letterS.contentWidth/2 + ob.letterU.contentWidt
 ob.letterP.x = ob.letterU.x + ob.letterP.contentWidth/2 + ob.letterU.contentWidth/2 + 2
 ob.letterA.x = ob.letterP.x + ob.letterP.contentWidth/2 + ob.letterA.contentWidth/2 + 2
 
-ob.letterS.y = 80
-ob.letterU.y = 80
-ob.letterP.y = 80
-ob.letterA.y = 80
+ob.letterS.y = 50
+ob.letterU.y = 50
+ob.letterP.y = 50
+ob.letterA.y = 50
 
 
 trophieImg  = display.newImage("TrophieReward/Trophie.png")
@@ -2009,7 +2075,8 @@ Runtime:addEventListener( "system", onSystemEvent )
 
         if (not isSimulator)  then
             
-           if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) then
+           if commonData.appodeal.isLoaded( "rewardedVideo") then
+            --if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) then
                commonData.analytics.logEvent( "startWatchAd - continueGame" , 
                    { gamesCount = tostring( commonData.gameData.gamesCount)  ,
                               highScore = tostring(  commonData.gameData.highScore) ,
@@ -2479,6 +2546,12 @@ ob.getNextCoinPos = function(min , range)
 end
 
 ob.getNextLetterPos = function(min , range)  
+    
+    if not commonData.gameData.letterMargin then
+      commonData.gameData.letterMargin = 1
+    end  
+    min = commonData.gameData.letterMargin  
+    range = commonData.gameData.letterMargin
     local gap = randNormal(range ) + min
     if (gameStatus.isUltraMode) then
        gap = 1 -- math.floor(gap / 3)
@@ -2647,9 +2720,26 @@ local function getSelectedFieldIndex()
 
 end 
 
+local function termsListener( event )
 
-local function showNewTip(tipCode)
+  if ( event.phase == "ended"  ) then
+      system.openURL( "http://littledribblegame.com/TermsOfUse.html" )
+  end
+end
+
+local function privacyListener( event )
+
+  if ( event.phase == "ended"  ) then
+      system.openURL( "https://m.facebook.com/Supa-Strikas-Dash-114918519295873" )
+  end
+end
+
+
+local function showWelcomeDialog()
      ob.boosterButton.alpha = 0
+     ob.quitButton.alpha = 0
+     ob.quitButtonIcon.alpha = 0
+
         ob.kickOverImg.alpha = 0
         ob.jumpOverImg.alpha = 0
         ob.collectCardsImg.alpha = 0
@@ -2657,7 +2747,7 @@ local function showNewTip(tipCode)
         ob.tipCircle.alpha = 0
         ob.boosterHeaderText.alpha = 0
         ob.boosterText.alpha = 0
-        ob.boosterText.text =getTransaltedText(tipCode)
+        ob.boosterText.text = "Before you start, please read and accept our updated terms of service and privacy policy. \n Thanks again and good luck in our game!"
         ob.boosterMsg:init()  
 
       timer.performWithDelay(100 , function ()                          
@@ -2670,15 +2760,59 @@ local function showNewTip(tipCode)
        ob.muteButton.alpha = 0              
        ob.unMuteButton.alpha = 0
 
-             
-           
-        timer.performWithDelay(1500 , function ()                                
-          ob.tipCircle.alpha = 1
-          ob.boosterHeaderText.alpha = 1
+      local termsText = display.newText({text="Terms Of Service & Privacy Policy" , x = 200, y = 180, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
+      termsText:setFillColor(0,0,1)
+
+      termsText:addEventListener("touch",termsListener)
+
+      -- local privacyText = display.newText({text="Privacy Policy" , x = 200, y = 170, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
+      -- privacyText:setFillColor(0,0,1)
+      -- privacyText:addEventListener("touch",privacyListener)
+
+      local termsLine = display.newLine( termsText.x - termsText.contentWidth /2 , termsText.y + termsText.contentHeight /2 + 1 , termsText.x + termsText.contentWidth /2, termsText.y + termsText.contentHeight /2 + 1 )
+      termsLine:setStrokeColor(0,0,1)
+
+      local logo = display.newImage("ExtrasMenu/Logo.png")
+     
+     logo.yScale = 0.3 * display.actualContentHeight  / logo.contentHeight
+     logo.xScale = logo.yScale
+     
+     logo.x = 180 
+     logo.y = 110 
+
+      -- local privacyLine = display.newLine( privacyText.x - privacyText.contentWidth /2 , privacyText.y + privacyText.contentHeight /2 + 1 , privacyText.x + privacyText.contentWidth /2, privacyText.y + privacyText.contentHeight /2 + 1 )
+      -- privacyLine:setStrokeColor(0,0,1)
+      ob.welcomeGroup:insert(logo)
+      ob.welcomeGroup:insert(termsText)
+      -- ob.welcomeGroup:insert(privacyText)
+      ob.welcomeGroup:insert(termsLine)
+      -- ob.welcomeGroup:insert(privacyLine)
+      ob.welcomeGroup:insert(ob.quitButton)
+      ob.welcomeGroup:insert(ob.quitButtonIcon)
+
+      -- ob.quitButton.y  = ob.boosterButton.y
+      -- ob.quitButton.x  = ob.boosterButton.x + ob.boosterButton.contentWidth/2 
+      -- ob.quitButtonIcon.y  = ob.quitButton.y
+      -- ob.quitButtonIcon.x  = ob.quitButton.x
+
+
+      
+      
+      ob.notification:insert(ob.welcomeGroup)
+      ob.notification:insert(ob.boosterButton)
+
+
+        timer.performWithDelay(1500 , function ()                                          
+          ob.boosterHeaderText.text = "Welcome to Supa Strikas Dash"
+          ob.boosterHeaderText.alpha = 0
           ob.boosterText.alpha = 1
+          ob.welcomeGroup.alpha = 1
         end , 1)
         timer.performWithDelay(2500 , function ()
+          ob.boosterButton:setLabel( "I ACCEPT")
           ob.boosterButton.alpha = 1                          
+          ob.quitButton.alpha = 1                          
+          ob.quitButtonIcon.alpha = 1                          
         end , 1)
 end 
 
@@ -2899,7 +3033,10 @@ ob.restartGame = function ()
 -- function restartGame()
 
 -- --      showNewTip
-
+        ob.welcomeGroup.alpha = 0
+        if commonData.gameData and commonData.gameData.gamesCount == 0 then                  
+          showWelcomeDialog()
+        end
 
         continueGroup.alpha = 0    
         ob.letterS:setFillColor(0.4,0.4,0.4)
@@ -2954,7 +3091,7 @@ ob.restartGame = function ()
             end   
 
             print(commonData.gameData.collectCardsShowed )
-            if commonData.gameData.gamesCount > 2 and not commonData.gameData.collectCardsShowed then
+            if commonData.gameData.gamesCount > 1 and not commonData.gameData.collectCardsShowed then
                   ob.boosterMsg:init()  
 
                 timer.performWithDelay(100 , function ()                          
@@ -2965,6 +3102,9 @@ ob.restartGame = function ()
                  print(commonData.gameData.collectCardsShowed )
                 
                 ob.boosterButton.alpha = 0
+                ob.quitButton.alpha = 0
+                ob.quitButtonIcon.alpha = 0
+                ob.boosterButton:setLabel(getTransaltedText("OK"))
                 ob.kickOverImg.alpha = 0
                 ob.jumpOverImg.alpha = 0
                 ob.collectCardsImg.alpha = 0
@@ -2980,6 +3120,7 @@ ob.restartGame = function ()
                                   
                                 end , 1)
                                 timer.performWithDelay(2500 , function ()
+                                  ob.boosterButton:setLabel(getTransaltedText("OK"))
                                   ob.boosterButton.alpha = 1                          
                                 end , 1)
             end                    
@@ -3270,12 +3411,12 @@ ob.restartGame = function ()
         pauseButton.alpha = 0
         coinsCountText.alpha = 1 
         coinsShadowText.alpha = 1
-        trophieCountText.alpha = 1 
-        trophieShadowText.alpha = 1
+        trophieCountText.alpha = 0 
+        trophieShadowText.alpha = 0
         
         
         coinImg.alpha = 1
-        trophieImg.alpha = 1
+        trophieImg.alpha = 0
 
         kickToStart.alpha = 1
 
@@ -4173,6 +4314,8 @@ function scene:show( event )
      
     
     ob.boosterButton.alpha = 0
+    ob.quitButton.alpha = 0
+    ob.quitButtonIcon.alpha = 0
     ob.kickOverImg.alpha = 0
     ob.jumpOverImg.alpha = 0
     ob.collectCardsImg.alpha = 0
@@ -4284,6 +4427,7 @@ function scene:show( event )
                                 commonData.analytics.logEvent( "Kick Over Showed")          
                               end , 1)
                               timer.performWithDelay(2500 , function ()
+                                ob.boosterButton:setLabel(getTransaltedText("OK"))
                                 ob.boosterButton.alpha = 1                          
                               end , 1)
                         end        
@@ -4319,6 +4463,7 @@ function scene:show( event )
 
                               end , 1)
                               timer.performWithDelay(2500 , function ()
+                                ob.boosterButton:setLabel(getTransaltedText("OK"))
                                 ob.boosterButton.alpha = 1                          
                               end , 1)
                         end        
@@ -4668,7 +4813,8 @@ gameStatus.isGameActive = false
                 --   (commonData.appodeal.isLoaded( "rewardedVideo" ) or
                 --   (system.getInfo("environment") == "simulator")) then gameStatus.conitnueCounter <=0
                  if lowerScoresCnt > 5 and continueRnd <= commonData.gameData.continueProb and
-                   (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) or
+                   (commonData.appodeal.isLoaded( "rewardedVideo" ) or
+                    --(commonData.appodeal.isLoaded( "rewardedVideo", {placement= "ContinueRun"} ) or
                    (system.getInfo("environment") == "simulator")) then
                   
                    -- showAdButton.alpha = 1
@@ -5341,15 +5487,15 @@ gameStatus.isGameActive = false
                  trophieRnd = 15
               end  
 
-              if (mRandom(trophieRnd) == 1 and commonData.gameData) then
-                rewardIndex = 3
-                addCoins = nil
-                achivmentAlert("PackWinner")
-              else
+              -- if (mRandom(trophieRnd) == 1 and commonData.gameData) then
+              --   rewardIndex = 3
+              --   addCoins = nil
+              --   achivmentAlert("PackWinner")
+              -- else
 
                 addCoins =  3 + mRandom(8) 
                 rewardIndex = 2
-              end
+--              end
 
 
             if (addCoins) then
@@ -5625,9 +5771,13 @@ gameStatus.isGameActive = false
 
 
                             ob.boosterButton.alpha = 0
+                            ob.quitButton.alpha = 0
+                            ob.quitButtonIcon.alpha = 0
                             ob.kickOverImg.alpha = 0
                             ob.jumpOverImg.alpha = 0
                             ob.tipCircle.alpha = 0
+                            ob.collectCardsImg.alpha = 0
+                            ob.welcomeGroup.alpha = 0
                             ob.boosterHeaderText.alpha = 0
                             ob.boosterText.alpha = 0
                             ob.boosterText.text =getTransaltedText("TimingTip")
@@ -5647,11 +5797,13 @@ gameStatus.isGameActive = false
                                
                                 timer.performWithDelay(1500 , function ()                                
                                   ob.tipCircle.alpha = 1
+                                  ob.boosterHeaderText.text =getTransaltedText("SupaTip")
                                   ob.boosterHeaderText.alpha = 1
 
                                   ob.boosterText.alpha = 1
                                 end , 1)
                                 timer.performWithDelay(2500 , function ()
+                                  ob.boosterButton:setLabel(getTransaltedText("OK"))
                                   ob.boosterButton.alpha = 1                          
                                 end , 1)
                                 return

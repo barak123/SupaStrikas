@@ -28,6 +28,7 @@ local coinsCountText = nil
 local coinsShadowText = nil
 local isDoubleBonusClaimed = false
 local  isAppodealInitCalled = false
+local hand = nil
 
 local function printTable( t, label, level )
   if label then print( label ) end
@@ -103,6 +104,7 @@ commonData.sessionGames = 0
             
             if 9 - packTypes[commonData.collection[i].group][1] < j then
               commonData.collection[i].type = "epic"
+              print()
 
             elseif  9 - packTypes[commonData.collection[i].group][1] - packTypes[commonData.collection[i].group][2] < j then
               commonData.collection[i].type = "rare"
@@ -168,7 +170,7 @@ commonData.setHighScoreNotification =  function(score)
     if t1.hour > 9 and  t1.hour < 21 then
 
       local notificationsOptions = {
-          alert = "Win a free trophy pack if you reach more than " .. score .. " points",
+          alert = "Win a free cards pack if you reach more than " .. score .. " points",
           custom = {getTropy = true, name = "barak"}
       }
        
@@ -426,7 +428,8 @@ local function giveDailyReward()
             return
         end  
 
-        if not isAppodealTimeOut and not commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) then 
+        --if not isAppodealTimeOut and not commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) then 
+        if not isAppodealTimeOut and not commonData.appodeal.isLoaded( "rewardedVideo" ) then 
           return
         end  
 
@@ -567,7 +570,8 @@ local function giveDailyReward()
                     else
 
 
-                        if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  )  then
+                        --if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  )  then
+                        if commonData.appodeal.isLoaded( "rewardedVideo" )  then
                           commonData.videoRewardFunction = enableDailyButton
                           commonData.analytics.logEvent( "startWatchAd - double bonus", 
                           { gamesCount = tostring( commonData.gameData.gamesCount)  ,
@@ -643,7 +647,8 @@ local function giveDailyReward()
 
 
                           if not isDoubleBonusClaimed  and
-                            (commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) or (system.getInfo("environment") == "simulator")) 
+                            (commonData.appodeal.isLoaded( "rewardedVideo" ) or (system.getInfo("environment") == "simulator")) 
+                            --(commonData.appodeal.isLoaded( "rewardedVideo", {placement= "DoubleDailyBonus"}  ) or (system.getInfo("environment") == "simulator")) 
                             then
                             --dailyOkBtnDisabled.alpha = 1                              
                             dailyOkBtn2.alpha = 1
@@ -1993,7 +1998,7 @@ Runtime:addEventListener( "system", systemEvents )
 
       local  playIcon = display.newImage("MainMenu/IcoPlay.png")
       local  shopIcon = display.newImage("MainMenu/IcoShop.png")
-      local  packsIcon = display.newImage("MainMenu/IcoPacks.png")
+      local  packsIcon = display.newImage("images/album/Cards.png")
 
 
       playIcon.yScale = (playButton.contentHeight * 0.5) / playIcon.contentHeight 
@@ -2353,12 +2358,11 @@ function scene:show( event )
           shopButton:setLabel(getTransaltedText("Shop")) 
           packsButton:setLabel(getTransaltedText("Packs")) 
 
-          if system.getInfo("environment") == "simulator" then  
-            commonData.gameData.commonPacks = 10
-            commonData.gameData.rarePacks= 10
-            commonData.gameData.epicPacks= 10 
-            
+          
+          if not commonData.gameData.letterMargin then
+            commonData.gameData.letterMargin = 10
           end
+
           if (not commonData.gameData.packsBought ) then
              commonData.gameData.packsBought = 0
           end
@@ -2416,6 +2420,11 @@ function scene:show( event )
             commonData.gameData.doubleCards = 0
           end
 
+          if isSimulator then
+            commonData.gameData.epicPacks = 10
+            commonData.gameData.commonPacks = 10
+            commonData.gameData.rarePacks = 10
+          end  
           local lvl = commonData.getLevel() 
           levelCostText.text = "LVL " .. lvl
           levelNameText.text =  commonData.getLevelName(lvl)
@@ -2484,7 +2493,8 @@ function scene:show( event )
              timer.performWithDelay(appodealInitDelay, 
                    function()                                      
                         commonData.appodeal.init( appodealListener, { appKey="1b8aa238dba5ebbababcfbffdc4d76cadbd790fd9e828b03", 
-                        disableWriteExternalPermissionCheck=true, 
+                        disableWriteExternalPermissionCheck=true,
+                        hasUserConsent = true, 
                         supportedAdTypes={"interstitial", "rewardedVideo"} } )
                                                    
                    end, 1)  
@@ -2539,12 +2549,12 @@ function scene:show( event )
           hand.skeleton.group.alpha = 1
           hand:init()          
           hand:tapLeft()
-        elseif not commonData.gameData.isShopPressed then   
-          hand.skeleton.group.x = shopButton.x + shopButton.contentWidth/4
-          hand.skeleton.group.y = shopButton.y + shopButton.contentHeight/4
-          hand.skeleton.group.alpha = 1
-          hand:init()          
-          hand:tapLeft()
+        -- elseif not commonData.gameData.isShopPressed then   
+        --   hand.skeleton.group.x = shopButton.x + shopButton.contentWidth/4
+        --   hand.skeleton.group.y = shopButton.y + shopButton.contentHeight/4
+        --   hand.skeleton.group.alpha = 1
+        --   hand:init()          
+        --   hand:tapLeft()
         else
           hand:pause()          
           hand.skeleton.group.alpha = 0

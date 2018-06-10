@@ -50,6 +50,6 @@ LAST_TUTORIAL_STAGE = 6
 BALL_X = 180
 
 END_GAME_WHEN_DEF_TOUCH = true
-SHOP_FILE = "strika295.dat"--"l1.dat" -- 32		"strika.dat"--"l1.dat" -- 32		
-GAME_DATA_FILE = "supaV4295.dat" -- "ldr.dat" --22 "supaV4.dat" -- "ldr.dat" --22
+SHOP_FILE = "strika.dat"--"l1.dat" -- 32		"strika.dat"--"l1.dat" -- 32		
+GAME_DATA_FILE = "supaV4.dat" -- "ldr.dat" --22 "supaV4.dat" -- "ldr.dat" --22
 

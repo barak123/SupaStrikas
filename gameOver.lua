@@ -461,7 +461,7 @@ local function leaderReward(score )
 
         parent:outerTrophieReward(70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
 
-        commonData.gameData.packs = commonData.gameData.packs + 1
+        commonData.gameData.epicPacks = commonData.gameData.epicPacks + 1
 
         commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
@@ -472,7 +472,7 @@ local function notificationReward(score )
 
         parent:outerTrophieReward(70 - (display.actualContentWidth - display.contentWidth) /2 , 165 )
 
-        commonData.gameData.packs = commonData.gameData.packs + 1
+        commonData.gameData.commonPacks = commonData.gameData.commonPacks + 1
 
         commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
@@ -1053,9 +1053,8 @@ local function showGameOver( gameResult, isFirstLoad)
          -- end
           
 
-         if  --  admob.isLoaded( "rewardedVideo" ) or  
-            --startapp.isLoaded( "rewardedVideo" ) or
-            commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) or
+         --if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) or
+         if commonData.appodeal.isLoaded( "rewardedVideo" ) or
             (system.getInfo("environment") == "simulator") then
              -- showAdButton.alpha = 1
               ob.watchAd.skeleton.group.alpha = 1
@@ -1583,6 +1582,24 @@ local function showGameOver( gameResult, isFirstLoad)
               else  
                 commonData.gameData.commonPacks = commonData.gameData.commonPacks + 1
               end
+
+              local cardsNum = 0
+              if commonData.gameData.cards then
+                cardsNum = #commonData.gameData.cards
+              end  
+              commonData.analytics.logEvent( "lettersCollected",{ 
+                                    gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                    highScore = tostring(  commonData.gameData.highScore),
+                                    gameScore = tostring(  gameResult.gameScore),
+                                    letterMargin = tostring(commonData.gameData.letterMargin),
+                                    cardsCount = tostring(cardsNum)})
+
+              commonData.gameData.letterMargin = commonData.gameData.letterMargin + 1
+            else              
+              commonData.gameData.letterMargin = commonData.gameData.letterMargin - 0.5
+              if commonData.gameData.letterMargin < 5 then
+                commonData.gameData.letterMargin = 5
+              end  
             end  
 
             parent:outerRefreshCoins()
@@ -1795,7 +1812,7 @@ local function showGameOver( gameResult, isFirstLoad)
                                                 reason= tostring(gameResult.finishReason) ,
                                                 leftRight = tostring(gameResult.bouncesLeft) .. "/" .. tostring(gameResult.bouncesRight)   } )
             
-            if (commonData.gameData.packs > 0) then
+            if (commonData.gameData.commonPacks + commonData.gameData.rarePacks + commonData.gameData.epicPacks  > 0) then
               openPkgButton.alpha = 0
               openPkgButton2.alpha = 1
             else  
@@ -1873,7 +1890,26 @@ local function showFinishGame()
         newLevelGroup.alpha =0       
         finishGameGroup.alpha =0
         promotionGroup.alpha =0 
-        commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
+        
+        commonData.gameData.coins = commonData.gameData.coins + ob.priceResult.coins
+            commonData.gameData.gamesCount = commonData.gameData.gamesCount + 1
+            commonData.gameData.totalScore = commonData.gameData.totalScore + ob.priceResult.gameScore
+            
+            commonData.gameData.bounces = commonData.gameData.bounces + ob.priceResult.bounces
+            commonData.gameData.bouncesPerfect = commonData.gameData.bouncesPerfect + ob.priceResult.bouncesPerfect
+            commonData.gameData.bouncesGood = commonData.gameData.bouncesGood + ob.priceResult.bouncesGood
+            commonData.gameData.bouncesEarly = commonData.gameData.bouncesEarly + ob.priceResult.bouncesEarly
+            commonData.gameData.bouncesLate = commonData.gameData.bouncesLate + ob.priceResult.bouncesLate
+            commonData.gameData.jumps  = commonData.gameData.jumps + ob.priceResult.jumps
+
+            if ob.priceResult.gameScore > commonData.gameData.highScore then
+              commonData.gameData.highScore = ob.priceResult.gameScore
+            end           
+
+            if ob.priceResult.letterS and ob.priceResult.letterU and ob.priceResult.letterP and ob.priceResult.letterA then              
+                commonData.gameData.commonPacks = commonData.gameData.commonPacks + 1              
+            end
+
         commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
 
@@ -1881,7 +1917,8 @@ local function showFinishGame()
     end  
     
  
-    if (not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  
+    --if (not commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) and  
+    if (not commonData.appodeal.isLoaded( "rewardedVideo" ) and    
         system.getInfo("environment") ~= "simulator" ) or commonData.isFirstSession then
         finishGameGroup.alpha =0
         
@@ -2218,7 +2255,8 @@ function scene:create( event )
                   
                   if (not isSimulator)  then
                      
-                     if commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) then
+                     --if commonData.appodeal.isLoaded( "rewardedVideo", {placement = "EndOfMissionDR"} ) then
+                     if commonData.appodeal.isLoaded( "rewardedVideo" ) then
                         commonData.analytics.logEvent( "startWatchAd - gameReward",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
                                     highScore = tostring(  commonData.gameData.highScore) ,
                                     totalCoins = tostring(  commonData.gameData.coins + commonData.gameData.usedcoins) ,
@@ -2766,7 +2804,8 @@ function scene:create( event )
                   
                 if (not isSimulator)  then
                    
-                   if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) then
+                   --if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "RewardedVideo"} ) then
+                   if commonData.appodeal.isLoaded( "rewardedVideo" ) then
                       commonData.analytics.logEvent( "startWatchAd") 
                       commonData.videoReward = {isContinueReward = false, source = "getCoins"}
                       commonData.videoRewardFunction = adBonus
@@ -3309,7 +3348,7 @@ function scene:create( event )
     winText:setFillColor(1,206/255,0)
     
     
-    local tropieIcon = display.newImage("TrophieReward/Trophie.png")
+    local tropieIcon = display.newImage("images/album/PackEpic.png")
     tropieIcon:scale(0.08,0.08)
     
     tropieIcon.y = 117

@@ -126,11 +126,11 @@ settings = {
         },
 
         -- Base
-['plugin.appodeal.base'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.AmazonAds'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.GoogleAdMob'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.TwitterMoPub'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.StartApp'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.base'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.AmazonAds'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.GoogleAdMob'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.TwitterMoPub'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.StartApp'] = { publisherId = 'com.coronalabs' },
  
 -- Banner
 --['plugin.appodeal.AppLovin'] = { publisherId = 'com.coronalabs' },
@@ -142,33 +142,33 @@ settings = {
 --['plugin.appodeal.Yandex'] = { publisherId = 'com.coronalabs' },
  
 -- Interstitial
-['plugin.appodeal.AdColony'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.AppLovin'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.AdColony'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.AppLovin'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Chartboost'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.FacebookAudience'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.FacebookAudience'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Flurry'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.InMobi'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.IronSource'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.IronSource'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Mobvista'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.MyTarget'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.StartApp'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.StartApp'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.MillenialMedia'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Ogury'] = { publisherId = 'com.coronalabs' },
  
 -- Rewarded Video
-['plugin.appodeal.AdColony'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.AppLovin'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.AdColony'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.AppLovin'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Chartboost'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.FacebookAudience'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Flurry'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.InMobi'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.IronSource'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.InMobi'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.IronSource'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.Mobvista'] = { publisherId = 'com.coronalabs' },
 --['plugin.appodeal.MyTarget'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.StartApp'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.Unity'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.Vungle'] = { publisherId = 'com.coronalabs' },
-['plugin.appodeal.Tapjoy'] = { publisherId = 'com.coronalabs' },    
+['plugin.appodeal.beta.StartApp'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.Unity'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.Vungle'] = { publisherId = 'com.coronalabs' },
+['plugin.appodeal.beta.Tapjoy'] = { publisherId = 'com.coronalabs' },    
 		
 	},
 }

@@ -36,17 +36,18 @@ local itemRewardCategory = nil
 local coinsCount = 0
 
 local  reward = nil
-
+local  hand = nil
 local packOpeningSound = audio.loadSound( "PackOpening.mp3" )
 local packRewardSound = audio.loadSound( "PackReward.mp3" )
 local packNewRewardSound = audio.loadSound( "Celebration.mp3" )
 local  indexArrow = display.newImage("images/album/IndexArrow.png")
+indexArrow:scale(0.7,0.7)
 local  tradeBar = nil
 
-local commonCountText = display.newText({text="0" , x = 120, y = 270, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
-local rareCountText = display.newText({text="0" , x = 220, y = 270, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
-local epicCountText = display.newText({text="0" , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
-local packsCountText = display.newText({text="0" , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 15,align = "center"})
+local commonCountText = display.newText({text="0" , x = 120, y = 270, font = "UnitedSansRgHv", fontSize = 10,align = "center"})
+local rareCountText = display.newText({text="0" , x = 220, y = 270, font = "UnitedSansRgHv", fontSize = 10,align = "center"})
+local epicCountText = display.newText({text="0" , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 10,align = "center"})
+local packsCountText = display.newText({text="0" , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 10,align = "center"})
 local doublesCountText = display.newText({text="0" , x = 320, y = 270, font = "UnitedSansRgHv", fontSize = 10,align = "center"})
 local doubleBar = display.newRect(5,5,5,5)
 doubleBar:setFillColor(0,1,0)
@@ -57,7 +58,7 @@ local tradeButton = nil
 
 
 local rewards = {
-  {id = "blok", row = 1 , fromIdx = 1, toIdx = 2 , isItem = true , category="skins" , catIdx= 3},
+  {id = "blok", row = 1 , fromIdx = 1, toIdx = 2 , isItem = true , category="skins" , catIdx= 2},
   {id = "group", row = 2.5 , fromIdx = 3, toIdx = 9 , isItem = false , coins = 50},
   {id = "shakes", row = 4.5 , fromIdx = 10, toIdx = 18, isItem = false , gems=1},
   {id = "shakes", row = 6.5 , fromIdx = 19, toIdx = 27, isItem = false , coins = 50},
@@ -80,7 +81,6 @@ local rewards = {
                           {id = "shakes", row = 40.5 , fromIdx = 172, toIdx = 180, isItem = true , category="skins" , catIdx= 7},
                             
 } 
-
 
 
 local function updateDoubles( )
@@ -107,6 +107,10 @@ local function updateDoubles( )
 end 
 
 local function updateRewards()
+
+    local isReward  = false
+    local firstReward  = nil
+
       for i=1,#rewards do
           local isRewardAvailable = true
           for j=rewards[i].fromIdx,rewards[i].toIdx do
@@ -116,12 +120,30 @@ local function updateRewards()
             end  
           end  
 
-          if isRewardAvailable and not commonData.gameData.claimedRewards[i] then
+          if isRewardAvailable and not commonData.gameData.claimedRewards[i]  then
             claimButtons[i].alpha  =1
+
+            if not isReward then
+              firstReward = i
+              isReward = true
+            end
           else
-            claimButtons[i].alpha  =0
+            claimButtons[i].alpha  = 0            
           end
       end
+
+      if isReward and firstReward then
+        hand.skeleton.group.alpha = 1
+        hand:init()          
+        hand:tapLeft()
+        hand.skeleton.group.x = claimButtons[firstReward].x + claimButtons[firstReward].contentWidth/4
+        hand.skeleton.group.y = claimButtons[firstReward].y + claimButtons[firstReward].contentHeight/2
+      else
+        hand:pause()         
+        hand.skeleton.group.alpha = 0   
+      end  
+
+
 end 
 
 local gradient = {
@@ -187,7 +209,25 @@ local function insertCards(fromIdx, toIdx, skipDevider )
             end
           end  
 
+          local frame = nil
+              if commonData.collection[i].type == "epic" then
+                  frame= display.newImage("images/album/EpicFrame.png")  
+              elseif commonData.collection[i].type == "rare" then
+                  frame= display.newImage("images/album/RareFrame.png")  
+              end  
+
+
           levelSelectGroup:insert(card)
+          if frame then
+            frame.x = card.x      
+            frame.y = card.y      
+            frame.xScale =  card.xScale 
+            frame.yScale =  card.yScale 
+            
+            levelSelectGroup:insert(frame)
+
+          end 
+
 
 
 
@@ -212,17 +252,39 @@ local function insertCards(fromIdx, toIdx, skipDevider )
             cardSmall:setFillColor(0, 1, 0)
           else  
             --cardSmall.fill.effect = "filter.grayscale"
-            -- cardSmall:setFillColor(23/32, 23/32, 23/32)
-            if commonData.collection[i].type == "epic" then
-              cardSmall:setFillColor(0, 0, 140/256)      
-            elseif commonData.collection[i].type == "rare" then
-                cardSmall:setFillColor(0, 0, 190/256)    
-            else
-              cardSmall:setFillColor(0, 0, 1)
+           cardSmall:setFillColor(23/32, 23/32, 23/32)
+            -- if commonData.collection[i].type == "epic" then
+            --   cardSmall:setFillColor(0, 0, 140/256)      
+            -- elseif commonData.collection[i].type == "rare" then
+            --     cardSmall:setFillColor(0, 0, 190/256)    
+            -- else
+            --   cardSmall:setFillColor(0, 0, 1)
               
-            end    
+            -- end    
           end  
 
+           local cardSmall2 = display.newRect(4,4,4,4)
+          
+
+          cardSmall2.yScale = 1.05 * (display.actualContentHeight/  (rowsNum))  / (cardSmall2.contentHeight + 3)
+          cardSmall2.xScale = cardSmall2.yScale          
+
+          cardSmall2.x =  cardSmall.x
+          cardSmall2.y =  cardSmall.y
+
+
+          if commonData.collection[i].type == "epic" then
+              --cardSmall2:setFillColor(0, 0, 140/256)      
+              cardSmall2:setFillColor(1,206/255,0)
+            elseif commonData.collection[i].type == "rare" then
+                cardSmall2:setFillColor(0, 0, 190/256)    
+            else
+              cardSmall2:setFillColor(23/32, 23/32, 23/32)
+              cardSmall2.alpha = 0
+              
+              
+            end   
+          indexGroup:insert(cardSmall2)   
           indexGroup:insert(cardSmall)
          
       end  
@@ -265,6 +327,12 @@ backMenuSound = audio.loadSound( "BtnPress.mp3" )
       --  reward.skeleton.group.x = 240
       --  reward.skeleton.group.y = 100
 
+      local handSpineAn = require "hand" 
+      hand =  handSpineAn.new(0.2)      
+      hand.skeleton.group.x = 60
+      hand.skeleton.group.alpha = 0
+      
+
     
         local function backButtonListener( event )
 
@@ -282,7 +350,19 @@ backMenuSound = audio.loadSound( "BtnPress.mp3" )
 
            if ( "ended" == event.phase ) then
               local rewardIndex  = event.target.id
-               if not commonData.gameData.claimedRewards[rewardIndex] then
+               if not commonData.gameData.claimedRewards[rewardIndex]  then
+
+                if rewardIndex > 1 then
+                    local cardsNum = 0
+                    if commonData.gameData.cards then
+                      cardsNum = #commonData.gameData.cards
+                    end  
+                    commonData.analytics.logEvent( "reward claimed no " .. rewardIndex ,{ 
+                                        gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                        highScore = tostring(  commonData.gameData.highScore),                                    
+                                        letterMargin = tostring(commonData.gameData.letterMargin),
+                                        cardsCount = tostring(cardsNum)})
+                end
                 commonData.gameData.claimedRewards[rewardIndex] = true
 
                 if rewards[rewardIndex].gems then
@@ -297,13 +377,19 @@ backMenuSound = audio.loadSound( "BtnPress.mp3" )
                 if rewards[rewardIndex].isItem then
                   commonData.shopItems[commonData.catalog.items[rewards[rewardIndex].category][rewards[rewardIndex].catIdx].id] = true 
                   commonData.saveTable(commonData.shopItems , SHOP_FILE)
+
+                   local options = {params = {gameData = commonData.gameData, category = rewards[rewardIndex].category, catIndex = rewards[rewardIndex].catIdx }}
+                   commonData.playSound( backMenuSound ) 
+                  composer.gotoScene( "shop" , options )
                 end  
                 
                 commonData.saveTable(commonData.gameData , GAME_DATA_FILE, true)
 
                 event.target.alpha = 0
                end 
-            
+              
+              hand:pause()         
+              hand.skeleton.group.alpha = 0   
           end
           return true
          end
@@ -334,7 +420,17 @@ backMenuSound = audio.loadSound( "BtnPress.mp3" )
               packsCountText.text = commonData.gameData.commonPacks + commonData.gameData.rarePacks + commonData.gameData.epicPacks 
         
               
-              
+              local cardsNum = 0
+              if commonData.gameData.cards then
+                cardsNum = #commonData.gameData.cards
+              end  
+              commonData.analytics.logEvent( "open " ..  event.target.packType  .." pack "  ,{ 
+                                  gamesCount = tostring( commonData.gameData.gamesCount)  ,
+                                  highScore = tostring(  commonData.gameData.highScore),                                    
+                                  letterMargin = tostring(commonData.gameData.letterMargin),
+                                  cardsCount = tostring(cardsNum)})
+
+
               commonData.saveTable(commonData.gameData , GAME_DATA_FILE)
 
                local options = { isModal = false,
@@ -353,6 +449,7 @@ backMenuSound = audio.loadSound( "BtnPress.mp3" )
          local function pickPackButtonListener( event )
 
            if ( "ended" == event.phase ) then
+              commonData.buttonSound()
               if commonData.gameData.commonPacks + commonData.gameData.rarePacks + commonData.gameData.epicPacks >0 then
                 pickPackGroup.alpha = 1
                 epicCountText.text = commonData.gameData.epicPacks
@@ -730,11 +827,21 @@ end
           dummy.alpha = 0
 
           sceneGroup:insert(dummy)
+
+            local divider2 =display.newImage("images/album/Devider.png")  
+              divider2.xScale = levelSelectGroup.contentWidth * 0.7 / divider2.contentWidth
+              divider2.yScale = divider2.xScale
+              divider2.y = 160
+              divider2.x = indexArrow.x - 3
+              divider2.rotation = 90
+
+
       sceneGroup:insert(background)
       
      sceneGroup:insert(levelSelectGroup)
      sceneGroup:insert(indexGroup)
      sceneGroup:insert(indexArrow)
+     sceneGroup:insert(divider2)
 
      sceneGroup:insert(backButton)
      sceneGroup:insert(backIcon)
@@ -760,13 +867,6 @@ end
      
      sceneGroup:insert(openCardsGroup)
      
-     
-
-
-
-
-
-      
        local gradient = {
                       type="gradient",
                       color2={ 255/255,241/255,208/255,1}, color1={ 1, 180/255, 0,1 }, direction="up"
@@ -804,7 +904,7 @@ for i=1,#rewards do
           local claimButton = widget.newButton
           {
               x = card.x,
-              y = card.y + 35,
+              y = card.y + 45,
               id = i,
               defaultFile = "BlueSet/End/EGShareUp.png",          
               overFile = "BlueSet/End/EGShareDown.png",          
@@ -816,7 +916,7 @@ for i=1,#rewards do
               onEvent = claimRewardListener
           }
 
-          claimButton.xScale =  (display.actualContentWidth*0.1) / claimButton.width
+          claimButton.xScale =  (display.actualContentWidth*0.15) / claimButton.width
           claimButton.yScale = claimButton.xScale 
 
           claimButtons[i] =  claimButton
@@ -846,6 +946,9 @@ for i=1,#rewards do
             rewardText.y = background.y + background.contentHeight/2 - rewardText.contentHeight/2 - 3
             levelSelectGroup:insert(rewardText)
           end  
+
+          levelSelectGroup:insert(hand.skeleton.group)
+
 
          
         
@@ -990,7 +1093,7 @@ function scene:hide( event )
       -- Example: stop timers, stop animation, stop audio, etc.
 
     --  saveTable(gameData , "gameData14.dat")
-          
+        pickPackGroup.alpha=0
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
    --    hero:pause()

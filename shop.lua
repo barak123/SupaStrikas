@@ -10,8 +10,8 @@ else
   store = require("store")   
 end
 
-
-
+local  hand = nil
+      
 
 local moshe= "moshe"
 
@@ -28,7 +28,8 @@ local scrollTo = false
 local outerScrollTo = false
 local coinsCount = 1
 local gemsCount = 1
-local productsLoaded = false      
+local productsLoaded = false     
+local isShopTutorial = false 
 
 
 local seletedCategory = nil
@@ -204,6 +205,11 @@ local icons = {}
 local function  selectedItemChanged( itemIdx )
 
   local catItems = commonData.catalog.getActiveItems(seletedCategory) 
+
+   if hand and isShopTutorial then
+          hand.skeleton.group.alpha = 0
+          hand:pause()                    
+   end    
 
   if (itemIdx and catItems[itemIdx]) then
     
@@ -640,6 +646,7 @@ local function openCategory()
                                        prevItem  = j
                               end
 
+                              
                                levelSelectGroup:scrollToPosition
                                {x =35 + (-1* itemIdx* 70  + resolutionFactor) , time = 190, 
                                 onComplete = function() 
@@ -680,6 +687,7 @@ local function openCategory()
                                      prevItem  = lastIdx
                                   end 
 
+                                  
                                    levelSelectGroup:scrollToPosition
                                    {x =105 + (-1* lastIdx * 70  + resolutionFactor) , time = 190, 
                                     onComplete = function() 
@@ -717,6 +725,8 @@ local function openCategory()
            end
            prevVelocity = 1
            outerScrollTo=true
+
+           
         levelSelectGroup:scrollToPosition
                              {x = 35  + resolutionFactor , time = 190, 
                               onComplete = function() 
@@ -756,6 +766,12 @@ function scene:create( event )
      end
 
      
+
+     local handSpineAn = require "hand" 
+      hand =  handSpineAn.new(0.2)      
+      hand.skeleton.group.x = 60
+      hand.skeleton.group.alpha = 0
+
      
      background.xScale = display.actualContentWidth / background.contentWidth 
      background.yScale = display.actualContentHeight  / background.contentHeight
@@ -1129,6 +1145,15 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
              if commonData.shopItems[commonData.catalog.items[seletedCategory][selectedItemIdx].id] then
                commonData.buttonSound()
                setSelectedItems()
+
+               if hand and isShopTutorial then
+                    hand.skeleton.group.alpha = 1
+                    hand:init()          
+                    hand:tapLeft()
+                    hand.skeleton.group.x = backButton.x + backButton.contentWidth/4
+                    hand.skeleton.group.y = backButton.y + backButton.contentHeight/2
+               end
+
             end
           end
 
@@ -1166,7 +1191,8 @@ gemsShadowText.x = gemsShadowText.x + (display.actualContentWidth - display.cont
                   
                   if (not isSimulator)  then
                      
-                     if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "HCFreePack"} ) then
+                     if commonData.appodeal.isLoaded( "rewardedVideo" ) then
+                      --if commonData.appodeal.isLoaded( "rewardedVideo", {placement= "HCFreePack"} ) then
                         
                         commonData.analytics.logEvent( "startWatchAd - shop",{ gamesCount = tostring( commonData.gameData.gamesCount)  ,
                                     highScore = tostring(  commonData.gameData.highScore) ,
@@ -2083,6 +2109,8 @@ local skillSubHeaderOptions =
     sceneGroup:insert(useButton)
     sceneGroup:insert(buyButton)
     sceneGroup:insert(skillsButton)
+
+    
     -- sceneGroup:insert(skillsDetailsImg)
     -- sceneGroup:insert(skillsDetailsText)
     
@@ -2095,7 +2123,7 @@ local skillSubHeaderOptions =
      sceneGroup:insert(itemDesc)  
      sceneGroup:insert(backButton)
      sceneGroup:insert(backIcon)
-     
+     sceneGroup:insert(hand.skeleton.group)
 
      
      sceneGroup:insert(skillsGroup)
@@ -2177,10 +2205,10 @@ function scene:show( event )
    local phase = event.phase
 
 
- 
+  
    if ( phase == "will" ) then
       -- Called when the scene is still off screen (but is about to come on screen).
-
+      isShopTutorial = false 
       
       commonData.shopSkin = commonData.selectedSkin 
       commonData.shopBall = commonData.selectedBall 
@@ -2210,9 +2238,41 @@ function scene:show( event )
       local prevScene = composer.getSceneName( "previous" )
       if prevScene == "game" then
         seletedCategory = "gems"
+      elseif (event.params and event.params.category) then  
+        seletedCategory = event.params.category
       end  
       openCategory()
 
+      if hand then
+        hand.skeleton.group.alpha = 0
+        hand:pause()
+      end          
+
+      if (event.params and event.params.catIndex) then  
+        outerScrollTo= true
+        scrollTo = true
+        if event.params.catIndex == 2 and seletedCategory == "skins" then
+          isShopTutorial = true
+        end
+        levelSelectGroup:scrollToPosition
+                                   {x =105 + (-1* event.params.catIndex * 70  + resolutionFactor) , time = 190, 
+                                    onComplete = function() 
+                                        scrollTo = false 
+                                        outerScrollTo= false 
+                                        prevVelocity = 1
+                                        selectedItemChanged(event.params.catIndex)
+                                        if hand and isShopTutorial then
+                                          hand.skeleton.group.alpha = 1
+                                          hand:init()          
+                                          hand:tapLeft()
+                                          hand.skeleton.group.x = useButton.x + useButton.contentWidth/4
+                                          hand.skeleton.group.y = useButton.y + useButton.contentHeight/2
+                                        end
+
+                                    end}
+        
+      end  
+        
 
   
    elseif ( phase == "did" ) then
@@ -2247,6 +2307,10 @@ function scene:hide( event )
         areYouSurePopup.alpha = 0
         setSlidesLocked(false)
         stopClock()
+        if hand then
+          hand.skeleton.group.alpha = 0
+          hand:pause()
+        end          
 
    elseif ( phase == "did" ) then
       -- Called immediately after scene goes off screen.
